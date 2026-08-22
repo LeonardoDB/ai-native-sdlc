@@ -22,6 +22,7 @@ The workflow is framework-agnostic. Claude Code calls the repository-memory file
 5. **Evidence in reviews.** Every finding cites file/line and concrete evidence, ordered by severity, with at most 5 nit comments per review.
 6. **Plan mode first.** Nothing is implemented without an accepted plan; when implementation departs from the plan, update plan.md in the same commit.
 7. **Reviews feed back.** When a review flags a mistake for the second time, the correction goes into CLAUDE.md as part of that review.
+8. **Subagents are named, visible, and accountable.** Scaffold subagents only with a functional name, a committed definition, an explained dispatch, and a bounded report with evidence — never a silent background worker that can idle or act on stale context.
 
 ## Starting from an idea
 

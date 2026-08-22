@@ -93,6 +93,8 @@ Build-phase hooks run on file edits and shell commands: block edits to protected
 
 Split work into tasks that touch different files; each parallel task gets its own git worktree so sessions don't collide. Two or three sessions is a sensible start; the ceiling is how many streams one person can review properly. Turn repeated jobs into subagents defined in `.claude/agents/*.md` (name, description, tools): a verifier that runs the app and checks behavior, a researcher that explores the codebase and reports back without flooding the main context, a code simplifier. Check the definitions into git. Governance comes from configuration in the repo — hooks and permission settings apply to all sessions, and activity is logged and attributed to the engineer who ran it.
 
+Every subagent is named for its functionality — verifier, researcher, code-simplifier — never a generic name like agent-1 or helper. Subagents are visible and accountable, never fire-and-forget: the orchestrating agent states why it dispatched one and summarizes what it returned, the developer can see what each one is doing, and each subagent reports what it ran, what it saw, and what it did not check. Require evidence over assertions: the subagent re-reads the current repo state before acting and cites what it verified, so it does not hallucinate or act on stale context. Bound the task with a concrete deliverable and check in, so a subagent cannot idle or drift.
+
 ### The feedback loop
 
 Always give the agent a way to verify its own work before a person sees it: run tests, build, take the screenshot; the agent iterates until the check passes. Setup rules:

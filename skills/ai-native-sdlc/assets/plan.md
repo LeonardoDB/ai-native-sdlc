@@ -27,3 +27,5 @@
 ## Parallelization
 
 <Which sessions/subagents can work in isolation, and how changes stay separated.>
+
+- Each session/subagent has a functional name, a defined scope, and a visible report; no silent or unbounded background work.

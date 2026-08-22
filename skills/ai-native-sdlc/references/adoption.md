@@ -84,6 +84,8 @@ neighboring flows. Report what you ran, what you saw, and any behavior that does
 not match plan.md. Do not fix anything; report only.
 ```
 
+Subagent hygiene: name each one for its function, commit the definition so the team shares it, and keep it visible to the engineer — the orchestrating agent explains why it was dispatched and summarizes its output. Give every subagent a bounded deliverable and an evidence-based report (what it ran, what it saw, what it did not check). A subagent is a scoped helper, not a black box: if it goes quiet, returns assertions without evidence, or acts on stale repo state, inspect or replace it.
+
 ## Source of truth for each artifact
 
 Existing systems (Jira, ServiceNow, Figma, change boards) are hard to displace. For every artifact the process produces, name one system as the source of truth:
