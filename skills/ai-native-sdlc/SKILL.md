@@ -9,6 +9,10 @@ Turn a stated goal into a planned, built, tested, deployed, and monitored projec
 
 Every phase ends by committing a versioned artifact to git; the next phase starts by reading it. The commit chain is the audit trail: who asked, what the agent produced, and who approved. The agent does the generating, verifying, and mechanical work. Humans keep the judgment calls and the final approvals.
 
+## Frameworks
+
+The workflow is framework-agnostic. Claude Code calls the repository-memory file `CLAUDE.md` and keeps skills in `.claude/skills/`; Codex calls the repository-memory file `AGENTS.md` and installs skills into `~/.codex/skills/`. Wherever this skill says CLAUDE.md, use the repository-memory file your framework recognizes. The same skill folder installs in either environment, and the artifacts (`intent.md`, `spec.md`, `plan.md`, `REVIEW.md`, `bands.yaml`) are framework-neutral.
+
 ## Hard rules
 
 1. **Human gates are real gates.** Do not advance without approval: intent accepted → Design; spec approved → Build; plan approved → code; PR merged → Deploy; release authorized → production.
@@ -46,12 +50,12 @@ At a glance:
 
 ## Templates and assets
 
-The scaffold script copies the core skeleton into a new project; copy these manually when extending an existing repo:
+The scaffold script copies the core skeleton into a new project (`intent.md`, `CLAUDE.md`, `REVIEW.md`, `bands.yaml`, `production-gate.sh`, `evals.example.md`); copy these manually when extending an existing repo. `spec.md` and `plan.md` are produced by the workflow itself during Design and Build — copy the blank forms only when you want them as starting points:
 
-- `assets/intent.md` — intent capture (problem, expected outcome, people/systems, constraints, out of scope, open questions)
-- `assets/spec.md` — requirements + design specification with gotchas
-- `assets/plan.md` — build plan (files, order, risks, verification)
-- `assets/CLAUDE.md` — repository-memory starter (commands, conventions, common mistakes)
+- `assets/intent.md` — intent capture (problem, proposed outcome, affected users/systems, constraints, out of scope, open questions)
+- `assets/spec.md` — requirements + design specification with gotchas (produced during Design)
+- `assets/plan.md` — build plan (files, order, risks, proof, verification) (produced during Build)
+- `assets/CLAUDE.md` — repository-memory starter (commands, verification, conventions, common mistakes)
 - `assets/REVIEW.md` — review standards (passes, evidence, severity, 5-nit cap)
 - `assets/bands.yaml` — monitoring control bands for Maintain
 - `assets/production-gate.sh` — release authorization hook

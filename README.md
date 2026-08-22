@@ -29,6 +29,8 @@ Each phase ends by committing a versioned artifact; the next phase starts by rea
 
 The agent does the generation, verification, and mechanical work. Humans keep the judgment calls: the agent goes all the way to the production gate and never crosses it.
 
+**Framework mapping.** The skill is framework-neutral: Claude Code calls repository memory CLAUDE.md and keeps skills in `.claude/skills/`; Codex calls it AGENTS.md and installs skills into `~/.codex/skills/`. The templates, artifacts, and scaffold script are the same either way.
+
 ## Install
 
 ### As a Codex skill

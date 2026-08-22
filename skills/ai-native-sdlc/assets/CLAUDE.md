@@ -2,6 +2,8 @@
 
 Keep this file under one page. Add a rule when the same mistake happens twice.
 
+> In Codex projects, the same content lives in AGENTS.md; the role is identical.
+
 ## Commands
 
 - Build: `make build` (must finish with "Build succeeded")

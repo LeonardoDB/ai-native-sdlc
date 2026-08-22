@@ -12,6 +12,20 @@ The plays have dependencies. Start with any play that nothing points into (a lea
 | Fourth | CI/CD integration, approval gates |
 | Last | close the loop (monitoring → new intents) |
 
+## Framework mapping
+
+The plays are written generically; each framework has its own names for the same roles:
+
+| Role | Claude Code | Codex |
+|---|---|---|
+| Repository memory | CLAUDE.md | AGENTS.md |
+| Skills | `.claude/skills/` | `~/.codex/skills/` |
+| Subagents | `.claude/agents/*.md` | Codex subagent configuration |
+| Hook wiring | `.claude/settings.json` + `.claude/hooks/` | Codex settings/hooks |
+| Artifacts | intent.md, spec.md, plan.md, REVIEW.md, bands.yaml | same files |
+
+When this skill or the templates say CLAUDE.md or `.claude/`, map to the equivalent in the target framework. The artifacts, the templates, and the scaffold script are framework-neutral.
+
 ## Minimal first run
 
 1. Ship the intent.md template and require it for new work (capture intent).
