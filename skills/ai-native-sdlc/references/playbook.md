@@ -26,7 +26,7 @@ Each play below covers: what changes, getting started (prerequisites and infrast
 
 ## Phase 2 — Design: requirements and design in one session
 
-**What changes.** Requirements and design collapse into a single prompted session. In the traditional flow the spec was written by analysts, then parsed by designers — separate teams, separate phases, a handoff that existed for accountability but was slow and lossy. In the AI-native flow, the product owner's prompt, the organization's skills, and the agent produce the spec in one pass, with policy applied while it is written rather than discovered in a review weeks later.
+**What changes.** Requirements and design are compressed into one working session with an agent, guided by standards encoded as skills, and versioned in git. In the traditional flow the spec was written by analysts, then parsed by designers — separate teams, separate phases, a handoff that existed for accountability but was slow and lossy. In the AI-native flow, the product owner's prompt plus the organization's skills produce the spec in one pass, with policy applied while it is written rather than discovered in a review weeks later.
 
 **Getting started.** Prerequisites: an accepted intent.md; brand, security, compliance, and UX policies written as skills. Infrastructure: a product owner with agent access; no engineering skill required.
 
