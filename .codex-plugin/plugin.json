@@ -1,0 +1,35 @@
+{
+  "name": "ai-native-sdlc",
+  "version": "0.1.0",
+  "description": "AI-native SDLC workflow as a reusable skill: turn any product goal into a planned, built, tested, deployed, and monitored project with human approval gates at every artifact.",
+  "skills": "./skills/",
+  "author": {
+    "name": "AI-Native SDLC contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "sdlc",
+    "ai-native",
+    "workflow",
+    "skill",
+    "coding-agent",
+    "claude",
+    "codex"
+  ],
+  "interface": {
+    "displayName": "AI-Native SDLC",
+    "shortDescription": "Run the AI-native SDLC loop from idea to production",
+    "longDescription": "Encodes Anthropic's AI-Native SDLC playbook as a reusable workflow: capture intent, design, plan, build, test, deploy, and maintain, with versioned artifacts and human approval gates at every handoff. Give your agent a goal and it scaffolds and drives the project through the full lifecycle.",
+    "developerName": "AI-Native SDLC contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Write",
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "Build my idea as an AI-native SDLC project",
+      "Turn this goal into intent.md, spec.md, and a plan",
+      "Run the full plan-build-test-deploy loop for this feature"
+    ]
+  }
+}

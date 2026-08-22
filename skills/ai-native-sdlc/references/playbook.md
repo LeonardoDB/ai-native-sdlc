@@ -1,0 +1,168 @@
+# Playbook — the six phases
+
+This is the operating detail for the AI-native SDLC loop. Read the section for the phase you are entering. Every stage ends by committing an artifact to version control — `intent.md`, `spec.md`, `plan.md`, the diff and its tests, the PR with its review findings, the incident record — and the next stage begins by reading it. The commit chain is the audit trail: who asked for what, what the agent produced, and who approved it.
+
+Humans stay accountable for every decision that requires judgment. Human attention concentrates at the gates, reviewing what the agent flagged rather than starting each stage from scratch.
+
+Each play below covers: what changes, getting started (prerequisites and infrastructure), how to execute, governance considerations, and how to measure it (leading and lagging indicators). The plays are modular; adopt them in the order of the dependency graph in `references/adoption.md`, not the order of the phases.
+
+## Phase 1 — Plan: capture intent as intent.md
+
+**What changes.** Ideas stop waiting for someone to write them up. Intent is captured once, in the originator's own words, as a version-controlled artifact the next stage can act on.
+
+**Getting started.** No prerequisites. Infrastructure: agent access for non-engineers (chat app or cowork), an agreed intent.md template, and a shared version-controlled home for intents that the product owner watches — an `intent/` folder in the product repo for a single product, or a dedicated intent repo only when one intent spans many repos. A technical team member sets up the home and decides who can write to it; a connector to the version-control system lets contributors without git experience commit markdown through the agent.
+
+**How to execute it.**
+
+1. The originator describes the problem in their own words — what cannot be done today, who is affected, what better looks like, what is out of scope. No formal language required.
+2. Brainstorm until the idea is concrete: the agent asks the questions an analyst would ask (scope, users, constraints, what success looks like).
+3. Write the result as intent.md using the org template (which can be encoded as a skill). Fields: title, author, source, status, problem, proposed outcome, affected users and systems, constraints, out of scope, open questions.
+4. The originator corrects anything the agent misunderstood.
+5. Commit intent.md to the shared home. Author and timestamp join the record, and the product owner picks it up from there.
+
+**Governance.** The evidence is the committed intent.md with its full revision history. The product owner approves; the accept-or-reject decision that sends the intent into Design is recorded as the merge or the closing review.
+
+**Measure.** Leading: time from first conversation to a committed intent.md, read from git history (expectation: weeks → hours). Lagging: survival rate — the share of intents the product owner accepts into Design rather than closes — and the number of changes made to intent.md after the first spec.md commit for the same change.
+
+## Phase 2 — Design: requirements and design in one session
+
+**What changes.** Requirements and design collapse into a single prompted session. Policy is applied while the spec is written, not discovered in a review weeks later.
+
+**Getting started.** Prerequisites: an accepted intent.md; brand, security, compliance, and UX policies written as skills. Infrastructure: a product owner with agent access; no engineering skill required.
+
+**How to execute it.**
+
+1. The product owner opens a session with the organization's skills available and attaches the intent.md.
+2. Prompt: "Read the attached intent.md and produce a requirements and design spec for integrating it into our existing codebase. Apply the skills available to you so the plan conforms to our brand guidelines, security policies and UX standards. Document the spec fully as spec.md, ready to hand to the engineering team. Describe clearly any areas of concern, especially where you cannot satisfy contradicting policies."
+3. Run by hand first; codify as an organization-level slash command; then make acceptance of intent.md the trigger — a non-interactive job fires on the merge, runs the pass with the organization's skills loaded, and commits spec.md as a pull request. From then on, the product owner's first involvement is the review.
+4. The product owner reviews the spec against the intent: does it solve the stated problem? Are the open questions answered or carried forward? Work through flagged concerns with their policy owners before engineering sees the spec.
+5. Commit spec.md alongside intent.md. The file pair records what was asked for and what was decided.
+6. A human decides whether the spec and intent progress to Build, consulting a technical lead for anything classed as higher risk.
+
+**Governance.** Live policy is read and applied while the spec is written; the organization's skills act as constraints. The spec, the prompt that produced it, and the skill versions in force are all logged in version control. The product owner signs off and routes flagged concerns to named policy owners.
+
+**Measure.** Leading: elapsed time between the intent.md commit and the spec.md commit, compared with the old requirements-plus-design cycle. Lagging: requirements rework after build starts — spec.md commits dated after the first plan.md commit for the same change.
+
+## Phase 3 — Build: nothing is implemented without an accepted plan
+
+**What changes.** Institutional knowledge becomes files the agent reads, and the guardrails run as code rather than as habits.
+
+### Plan mode first
+
+The engineer starts the session in plan mode, gives the agent intent.md and spec.md, and asks for an implementation plan naming the files that change, the order of work, and the tests that prove it. Interrogate the plan: what could this break, which step is most risky, what options were rejected? Iterate until an engineer who has never seen the conversation could implement the change from the plan alone. Commit the approved plan as plan.md; the review pass in Phase 5 checks the eventual diff against it. When implementation departs from the plan, update plan.md in the same commit — consider a hook that enforces synchronization.
+
+plan.md contents: files that change; order of work; risks; proof (tests that cover the change; screenshot matching the approved mock where relevant).
+
+### Auto mode
+
+Once the guardrails mature — a tuned CLAUDE.md, skills that encode policy, hooks that block unsafe actions, a test suite the agent can run — auto-accept becomes the default for routine work: approve the plan, then let the agent apply changes without per-edit prompts. Review shifts from watching edits to reviewing artifacts after longer autonomous sessions. Auto mode enables parallelism across individuals via worktrees and is what makes the Phase 6 loop runnable.
+
+### CLAUDE.md as repository memory
+
+CLAUDE.md gives the agent the context a new joiner needs: conventions, commands, architecture, and the mistakes the team sees most often. Generate a starting version with the agent's init command, cut it to one page, check it into git, and review changes like code. Working rule: when the agent makes a mistake twice, the correction goes into CLAUDE.md. Keep it under a page — the agent reads all of it at session start, and anything stale costs context for no benefit.
+
+### Skills as institutional knowledge
+
+Write a skill for knowledge that must be applied consistently (security standards, API design conventions, brand rules); don't write a skill for components that belong in CLAUDE.md or a prompt. A skill is a folder containing a SKILL.md whose frontmatter says when it triggers and whose body says what to do. Put it in `.claude/skills/<name>/` so it ships with the code, or distribute it organization-wide through a plugin. Test that it triggers, and have the policy owner sign off on changes; engineers pick up the new version in their next session.
+
+A skill is an advisory control — it makes compliant behavior likely. A policy that must always hold needs a deterministic hook behind it or a review pass that re-checks it. Skills make violations rare; hooks make them close to impossible.
+
+### Hooks as build-time guardrails
+
+Build-phase hooks run on file edits and shell commands: block edits to protected paths (generated classes, frozen packages), run the formatter and linter after edits, keep credentials out of the diff. Keep them fast and scoped to the file that changed; heavier checks belong at the commit or the PR. Hooks that ask a human for approval belong with the gates in Phase 5 — an approval prompt during the build puts a person on the critical path of every parallel session.
+
+### Parallel sessions and subagents
+
+Split work into tasks that touch different files; each parallel task gets its own git worktree so sessions don't collide. Two or three sessions is a sensible start; the ceiling is how many streams one person can review properly. Turn repeated jobs into subagents defined in `.claude/agents/*.md` (name, description, tools): a verifier that runs the app and checks behavior, a researcher that explores the codebase and reports back without flooding the main context, a code simplifier. Check the definitions into git. Governance comes from configuration in the repo — hooks and permission settings apply to all sessions, and activity is logged and attributed to the engineer who ran it.
+
+### The feedback loop
+
+Always give the agent a way to verify its own work before a person sees it: run tests, build, take the screenshot; the agent iterates until the check passes. Setup rules:
+
+- Wrap multi-step checks in one command (`make test`) that exits non-zero on failure.
+- In CLAUDE.md's Commands section, list each command with an example of healthy output.
+- Make the target quantifiable: "All tests in test_status.py pass", "the endpoint returns 200 with the new field", "the screenshot matches the attached mock".
+- For bug fixes, write the failing test first: reproduce the bug as a test, run it, confirm it fails for the expected reason, commit it, then make it pass without editing the test. A hook that blocks test-file edits during a fix task protects the check itself.
+- For UI work, close the loop with a screenshot or browser tool against the approved mock: implement, screenshot, compare, adjust — two or three rounds is normal.
+- Make verification part of "done" in CLAUDE.md, and paste the output as evidence.
+
+**Measure.** Leading: first-pass CI success rate for agent-written changes. Lagging: review time per PR (falls once tests catch what reviewers used to catch), change failure rate, rework cycles per change, and how often the merged diff still matches the committed plan.md.
+
+## Phase 4 — Test: continuous evals in CI
+
+**What changes.** Stage-gate QA becomes a live eval suite that runs whenever the agent's configuration changes. When a new model is swapped in or a prompt is rewritten, the suite says whether the agent still does the work to the same standard.
+
+**Getting started.** Prerequisites: CLAUDE.md and the feedback loop. Infrastructure: CI that can run the agent non-interactively (for example `claude -p`), with an API key and budget for eval runs.
+
+**How to execute it.**
+
+1. Collect 20–50 real tasks from recent work with their expected or accepted outcomes.
+2. Write each task as an eval: the prompt plus the checks that define acceptable (tests pass, lint clean, behavior unchanged, policy followed).
+3. Run the suite non-interactively in CI — on a schedule and on any change to CLAUDE.md, skills, or hooks. That configuration steers the agent and deserves the same regression testing as code.
+4. Gate configuration changes on the results: a skill change that drops the pass rate is reviewed before it merges.
+5. Every production incident gets an eval, written by the team that owned it, and stays in the suite as a regression test.
+
+A GitHub Actions example ships in `assets/agent-evals.yml.example`.
+
+**Governance.** The pass-rate threshold is enforced as a merge check; runs are logged so results compare over time; the team owning the configuration change approves it. QA shifts from manual testing to maintaining eval cases. Human acceptance criteria remain final; don't over-rely on LLM-as-judge.
+
+**Measure.** Leading: eval pass rate over time, and how long a production incident takes to become a permanent eval. Lagging: regressions caught in CI versus regressions found in production.
+
+## Phase 5 — Deploy: review runs both ways, and the agent stops at the production gate
+
+### AI in the PR review loop
+
+Every PR gets the same review passes — bugs and logic errors, security and vulnerabilities, compliance against spec.md, plan.md, and design principles — with findings ranked by severity. The tech lead writes the policy as REVIEW.md at the repo root: what counts as Important versus a Nit, what to skip (generated paths, anything CI already enforces), and the cap of five nits per review. Findings do not approve or block a PR on their own; branch protection still requires code owner approval, so the agent that wrote the code cannot approve it.
+
+Reviews are bidirectional: the agent reviews incoming PRs and addresses review comments on its own PRs (for example, @claude on a comment triggers a fix and push; a slash command can babysit the PR through failing checks until it waits only on code owner approval). When a review flags a mistake for the second time, the correction goes into CLAUDE.md as part of that review. The tech lead tunes the setup monthly by rating findings and capping nit volume.
+
+**Measure.** Leading: time to first review (target: minutes) and the share of review comments resolved without a human touching the branch. Lagging: defects and vulnerabilities caught before merge versus those escaping to production.
+
+### Hooks as approval gates
+
+The build phase used hooks as guardrails (allow or block, no human involved). A hook can also ask — pausing an action until a specific person approves — which is what release gating needs. Engineering leadership, with change management and compliance, lists the human approval gates that must survive (change sign-off, release authorization, edits to protected paths). Each gate becomes a hook script that can allow, ask, or block. Team hooks live in the repo's settings file (`.claude/settings.json` in Claude Code); non-negotiable hooks live in managed settings owned by platform/IT, where engineers cannot switch them off. A block should explain itself: the reason and the route to approval appear in the agent's output.
+
+The release gate is the canonical example: `assets/production-gate.sh` blocks any production deploy unless a release authorization is present, exiting 2 (block) with the reason. A wiring example ships as `assets/hook-settings.example.json`, and the worked example for a regulated enterprise (permissions, sandbox, credential controls, managed hooks and MCP, version floor) ships as `assets/managed-settings.example.json`.
+
+**Measure.** Leading: time spent waiting on each approval gate (every hook decision logged with a timestamp and an allow or block verdict). Lagging: gate violations reaching production before and after hooks.
+
+### CI/CD integration
+
+Run the agent non-interactively in the pipeline for judgment steps — triage a failed build, summarize a flaky test, draft the changelog — then add write steps behind existing gates (fix lint, update generated docs, address review comments). Anything the agent writes arrives as a PR through branch protection; there is no direct path to main. Agent jobs run sandboxed with short-lived scoped tokens and no standing production credentials. Expose deployment through MCP — deploy, status, and rollback become scoped tools rather than a shell script with credentials. Tier autonomy by environment: development is open, staging in between, production requires a release manager's authorization enforced by the gate hook. Make rollback the most rehearsed path — a single command exercised regularly in staging — because Phase 6 calls it when a control band is breached.
+
+**Measure.** Leading: the share of pipeline failures triaged without paging a human. Lagging: DORA measures from the CI system and deployment tooling.
+
+## Phase 6 — Maintain: close the loop
+
+**What changes.** A trigger — control-band breach, ticket, channel message, or schedule — invokes the agent with no person in the invocation path. The agent diagnoses, acts only through gated routes, and writes what it found as intent.md, which re-enters the pipeline at Plan. People triage and review the work; they no longer have to start it.
+
+**Getting started.** Prerequisites: intent.md as the structured output, agentic PR review, hooks as the action boundary, and a rehearsed rollback path. Infrastructure: a metrics store the detection script can query, repo read access, a way to run the agent non-interactively (CI runner or Agent SDK service), and a trigger layer (scheduled workflow, monitoring webhook, or in-network cron).
+
+**How to execute it.**
+
+1. Pick one metric with a stable rolling baseline — CI test failure rate, post-deploy 5xx rate, PR cycle time.
+2. Write the detection script: mean and standard deviation over a rolling window with Western Electric rules, so the bands catch slow drift as well as spikes. The script is version controlled and unit tested; detection stays deterministic, with no model involved.
+3. Define response tiers in version-controlled config (`bands.yaml`): at 1σ log only; at 2σ invoke the agent read-only to diagnose; at 3σ the agent may act, but only by opening a PR into the review gate or triggering a pre-approved runbook.
+4. The agent runs stateless and non-interactive. Because nothing needs a person to start it, the loop can begin and end on its own.
+5. The agent writes its diagnosis as intent.md in the Plan format — the anomaly and its evidence, a proposed outcome, affected systems, open questions — and it flows through the pipeline like anything else.
+6. The service owner or on-call engineer triages the queue: fix now, schedule, or dismiss. Dismissals tune the bands and reduce noise.
+7. When a fix ships, add an eval for the incident so the class of issue is protected going forward.
+
+**Examples.** CI test failure rate breaches 3σ → quarantine the flaky test or open a revert PR, and the review gate decides. Post-deploy 5xx rate breaches 3σ with a deployment in the window → trigger the existing rollback pipeline. PR cycle time trips a drift rule → write a report for engineering leadership (process metrics work too).
+
+**Chat as a channel.** Incidents arrive via Slack or Teams as well. An agent present in incident channels (for example, Claude Tag in Slack) acts as first responder under its own identity: tests hypotheses, verifies the metric is back at baseline via MCP, writes the post-mortem to a version-controlled lessons file, and converts anything larger than a small bounded fix into intent.md. The channel is the audit trail — request, diagnosis, authorization, and fix stay where the incident was handled.
+
+**Measure.** Leading: time from band breach to intent.md in the triage queue, versus the old time from incident to post-mortem action. Lagging: the share of findings that become merged fixes, and repeat incidents of the same class, which should fall as fixes add cases to the eval suite.
+
+## Numbers to remember
+
+| Item | Value |
+|---|---|
+| Requirements cycle | weeks → hours |
+| Parallel sessions to start | 2–3 |
+| Eval suite size | 20–50 real tasks |
+| Nits per review | max 5 |
+| Monitoring tiers | 1σ log / 2σ diagnose / 3σ act |
+| Baseline window | rolling 30 days |
+| Time to first review | minutes |
+| Review quality with evidence | 16% → 54% |

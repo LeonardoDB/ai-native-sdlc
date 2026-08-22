@@ -1,0 +1,25 @@
+# GitHub Actions workflow: run the agent eval suite on config changes and on a
+# schedule (Phase 4 — Test). Copy to .github/workflows/agent-evals.yml and adapt
+# to your agent CLI and eval layout.
+name: Agent evals
+on:
+  pull_request:
+    paths: ['CLAUDE.md', '.claude/**', 'hooks/**', 'skills/**']
+  schedule:
+    - cron: '0 2 * * *'
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: Run eval suite
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          for eval in evals/*.json; do
+            claude -p "$(jq -r '.prompt' $eval)" \
+              --allowedTools "Read,Edit,Bash(make test)" \
+              --output-format json > result.json
+            ./evals/check.sh "$eval" result.json
+          done
