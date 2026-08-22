@@ -49,6 +49,10 @@ At a glance:
 | Deploy | merged PR + review findings | authorized release | agentic review + explicit release authorization |
 | Maintain | production metrics | diagnosis → new intent.md | on-call triage: fix, schedule, or adjust thresholds |
 
+## Graph engineering
+
+The loop is a directed graph, not a linear pipeline: plays and artifacts are nodes, gates are the human approval points, and triggers are the edges that fire the next stage. Treating the workflow as a graph makes it automatable (accepted artifacts fire the next gate), parallelizable (independent branches run in separate worktrees), and auditable (node history is the record). The plays also form a separate adoption graph — start at the leaf plays and build outward. Read `references/graph.md` when designing or automating how phases trigger each other; the machine-readable form ships in `assets/workflow-graph.example.yaml`.
+
 ## Templates and assets
 
 The scaffold script copies the core skeleton into a new project (`intent.md`, `CLAUDE.md`, `REVIEW.md`, `bands.yaml`, `production-gate.sh`, `evals.example.md`); copy these manually when extending an existing repo. `spec.md` and `plan.md` are produced by the workflow itself during Design and Build — copy the blank forms only when you want them as starting points:
@@ -61,6 +65,7 @@ The scaffold script copies the core skeleton into a new project (`intent.md`, `C
 - `assets/bands.yaml` — monitoring control bands for Maintain
 - `assets/production-gate.sh` — release authorization hook
 - `assets/evals.example.md` — eval case format for Test
+- `assets/workflow-graph.example.yaml` — the loop as a directed graph (nodes, gates, trigger edges)
 
 Organization-level examples to wire up during adoption:
 

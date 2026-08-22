@@ -1,0 +1,43 @@
+# Expense tracker project state on the AI-native SDLC loop graph.
+
+version: 1
+
+nodes:
+  intent:
+    stage: plan
+    artifact: intent/intent.md
+    gate: product_owner_accept
+    status: accepted
+  spec:
+    stage: design
+    artifact: spec.md
+    gate: product_owner_approve
+    status: approved
+  plan:
+    stage: build
+    artifact: plan.md
+    gate: engineer_approve
+    status: approved
+  implementation:
+    stage: build
+    artifact: code + tests
+    gate: code_owner_approve
+    status: in_review
+  release:
+    stage: deploy
+    artifact: authorized release
+    gate: release_authorization
+    status: pending
+  diagnosis:
+    stage: maintain
+    artifact: new intent.md
+    gate: on_call_triage
+    status: not_started
+
+edges:
+  - { from: intent, to: spec, trigger: acceptance }
+  - { from: spec, to: plan, trigger: approval }
+  - { from: plan, to: implementation, trigger: plan_accepted }
+  - { from: implementation, to: release, trigger: pr_merged }
+  - { from: release, to: diagnosis, trigger: band_breach_or_incident }
+  - { from: diagnosis, to: intent, trigger: written_back }

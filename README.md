@@ -8,6 +8,14 @@ This repo is three things at once:
 - A **Claude Code skill** — the same folder, installable into `~/.claude/skills`.
 - A **Codex plugin** (`.codex-plugin/plugin.json` at the repo root) that bundles the skill, so teams can publish or fork it as their workflow baseline.
 
+## What this is about
+
+Writing code is no longer the bottleneck — agents produce it in hours. The bottleneck moved to the process around the code: planning, review, deployment, and governance still run at human speed and human scale. This repo reworks the SDLC so those stages keep up with the build. The loop is Plan → Design → Build → Test → Deploy → Maintain; every stage ends by committing a versioned artifact the next stage reads, human judgment concentrates at gates instead of line-by-line review, guardrails run as deterministic hooks rather than habits, and continuous evals replace stage-gate QA. The operating principle, in one sentence: the agent can do everything up to the production gate, but never crosses it.
+
+## Graph engineering
+
+The loop is a directed graph, not a linear pipeline. Plays and artifacts are nodes, gates are human approval points, and triggers are the edges that fire the next stage: an accepted intent fires Design, an approved spec fires plan mode, a merged PR fires the pipeline, and a breached control band writes the next intent. Treating the workflow as a graph makes it automatable, parallelizable (independent branches run in separate worktrees), and auditable (node history is the record). The plays also form a separate adoption graph — start at the leaf plays (capture intent, CLAUDE.md, feedback loop, hooks, plan mode) and build outward. The machine-readable form is `skills/ai-native-sdlc/assets/workflow-graph.example.yaml`; full detail in `skills/ai-native-sdlc/references/graph.md`.
+
 ## The workflow
 
 ```
@@ -101,6 +109,10 @@ cp skills/ai-native-sdlc/assets/{intent.md,spec.md,plan.md,CLAUDE.md,REVIEW.md,b
 cp skills/ai-native-sdlc/assets/production-gate.sh hooks/
 ```
 
+## Examples
+
+The `examples/` folder contains a worked project — the expense-tracker idea from this README — showing what `intent.md`, `spec.md`, `plan.md`, `CLAUDE.md`, and the workflow graph look like when filled in. Use them as reference for tone and structure, then scaffold your own blanks with the script above.
+
 ## Customizing for your organization
 
 - **Standards as skills** — encode brand, security, UX, and compliance policies as skills so Design and Build apply them consistently.
@@ -120,13 +132,17 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
 ├── AGENTS.md                      # guidance for agents working in this repo
 ├── README.md
 ├── LICENSE
+├── examples/
+│   ├── README.md
+│   └── expense-tracker/           # worked example: intent, spec, plan, CLAUDE.md, graph
 └── skills/
     └── ai-native-sdlc/
         ├── SKILL.md               # skill entrypoint
         ├── agents/openai.yaml     # UI metadata
         ├── references/
         │   ├── playbook.md        # phase-by-phase procedures
-        │   └── adoption.md        # staged rollout + org customization
+        │   ├── adoption.md        # staged rollout + org customization
+        │   └── graph.md           # the loop as a directed graph
         ├── assets/                # templates copied into target projects
         │   ├── intent.md
         │   ├── spec.md
@@ -136,6 +152,7 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
         │   ├── bands.yaml
         │   ├── production-gate.sh
         │   ├── evals.example.md
+        │   ├── workflow-graph.example.yaml
         │   ├── hook-settings.example.json
         │   ├── agent-evals.yml.example
         │   └── managed-settings.example.json

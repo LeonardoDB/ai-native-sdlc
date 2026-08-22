@@ -1,0 +1,43 @@
+# The AI-native SDLC as a directed graph.
+# Nodes are plays/artifacts; edges are triggers between them.
+# Gate nodes are human approvals: automation may run the edges but never skip a gate.
+
+version: 1
+
+nodes:
+  intent:
+    stage: plan
+    artifact: intent/intent.md
+    gate: product_owner_accept
+  spec:
+    stage: design
+    artifact: spec.md
+    gate: product_owner_approve
+  plan:
+    stage: build
+    artifact: plan.md
+    gate: engineer_approve
+  implementation:
+    stage: build
+    artifact: code + tests
+    gate: code_owner_approve
+  release:
+    stage: deploy
+    artifact: authorized release
+    gate: release_authorization
+  diagnosis:
+    stage: maintain
+    artifact: new intent.md
+    gate: on_call_triage
+
+edges:
+  - { from: intent, to: spec, trigger: acceptance }
+  - { from: spec, to: plan, trigger: approval }
+  - { from: plan, to: implementation, trigger: plan_accepted }
+  - { from: implementation, to: release, trigger: pr_merged }
+  - { from: release, to: diagnosis, trigger: band_breach_or_incident }
+  - { from: diagnosis, to: intent, trigger: written_back }
+
+parallel_slots:
+  recommended: 2-3
+  isolation: git worktrees

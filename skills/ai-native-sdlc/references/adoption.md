@@ -4,6 +4,8 @@ The plays have dependencies. Start with any play that nothing points into (a lea
 
 ## Dependency order
 
+The plays form a directed dependency graph. Start at any leaf play (nothing points into it), then adopt the plays that depend on it — see `references/graph.md` for why the workflow is engineered as a graph.
+
 | Layer | Plays |
 |---|---|
 | Start here (no prerequisites) | capture intent, CLAUDE.md, feedback loop, build-time hooks, plan mode |
