@@ -8,7 +8,7 @@ Each play below covers: what changes, getting started (prerequisites and infrast
 
 ## Phase 1 — Plan: capture intent as intent.md
 
-**What changes.** Ideas stop waiting for someone to write them up. Intent is captured once, in the originator's own words, as a version-controlled artifact the next stage can act on.
+**What changes.** Ideas stop waiting for someone to write them up. Intent is captured once, in the originator's own words, as a version-controlled artifact the next stage can act on — human-readable for the product owner, machine-actionable for the agent.
 
 **Getting started.** No prerequisites. Infrastructure: agent access for non-engineers (chat app or cowork), an agreed intent.md template, and a shared version-controlled home for intents that the product owner watches — an `intent/` folder in the product repo for a single product, or a dedicated intent repo only when one intent spans many repos. A technical team member sets up the home and decides who can write to it; a connector to the version-control system lets contributors without git experience commit markdown through the agent.
 
@@ -16,7 +16,7 @@ Each play below covers: what changes, getting started (prerequisites and infrast
 
 1. The originator describes the problem in their own words — what cannot be done today, who is affected, what better looks like, what is out of scope. No formal language required.
 2. Brainstorm until the idea is concrete: the agent asks the questions an analyst would ask (scope, users, constraints, what success looks like).
-3. Write the result as intent.md using the org template (which can be encoded as a skill). Fields: title, author, source, status, problem, proposed outcome, affected users and systems, constraints, out of scope, open questions.
+3. Write the result as intent.md using the org template (which can be encoded as a skill). It points straight at the sources: the problem, proposed outcome, affected users and systems, constraints, out of scope, and open questions. Fields are structured enough for the agent to act on them directly, and plain enough for the product owner to review without engineering knowledge.
 4. The originator corrects anything the agent misunderstood.
 5. Commit intent.md to the shared home. Author and timestamp join the record, and the product owner picks it up from there.
 

@@ -28,3 +28,9 @@
 ## Open questions
 
 <Questions that must be answered before or during design.>
+
+---
+
+> Format note: keep this file human-readable (the product owner reviews and accepts it) and
+> machine-actionable (the agent reads it and produces spec.md from it). Fields are structured
+> on purpose; keep each section short and concrete.
