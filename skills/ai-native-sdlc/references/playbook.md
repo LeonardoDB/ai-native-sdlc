@@ -90,7 +90,7 @@ Always give the agent a way to verify its own work before a person sees it: run 
 
 ## Phase 4 — Test: continuous evals in CI
 
-**What changes.** Stage-gate QA becomes a live eval suite that runs whenever the agent's configuration changes. When a new model is swapped in or a prompt is rewritten, the suite says whether the agent still does the work to the same standard.
+**What changes.** In the traditional flow, QA was a gate at stage boundaries. In the AI-native flow it becomes a live eval suite that runs throughout implementation and whenever the agent's configuration changes — a new model, a rewritten prompt, or an edit to CLAUDE.md, skills, or hooks — so the suite says whether the agent still does the work to the same standard.
 
 **Getting started.** Prerequisites: CLAUDE.md and the feedback loop. Infrastructure: CI that can run the agent non-interactively (for example `claude -p`), with an API key and budget for eval runs.
 
