@@ -110,6 +110,8 @@ A GitHub Actions example ships in `assets/agent-evals.yml.example`.
 
 ## Phase 5 — Deploy: review runs both ways, and the agent stops at the production gate
 
+**What changes.** In the traditional flow, humans reviewed every line of code, and governance happened in review cycles — often inconsistently. In the AI-native flow, layered agentic review applies the same passes to every PR, human review is reserved for regulated and critical code, and governance is enforced as the AI acts, with hooks as approval gates.
+
 ### AI in the PR review loop
 
 Every PR gets the same review passes — bugs and logic errors, security and vulnerabilities, compliance against spec.md, plan.md, and design principles — with findings ranked by severity. The tech lead writes the policy as REVIEW.md at the repo root: what counts as Important versus a Nit, what to skip (generated paths, anything CI already enforces), and the cap of five nits per review. Findings do not approve or block a PR on their own; branch protection still requires code owner approval, so the agent that wrote the code cannot approve it.
