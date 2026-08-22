@@ -6,7 +6,7 @@ This repo is a reusable skill and plugin bundle implementing the AI-native SDLC 
 
 - The workflow lives in `skills/ai-native-sdlc/SKILL.md`. Read it first, then the references it routes to (`references/playbook.md`, `references/adoption.md`).
 - Templates in `skills/ai-native-sdlc/assets/` are copied into target projects — never edited to fit one project.
-- `scripts/init_workflow.py` performs that copy; change the script when the scaffold layout changes.
+- `skills/ai-native-sdlc/scripts/init_workflow.py` performs that copy; change the script when the scaffold layout changes.
 
 ## Validation
 
@@ -17,7 +17,7 @@ python3 <skill-creator-path>/scripts/quick_validate.py skills/ai-native-sdlc
 python3 <plugin-creator-path>/scripts/validate_plugin.py .
 ```
 
-Both must pass before finishing. Keep `plugin.json` and `SKILL.md` consistent (name, description, version).
+Both must pass before finishing. Keep `plugin.json` and `SKILL.md` consistent in name and description; keep the `plugin.json` version in sync with releases.
 
 ## Conventions
 

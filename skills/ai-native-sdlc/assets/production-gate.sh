@@ -16,10 +16,11 @@ if [[ -z "$cmd" && ! -t 0 ]]; then
   fi
 fi
 
-if [[ "$cmd" == *"deploy"* && "$cmd" == *"production"* ]]; then
+# Word-boundary match so "undeploy" or "productionize" do not trip the gate.
+if [[ "$cmd" =~ (^|[^[:alpha:]])deploy([^[:alpha:]]|$) && "$cmd" =~ (^|[^[:alpha:]])production([^[:alpha:]]|$) ]]; then
   if [[ -z "${RELEASE_APPROVAL:-}" ]]; then
     echo "BLOCK: production deploys need a release authorization." >&2
-    echo "An authorized human must set RELEASE_APPROVAL=<ticket-or-signer> or approve via the org's release process." >&2
+    echo "An authorized human must set RELEASE_APPROVAL=<ticket-or-signer> or approve via the org's release process (RELEASE_APPROVAL is a stand-in for your approval service)." >&2
     exit 2
   fi
 fi

@@ -42,6 +42,6 @@
 
 ## Verification plan
 
-- Unit tests for the policy engine covering the four claim states.
+- Unit tests for the policy engine covering all six statuses and their transitions.
 - Integration test for submit → status.
 - Screenshot of the status panel matches the approved mock.

@@ -28,7 +28,7 @@ The workflow is framework-agnostic. Claude Code calls the repository-memory file
 
 When the user gives a goal or idea and there is no workflow in place yet:
 
-1. Scaffold the artifact skeleton with `scripts/init_workflow.py <project-dir> --name "<project name>"`, or copy templates from `assets/` into an existing repo.
+1. Scaffold the artifact skeleton with `scripts/init_workflow.py <project-dir> --name "<project name>" --framework codex|claude` (codex writes AGENTS.md, claude writes CLAUDE.md), or copy templates from `assets/` into an existing repo.
 2. Run **Plan**: interview the user with analyst-style questions — what cannot be done today, who is affected, what success looks like, constraints, what is out of scope — until the idea is concrete.
 3. Write `intent/intent.md` from the template, commit it, and ask the product owner to accept or reject. Acceptance triggers Design.
 

@@ -84,6 +84,8 @@ Clone or copy this repo to `~/plugins/ai-native-sdlc`, then add it to your perso
 
 For a team, publish the repo and point a marketplace at it instead.
 
+Installing the plugin also makes the bundled skill available, so you don't need to also copy it into `~/.codex/skills` — choose one path.
+
 ### Or inherit the repo directly
 
 Fork it, keep the skill and templates, and drop in your organization's standards. The repo models the workflow it ships, so agents working inside it (via the root `AGENTS.md`) follow the same conventions.

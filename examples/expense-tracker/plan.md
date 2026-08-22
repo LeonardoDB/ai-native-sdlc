@@ -15,7 +15,7 @@
 ## Order of work
 
 1. Add the submit endpoint behind existing SSO.
-2. Add the policy engine with the four claim states.
+2. Add the policy engine with the six statuses.
 3. Build the form and status panel against the endpoints.
 4. Wire the nightly export job.
 
@@ -26,7 +26,7 @@
 
 ## Proof
 
-- `test_expenses.py` covers the four claim states and the export mapping.
+- `test_expenses.py` covers the six statuses and the export mapping.
 - Screenshot of the status panel matches the approved mock.
 
 ## Verification

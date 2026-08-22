@@ -2,11 +2,11 @@
 """Scaffold the AI-native SDLC artifact skeleton in a project directory.
 
 Usage:
-    python3 init_workflow.py <project-dir> [--name "<project name>"] [--force]
+    python3 init_workflow.py <project-dir> [--name "<project name>"] [--framework codex|claude] [--force]
 
 Creates:
     intent/intent.md          intent template (copy of assets/intent.md)
-    CLAUDE.md                 repository-memory starter
+    CLAUDE.md / AGENTS.md     repository-memory starter (--framework claude|codex)
     REVIEW.md                 review standards
     hooks/production-gate.sh  release authorization hook (executable)
     bands.yaml                monitoring control bands
@@ -46,6 +46,12 @@ def main() -> int:
         help="project/product name to fill into the intent title",
     )
     parser.add_argument(
+        "--framework",
+        choices=["claude", "codex"],
+        default="claude",
+        help="agent framework to target: claude writes CLAUDE.md, codex writes AGENTS.md (default: claude)",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="overwrite existing files",
@@ -72,6 +78,13 @@ def main() -> int:
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
         text = src.read_text(encoding="utf-8")
+        if rel_dest == "CLAUDE.md" and args.framework == "codex":
+            dest = root / "AGENTS.md"
+            text = text.replace("# CLAUDE.md — repository memory", "# AGENTS.md — repository memory")
+            text = text.replace(
+                "\n\n> In Codex projects, the same content lives in AGENTS.md; the role is identical.\n",
+                "\n",
+            )
         if args.name:
             text = text.replace("<Title>", args.name)
         dest.write_text(text, encoding="utf-8")
