@@ -45,7 +45,7 @@ Each play below covers: what changes, getting started (prerequisites and infrast
 
 ## Phase 3 — Build: nothing is implemented without an accepted plan
 
-**What changes.** Institutional knowledge becomes files the agent reads, and the guardrails run as code rather than as habits.
+**What changes.** Tests and code are no longer handwritten with documentation written after the main development; the agent generates them together and iterates on them, and institutional knowledge becomes files the agent reads. The guardrails run as code rather than as habits.
 
 ### Plan mode first
 
