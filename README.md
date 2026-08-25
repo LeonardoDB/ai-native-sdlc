@@ -1,5 +1,7 @@
 # AI-Native SDLC — reusable workflow repo
 
+![AI-Native SDLC workflow loop: Plan → Design → Build → Test → Deploy → Maintain](assets/ai-native-sdlc-banner.png)
+
 A ready-to-inherit implementation of Anthropic's [AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook): give your coding agent a goal or idea, and it scaffolds and drives the project through the full lifecycle — planning, design, build, test, deploy, and maintain — with human approval gates at every handoff.
 
 This repo is three things at once:
@@ -7,6 +9,8 @@ This repo is three things at once:
 - A **Codex skill** at `skills/ai-native-sdlc/`, installable into `~/.codex/skills`.
 - A **Claude Code skill** — the same folder, installable into `~/.claude/skills`.
 - A **Codex plugin** (`.codex-plugin/plugin.json` at the repo root) that bundles the skill, so teams can publish or fork it as their workflow baseline.
+
+**Learn more:** [Phase-by-phase playbook](skills/ai-native-sdlc/references/playbook.md) · [Staged adoption guide](skills/ai-native-sdlc/references/adoption.md) · [Workflow as a directed graph](skills/ai-native-sdlc/references/graph.md) · [Worked example](examples/expense-tracker/)
 
 ## What this is about
 
