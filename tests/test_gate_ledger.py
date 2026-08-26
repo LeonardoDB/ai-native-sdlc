@@ -90,6 +90,9 @@ class RecordAndChainTests(unittest.TestCase):
         td = tempfile.mkdtemp()
         self.addCleanup(lambda: os.system(f"rm -rf {td}"))
         subprocess.run(["git", "init", td], check=True, capture_output=True)
+        # CI runners have no git identity configured; set one so commits work.
+        subprocess.run(["git", "-C", td, "config", "user.email", "test@example.com"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", td, "config", "user.name", "Test"], check=True, capture_output=True)
         ledger = os.path.join(td, "ledger.jsonl")
         common = dict(ledger=ledger, gate="release_authorization", decision="approved",
                       artifact="x", commit=None, approver="Ada", evidence="e", expires_at=None)

@@ -75,6 +75,9 @@ fi
 LEDGER_TMP="$(mktemp -d)"
 LEDGER_FILE="$LEDGER_TMP/ledger.jsonl"
 git -C "$LEDGER_TMP" init -q
+# CI runners have no git identity configured; set one so commits work.
+git -C "$LEDGER_TMP" config user.email test@example.com
+git -C "$LEDGER_TMP" config user.name Test
 LEDGER_SCRIPT="$REPO_ROOT/skills/ai-native-sdlc/scripts/gate_ledger.py"
 python3 "$LEDGER_SCRIPT" --ledger "$LEDGER_FILE" record --gate release_authorization \
   --artifact "deploy app v1.2.3" --commit cf13ec7 --approver "Ada" --evidence "REL-42" \
