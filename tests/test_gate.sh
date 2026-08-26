@@ -71,6 +71,35 @@ else
   fail=$((fail + 1)); echo "FAIL: stdin JSON mode read-only (got: $json_allow)"
 fi
 
+# --- ledger-backed approvals (RELEASE_APPROVAL=ledger:<id>) ---
+LEDGER_TMP="$(mktemp -d)"
+LEDGER_FILE="$LEDGER_TMP/ledger.jsonl"
+git -C "$LEDGER_TMP" init -q
+LEDGER_SCRIPT="$REPO_ROOT/skills/ai-native-sdlc/scripts/gate_ledger.py"
+python3 "$LEDGER_SCRIPT" --ledger "$LEDGER_FILE" record --gate release_authorization \
+  --artifact "deploy app v1.2.3" --commit cf13ec7 --approver "Ada" --evidence "REL-42" \
+  --id release_authorization-001 >/dev/null 2>&1
+# Uncommitted ledger must block (require-committed is enforced by the hook).
+check "ledger: uncommitted ledger blocks" 2 RELEASE_APPROVAL=ledger:release_authorization-001 GATE_LEDGER_SCRIPT="$LEDGER_SCRIPT" GATE_LEDGER_FILE="$LEDGER_FILE" -- "kubectl deploy --env=production"
+git -C "$LEDGER_TMP" add -A && git -C "$LEDGER_TMP" commit -q -m "gates: record release authorization"
+# Committed, valid record allows the deploy.
+check "ledger: committed valid record allows" 0 RELEASE_APPROVAL=ledger:release_authorization-001 GATE_LEDGER_SCRIPT="$LEDGER_SCRIPT" GATE_LEDGER_FILE="$LEDGER_FILE" -- "kubectl deploy --env=production"
+# Unknown record id blocks.
+check "ledger: unknown id blocks" 2 RELEASE_APPROVAL=ledger:release_authorization-999 GATE_LEDGER_SCRIPT="$LEDGER_SCRIPT" GATE_LEDGER_FILE="$LEDGER_FILE" -- "helm upgrade prod-app"
+# A tampered ledger (rewrite approver, same hash) blocks.
+python3 - <<PYEOF
+import json
+from pathlib import Path
+p = Path("$LEDGER_FILE")
+lines = p.read_text(encoding="utf-8").splitlines()
+rec = json.loads(lines[0]); rec["approver"] = "Mallory"
+lines[0] = json.dumps(rec, sort_keys=True)
+p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+PYEOF
+git -C "$LEDGER_TMP" add -A && git -C "$LEDGER_TMP" commit -q -m "gates: tamper"
+check "ledger: tampered record blocks" 2 RELEASE_APPROVAL=ledger:release_authorization-001 GATE_LEDGER_SCRIPT="$LEDGER_SCRIPT" GATE_LEDGER_FILE="$LEDGER_FILE" -- "kubectl deploy --env=production"
+rm -rf "$LEDGER_TMP"
+
 echo
 echo "gate: $pass passed, $fail failed"
 [[ "$fail" -eq 0 ]]

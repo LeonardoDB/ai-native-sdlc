@@ -88,14 +88,40 @@ fi
 
 # A production deploy: require an unexpired release authorization.
 approval="${RELEASE_APPROVAL:-}"
-if [[ -n "$approval" && -n "${RELEASE_APPROVAL_EXPIRY:-}" ]] && ! _expiry_ok "$RELEASE_APPROVAL_EXPIRY"; then
-  echo "BLOCK: release authorization ($approval) expired at $RELEASE_APPROVAL_EXPIRY." >&2
-  echo "An authorized human must issue a fresh release authorization." >&2
-  exit 2
-fi
 if [[ -z "$approval" ]]; then
   echo "BLOCK: production deploys need a release authorization." >&2
-  echo "An authorized human must set RELEASE_APPROVAL=<ticket-or-signer> (RELEASE_APPROVAL_EXPIRY=<ISO-8601-or-epoch> optional) or approve via the org's release process. The env vars are a stand-in for your approval service." >&2
+  echo "An authorized human must set RELEASE_APPROVAL=<ticket-or-signer> or RELEASE_APPROVAL=ledger:<record-id>, or approve via the org's release process. The env vars are a stand-in for your approval service." >&2
+  exit 2
+fi
+
+# Ledger-backed approval: RELEASE_APPROVAL=ledger:<id> must match a verified,
+# unexpired, committed record in gates/ledger.jsonl (see gate_ledger.py).
+if [[ "$approval" == ledger:* ]]; then
+  ledger_id="${approval#ledger:}"
+  hook_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  project_dir="$(dirname "$hook_dir")"
+  ledger_script="${GATE_LEDGER_SCRIPT:-$project_dir/scripts/gate_ledger.py}"
+  ledger_file="${GATE_LEDGER_FILE:-$project_dir/gates/ledger.jsonl}"
+  if [[ ! -f "$ledger_script" ]]; then
+    echo "BLOCK: ledger approval requested but $ledger_script not found." >&2
+    exit 2
+  fi
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "BLOCK: ledger verification requires python3." >&2
+    exit 2
+  fi
+  if ! out="$(python3 "$ledger_script" --ledger "$ledger_file" verify --record "$ledger_id" --require-committed 2>&1)"; then
+    echo "BLOCK: ledger record $ledger_id failed verification: $out" >&2
+    exit 2
+  fi
+  echo "ALLOW (release authorization: ledger $ledger_id)"
+  exit 0
+fi
+
+# Free-form approval (ticket or signer), with optional expiry.
+if [[ -n "${RELEASE_APPROVAL_EXPIRY:-}" ]] && ! _expiry_ok "$RELEASE_APPROVAL_EXPIRY"; then
+  echo "BLOCK: release authorization ($approval) expired at $RELEASE_APPROVAL_EXPIRY." >&2
+  echo "An authorized human must issue a fresh release authorization." >&2
   exit 2
 fi
 

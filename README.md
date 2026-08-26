@@ -166,6 +166,7 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
         │   ├── incident.md
         │   ├── runbooks/          # rollback-deploy.md, README.md
         │   ├── PULL_REQUEST_TEMPLATE.md
+        │   ├── gates-README.md
         │   ├── hook-settings.example.json
         │   ├── agent-evals.yml.example
         │   └── managed-settings.example.json
@@ -173,7 +174,8 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
             ├── init_workflow.py   # scaffolds the artifact skeleton
             ├── quick_validate.py  # skill/plugin self-check
             ├── run_evals.py       # eval-suite runner (Phase 4)
-            └── detect_bands.py    # control-band detection (Phase 6)
+            ├── detect_bands.py    # control-band detection (Phase 6)
+            └── gate_ledger.py     # hash-chained approval ledger (all gates)
 ```
 
 ## Attribution and license

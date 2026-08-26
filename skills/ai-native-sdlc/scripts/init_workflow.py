@@ -10,10 +10,14 @@ Creates:
     CLAUDE.md / AGENTS.md       repository-memory starter (--framework claude|codex)
     REVIEW.md                   review standards
     hooks/production-gate.sh    release authorization hook (executable)
+    scripts/gate_ledger.py      approval-record ledger (hash-chained)
+    scripts/run_evals.py        eval-suite runner (Phase 4)
+    scripts/detect_bands.py     control-band detection (Phase 6)
     bands.yaml                  monitoring control bands
     workflow-graph.yaml         project state on the loop graph
     evals/example.md            eval case example (markdown)
     evals/README.md             how to add evals (JSON format)
+    gates/README.md             gate ledger usage
     .gitignore                  basic ignore rules
 
 Existing files are skipped unless --force is passed. --dry-run prints the
@@ -27,18 +31,24 @@ import subprocess
 import sys
 from pathlib import Path
 
-ASSET_DIR = Path(__file__).resolve().parent.parent / "assets"
+SKILL_DIR = Path(__file__).resolve().parent.parent
+ASSET_DIR = SKILL_DIR / "assets"
 
+# dest -> skill-relative source (assets/ for templates, scripts/ for tooling)
 FILES = {
-    "intent/intent.md": "intent.md",
-    "CLAUDE.md": "CLAUDE.md",
-    "REVIEW.md": "REVIEW.md",
-    "hooks/production-gate.sh": "production-gate.sh",
-    "bands.yaml": "bands.yaml",
-    "workflow-graph.yaml": "workflow-graph.yaml",
-    "evals/example.md": "evals.example.md",
-    "evals/README.md": "evals-README.md",
-    ".gitignore": ".gitignore",
+    "intent/intent.md": "assets/intent.md",
+    "CLAUDE.md": "assets/CLAUDE.md",
+    "REVIEW.md": "assets/REVIEW.md",
+    "hooks/production-gate.sh": "assets/production-gate.sh",
+    "scripts/gate_ledger.py": "scripts/gate_ledger.py",
+    "scripts/run_evals.py": "scripts/run_evals.py",
+    "scripts/detect_bands.py": "scripts/detect_bands.py",
+    "bands.yaml": "assets/bands.yaml",
+    "workflow-graph.yaml": "assets/workflow-graph.yaml",
+    "evals/example.md": "assets/evals.example.md",
+    "evals/README.md": "assets/evals-README.md",
+    "gates/README.md": "assets/gates-README.md",
+    ".gitignore": "assets/.gitignore",
 }
 
 
@@ -99,8 +109,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not ASSET_DIR.is_dir():
-        print(f"error: assets directory not found at {ASSET_DIR}", file=sys.stderr)
+    if not SKILL_DIR.is_dir():
+        print(f"error: skill directory not found at {SKILL_DIR}", file=sys.stderr)
         return 1
     if args.name is not None and _bad_name(args.name):
         print(
@@ -111,32 +121,32 @@ def main() -> int:
 
     root = Path(args.project_dir).expanduser().resolve()
 
-    plan: list[tuple[Path, str, str]] = []  # (dest, asset_name, mode)
-    for rel_dest, asset_name in FILES.items():
-        src = ASSET_DIR / asset_name
+    plan: list[tuple[Path, str, str]] = []  # (dest, src, mode)
+    for rel_dest, rel_src in FILES.items():
+        src = SKILL_DIR / rel_src
         if not src.is_file():
-            print(f"error: missing asset {src}", file=sys.stderr)
+            print(f"error: missing source {src}", file=sys.stderr)
             return 1
         dest = root / rel_dest
         if rel_dest == "CLAUDE.md" and args.framework == "codex":
             dest = root / "AGENTS.md"
         mode = "write" if args.force or not dest.exists() else "skip"
-        plan.append((dest, asset_name, mode))
+        plan.append((dest, rel_src, mode))
 
     if args.dry_run:
         print(f"Dry run: would scaffold AI-native SDLC skeleton in {root}")
-        for dest, asset_name, mode in plan:
-            print(f"  [{mode}] {dest.relative_to(root)}  <- {asset_name}")
+        for dest, rel_src, mode in plan:
+            print(f"  [{mode}] {dest.relative_to(root)}  <- {rel_src}")
         return 0
 
     root.mkdir(parents=True, exist_ok=True)
     written: list[str] = []
     skipped: list[str] = []
-    for dest, asset_name, mode in plan:
+    for dest, rel_src, mode in plan:
         if mode == "skip":
             skipped.append(str(dest.relative_to(root)))
             continue
-        text = (ASSET_DIR / asset_name).read_text(encoding="utf-8")
+        text = (SKILL_DIR / rel_src).read_text(encoding="utf-8")
         if dest.name == "AGENTS.md":
             text = text.replace(
                 "# CLAUDE.md \u2014 repository memory", "# AGENTS.md \u2014 repository memory"

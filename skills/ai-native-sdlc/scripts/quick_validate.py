@@ -40,6 +40,9 @@ PROMISED = [
     "references/adoption.md",
     "references/graph.md",
     "scripts/init_workflow.py",
+    "scripts/gate_ledger.py",
+    "scripts/run_evals.py",
+    "scripts/detect_bands.py",
     "assets/intent.md",
     "assets/spec.md",
     "assets/plan.md",
@@ -50,6 +53,7 @@ PROMISED = [
     "assets/evals.example.md",
     "assets/evals.example.json",
     "assets/evals-README.md",
+    "assets/gates-README.md",
     "assets/workflow-graph.example.yaml",
     "assets/workflow-graph.yaml",
     "assets/incident.md",
@@ -203,8 +207,8 @@ def main() -> int:
         check((smoke / "workflow-graph.yaml").is_file(), "scaffold writes workflow-graph.yaml")
         check((smoke / "hooks" / "production-gate.sh").is_file(), "scaffold writes hooks/production-gate.sh")
 
-    # 9. run_evals / detect_bands import cleanly.
-    for script in ("run_evals.py", "detect_bands.py"):
+    # 9. run_evals / detect_bands / gate_ledger import cleanly.
+    for script in ("run_evals.py", "detect_bands.py", "gate_ledger.py"):
         code, _ = run(["python3", "-m", "py_compile", str(skill / "scripts" / script)])
         check(code == 0, f"py_compile: {script}")
 

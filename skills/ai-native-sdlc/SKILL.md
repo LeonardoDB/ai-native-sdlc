@@ -34,7 +34,7 @@ deterministic layer (makes violation nearly impossible), or a review pass
 | Hard rule | Advisory (skill/CLAUDE.md) | Deterministic (hook/file) | Checked at |
 |---|---|---|---|
 | 1. Gates are real | CLAUDE.md conventions | committed artifact chain in git; hooks | gate acceptance commits |
-| 2. Never cross the production gate | this skill | `production-gate.sh` + approval/expiry | Deploy gate |
+| 2. Never cross the production gate | this skill | `production-gate.sh` + approval/expiry; release approvals recorded in the hash-chained gate ledger (`gate_ledger.py`) | Deploy gate |
 | 3. Verify before review | CLAUDE.md "Verifying your work" | single `make`-style verify commands | PR template evidence |
 | 4. Encode repeated lessons | CLAUDE.md "Things the agent gets wrong" | protected-path hooks | second-time-mistake rule in reviews |
 | 5. Evidence in reviews | REVIEW.md | — | review passes, 5-nit cap |
@@ -78,8 +78,9 @@ The loop is a directed graph, not a linear pipeline: plays and artifacts are nod
 
 The scaffold script copies the core skeleton into a new project (`intent.md`,
 `CLAUDE.md`/`AGENTS.md`, `REVIEW.md`, `bands.yaml`, `production-gate.sh`,
-`workflow-graph.yaml`, `.gitignore`, `evals/example.md`, `evals/README.md`);
-copy these manually when extending an existing repo. `spec.md` and `plan.md`
+`workflow-graph.yaml`, `.gitignore`, `evals/example.md`, `evals/README.md`,
+`gates/README.md`, and the tool scripts `gate_ledger.py`/`run_evals.py`/
+`detect_bands.py`); copy these manually when extending an existing repo. `spec.md` and `plan.md`
 are produced by the workflow itself during Design and Build — copy the blank
 forms only when you want them as starting points:
 
@@ -89,7 +90,8 @@ forms only when you want them as starting points:
 - `assets/CLAUDE.md` — repository-memory starter (commands, verification, conventions, common mistakes)
 - `assets/REVIEW.md` — review standards (passes, evidence, severity, 5-nit cap)
 - `assets/bands.yaml` — monitoring control bands for Maintain
-- `assets/production-gate.sh` — release authorization hook (deploy-action patterns, expiry, read-only allowlist)
+- `assets/production-gate.sh` — release authorization hook (deploy-action patterns, expiry, read-only allowlist, ledger-backed approvals)
+- `assets/gates-README.md` — gate ledger usage (copied into new projects as `gates/README.md`)
 - `assets/evals.example.md` — eval case format for Test (reference form)
 - `assets/evals.example.json` — canonical JSON eval format consumed by `scripts/run_evals.py`
 - `assets/evals-README.md` — how to add evals (copied into new projects as `evals/README.md`)
@@ -111,6 +113,7 @@ Organization-level examples to wire up during adoption:
 - `scripts/quick_validate.py` — validate the skill/plugin bundle (self-check; CI runs it)
 - `scripts/run_evals.py` — run the eval suite locally or in CI (Phase 4), with `--min-pass-rate` gating
 - `scripts/detect_bands.py` — deterministic control-band detection (Phase 6 reference implementation: rolling window, Western Electric rules, drift rule)
+- `scripts/gate_ledger.py` — hash-chained approval ledger: every gate decision is a committed, tamper-evident record; the release gate verifies `RELEASE_APPROVAL=ledger:<id>` against it
 
 ## Self-test (after installing)
 

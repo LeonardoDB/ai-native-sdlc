@@ -8,6 +8,16 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- `scripts/gate_ledger.py` — hash-chained, version-controlled approval ledger:
+  every gate decision is a tamper-evident record (`record`/`list`/`verify`);
+  `verify --require-committed` and `--graph … --require-gates` completeness
+  checks; the release gate now accepts `RELEASE_APPROVAL=ledger:<id>` and
+  verifies the record before allowing a deploy.
+- `assets/gates-README.md` — gate ledger usage (scaffolded as `gates/README.md`).
+- `tests/test_gate_ledger.py` — chain integrity, tamper detection, expiry,
+  wrong-decision, require-committed, and graph-completeness cases; ledger
+  integration cases in `tests/test_gate.sh` (uncommitted/valid/unknown/
+  tampered).
 - `scripts/quick_validate.py` — self-contained skill/plugin validator; the
   AGENTS.md validation step now has a real implementation.
 - `scripts/run_evals.py` — eval-suite runner for Phase 4 (local + CI) with the
