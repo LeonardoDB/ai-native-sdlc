@@ -2,22 +2,28 @@
 """Scaffold the AI-native SDLC artifact skeleton in a project directory.
 
 Usage:
-    python3 init_workflow.py <project-dir> [--name "<project name>"] [--framework codex|claude] [--force]
+    python3 init_workflow.py <project-dir> [--name "<project name>"]
+        [--framework codex|claude] [--dry-run] [--force] [--git]
 
 Creates:
-    intent/intent.md          intent template (copy of assets/intent.md)
-    CLAUDE.md / AGENTS.md     repository-memory starter (--framework claude|codex)
-    REVIEW.md                 review standards
-    hooks/production-gate.sh  release authorization hook (executable)
-    bands.yaml                monitoring control bands
-    evals/example.md          eval case example
+    intent/intent.md            intent template (copy of assets/intent.md)
+    CLAUDE.md / AGENTS.md       repository-memory starter (--framework claude|codex)
+    REVIEW.md                   review standards
+    hooks/production-gate.sh    release authorization hook (executable)
+    bands.yaml                  monitoring control bands
+    workflow-graph.yaml         project state on the loop graph
+    evals/example.md            eval case example (markdown)
+    evals/README.md             how to add evals (JSON format)
+    .gitignore                  basic ignore rules
 
-Existing files are skipped unless --force is passed.
+Existing files are skipped unless --force is passed. --dry-run prints the
+plan without writing anything (not even the project directory).
 """
 
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 
@@ -29,8 +35,33 @@ FILES = {
     "REVIEW.md": "REVIEW.md",
     "hooks/production-gate.sh": "production-gate.sh",
     "bands.yaml": "bands.yaml",
+    "workflow-graph.yaml": "workflow-graph.yaml",
     "evals/example.md": "evals.example.md",
+    "evals/README.md": "evals-README.md",
+    ".gitignore": ".gitignore",
 }
+
+
+def _bad_name(name: str) -> bool:
+    return not name or any(c in name for c in "\r\n\t") or name.startswith("-")
+
+
+def _git_init_and_commit(root: Path) -> None:
+    if (root / ".git").exists():
+        print("  git: already a repository; skipping init")
+        return
+    try:
+        subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+        subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "scaffold ai-native-sdlc workflow"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+        )
+        print("  git: initialized and created the initial commit")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("  git: skipped (git unavailable or commit failed); run git init manually")
 
 
 def main() -> int:
@@ -56,37 +87,67 @@ def main() -> int:
         action="store_true",
         help="overwrite existing files",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="print the plan without writing anything",
+    )
+    parser.add_argument(
+        "--git",
+        action="store_true",
+        help="git init and commit the skeleton (requires git)",
+    )
     args = parser.parse_args()
 
     if not ASSET_DIR.is_dir():
         print(f"error: assets directory not found at {ASSET_DIR}", file=sys.stderr)
         return 1
+    if args.name is not None and _bad_name(args.name):
+        print(
+            "error: --name must be non-empty, contain no control characters, and not start with '-'",
+            file=sys.stderr,
+        )
+        return 1
 
     root = Path(args.project_dir).expanduser().resolve()
-    root.mkdir(parents=True, exist_ok=True)
 
-    written: list[str] = []
-    skipped: list[str] = []
+    plan: list[tuple[Path, str, str]] = []  # (dest, asset_name, mode)
     for rel_dest, asset_name in FILES.items():
         src = ASSET_DIR / asset_name
-        dest = root / rel_dest
         if not src.is_file():
             print(f"error: missing asset {src}", file=sys.stderr)
             return 1
-        if dest.exists() and not args.force:
-            skipped.append(str(dest.relative_to(root)))
-            continue
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        text = src.read_text(encoding="utf-8")
+        dest = root / rel_dest
         if rel_dest == "CLAUDE.md" and args.framework == "codex":
             dest = root / "AGENTS.md"
-            text = text.replace("# CLAUDE.md — repository memory", "# AGENTS.md — repository memory")
+        mode = "write" if args.force or not dest.exists() else "skip"
+        plan.append((dest, asset_name, mode))
+
+    if args.dry_run:
+        print(f"Dry run: would scaffold AI-native SDLC skeleton in {root}")
+        for dest, asset_name, mode in plan:
+            print(f"  [{mode}] {dest.relative_to(root)}  <- {asset_name}")
+        return 0
+
+    root.mkdir(parents=True, exist_ok=True)
+    written: list[str] = []
+    skipped: list[str] = []
+    for dest, asset_name, mode in plan:
+        if mode == "skip":
+            skipped.append(str(dest.relative_to(root)))
+            continue
+        text = (ASSET_DIR / asset_name).read_text(encoding="utf-8")
+        if dest.name == "AGENTS.md":
+            text = text.replace(
+                "# CLAUDE.md \u2014 repository memory", "# AGENTS.md \u2014 repository memory"
+            )
             text = text.replace(
                 "\n\n> In Codex projects, the same content lives in AGENTS.md; the role is identical.\n",
                 "\n",
             )
         if args.name:
             text = text.replace("<Title>", args.name)
+        dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text, encoding="utf-8")
         if dest.name == "production-gate.sh":
             dest.chmod(dest.stat().st_mode | 0o111)
@@ -101,11 +162,15 @@ def main() -> int:
         print("  skipped (already exist; use --force to overwrite):")
         for name in skipped:
             print(f"    - {name}")
+
+    if args.git:
+        _git_init_and_commit(root)
+
     print()
     print("Next steps:")
     print("  1. Open intent/intent.md and describe the goal in your own words.")
     print("  2. Tell your agent: run the AI-native SDLC workflow from this intent.")
-    print("  3. Commit the skeleton: git init && git add -A && git commit -m 'scaffold ai-native-sdlc workflow'")
+    print("  3. Commit the skeleton: git add -A && git commit -m 'scaffold ai-native-sdlc workflow'")
     return 0
 
 

@@ -1,0 +1,9 @@
+{
+  "name": "duplicate import regression",
+  "prompt": "A user imported `utils.py` twice in `app/main.py`. Find and fix the bug, then add a regression test.",
+  "agent": { "cli": "claude -p" },
+  "checks": [
+    { "run": "python -m pytest tests/test_main.py -q", "expect_exit": 0, "contains": "passed" },
+    { "run": "grep -c 'import utils' app/main.py", "expect_exit": 0, "contains": "1" }
+  ]
+}

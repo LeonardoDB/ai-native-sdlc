@@ -10,14 +10,19 @@ This repo is a reusable skill and plugin bundle implementing the AI-native SDLC 
 
 ## Validation
 
-After changing the skill or plugin:
+After changing the skill or plugin, run the self-check suite (from the repo root):
 
 ```bash
-python3 <skill-creator-path>/scripts/quick_validate.py skills/ai-native-sdlc
-python3 <plugin-creator-path>/scripts/validate_plugin.py .
+python3 skills/ai-native-sdlc/scripts/quick_validate.py skills/ai-native-sdlc
+bash tests/test_gate.sh
+bash tests/test_init.sh
+python3 -m unittest discover -s tests -v
 ```
 
-Both must pass before finishing. Keep `plugin.json` and `SKILL.md` consistent in name and description; keep the `plugin.json` version in sync with releases.
+All must pass before finishing; CI runs the same checks
+(`.github/workflows/self-check.yml`). Keep `plugin.json` and `SKILL.md`
+consistent in name, description, and version — `quick_validate.py` enforces
+this.
 
 ## Conventions
 

@@ -28,16 +28,13 @@ Plan → Design → Build → Test → Deploy → Maintain
   └────────────────── back to Plan ←─────────────┘
 ```
 
-Each phase ends by committing a versioned artifact; the next phase starts by reading it:
-
-| Phase | Artifact | Human gate |
-|---|---|---|
-| Plan | `intent.md` | accepted → Design |
-| Design | `spec.md` | approved → Build |
-| Build | `plan.md` → code + tests → PR | plan approved before code; PR merged → Deploy |
-| Test | eval results, regression evals | config changes that drop pass rate are reviewed |
-| Deploy | authorized release | agentic review + explicit release authorization |
-| Maintain | diagnosis → new `intent.md` | on-call triage, then back to Plan |
+Each phase ends by committing a versioned artifact; the next phase starts by
+reading it. The full phase → artifact → gate contract lives in
+`skills/ai-native-sdlc/SKILL.md` (single source of truth). The short version:
+**Plan** commits `intent.md`, **Design** commits `spec.md`, **Build** commits
+`plan.md` then code + tests, **Test** reports eval results, **Deploy** ships an
+authorized release, **Maintain** writes its diagnosis back as a new
+`intent.md`.
 
 The agent does the generation, verification, and mechanical work. Humans keep the judgment calls: the agent goes all the way to the production gate and never crosses it.
 
@@ -135,15 +132,19 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
 ```text
 .
 ├── .codex-plugin/plugin.json      # Codex plugin manifest (repo root is the plugin)
+├── .github/workflows/self-check.yml  # CI for this repo itself (validate + tests)
 ├── AGENTS.md                      # guidance for agents working in this repo
 ├── README.md
+├── CHANGELOG.md
 ├── LICENSE
+├── SECURITY.md
 ├── examples/
 │   ├── README.md
 │   └── expense-tracker/           # worked example: intent, spec, plan, CLAUDE.md, graph
+├── tests/                         # gate, scaffold, band-detector, eval-runner tests
 └── skills/
     └── ai-native-sdlc/
-        ├── SKILL.md               # skill entrypoint
+        ├── SKILL.md               # skill entrypoint (versioned; rule→enforcement matrix)
         ├── agents/openai.yaml     # UI metadata
         ├── references/
         │   ├── playbook.md        # phase-by-phase procedures
@@ -158,12 +159,21 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
         │   ├── bands.yaml
         │   ├── production-gate.sh
         │   ├── evals.example.md
+        │   ├── evals.example.json
+        │   ├── evals-README.md
         │   ├── workflow-graph.example.yaml
+        │   ├── workflow-graph.yaml
+        │   ├── incident.md
+        │   ├── runbooks/          # rollback-deploy.md, README.md
+        │   ├── PULL_REQUEST_TEMPLATE.md
         │   ├── hook-settings.example.json
         │   ├── agent-evals.yml.example
         │   └── managed-settings.example.json
         └── scripts/
-            └── init_workflow.py   # scaffolds the artifact skeleton
+            ├── init_workflow.py   # scaffolds the artifact skeleton
+            ├── quick_validate.py  # skill/plugin self-check
+            ├── run_evals.py       # eval-suite runner (Phase 4)
+            └── detect_bands.py    # control-band detection (Phase 6)
 ```
 
 ## Attribution and license

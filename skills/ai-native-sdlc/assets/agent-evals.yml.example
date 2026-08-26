@@ -1,10 +1,14 @@
 # GitHub Actions workflow: run the agent eval suite on config changes and on a
-# schedule (Phase 4 — Test). Copy to .github/workflows/agent-evals.yml and adapt
-# to your agent CLI and eval layout.
+# schedule (Phase 4 — Test). Copy to .github/workflows/agent-evals.yml and adapt.
+#
+# Requirements:
+#   - scripts/run_evals.py from the skill (copy it into your repo, e.g. scripts/)
+#   - evals/ filled with JSON evals (see assets/evals.example.json in the skill)
+#   - an ANTHROPIC_API_KEY secret for evals that invoke the agent CLI
 name: Agent evals
 on:
   pull_request:
-    paths: ['CLAUDE.md', '.claude/**', 'hooks/**', 'skills/**']
+    paths: ['CLAUDE.md', '.claude/**', 'hooks/**', 'skills/**', 'evals/**']
   schedule:
     - cron: '0 2 * * *'
 jobs:
@@ -12,14 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm install -g @anthropic-ai/claude-code
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Run eval suite
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # CLI used for evals with an "agent" block; omit to skip agent evals.
+          AGENT_CLI: 'claude -p'
         run: |
-          for eval in evals/*.json; do
-            claude -p "$(jq -r '.prompt' $eval)" \
-              --allowedTools "Read,Edit,Bash(make test)" \
-              --output-format json > result.json
-            ./evals/check.sh "$eval" result.json
-          done
+          python3 scripts/run_evals.py evals/ --min-pass-rate 0.9 --record
