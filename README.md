@@ -178,6 +178,51 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
             └── gate_ledger.py     # hash-chained approval ledger (all gates)
 ```
 
+## Contributing
+
+Contributions are welcome — this repo practices what it ships. Open an issue
+first for larger ideas (new phases, changed artifacts, redesigns); for fixes
+and small improvements, fork, branch, and open a pull request.
+
+### Getting started
+
+1. Fork the repo and clone your fork.
+2. Create a branch: `git checkout -b my-change`.
+3. Make your change, then run the self-check suite from the repo root:
+
+   ```bash
+   python3 skills/ai-native-sdlc/scripts/quick_validate.py skills/ai-native-sdlc
+   bash tests/test_gate.sh
+   bash tests/test_init.sh
+   python3 -m unittest discover -s tests -v
+   ```
+
+   All checks must pass before opening the PR — CI runs the same checks on
+   every pull request (`.github/workflows/self-check.yml`).
+4. Add a `CHANGELOG.md` entry under `[Unreleased]` for user-visible changes.
+5. Commit with a clear message and open the pull request.
+
+### Conventions
+
+- Templates in `skills/ai-native-sdlc/assets/` are copied into target
+  projects — never edit them to fit one project; change
+  `scripts/init_workflow.py` when the scaffold layout changes.
+- Keep `SKILL.md` short; put phase detail in `references/`.
+- Keep artifacts generic — organization specifics belong in the adopter's own
+  skills and hooks, never in shared templates.
+- Keep `plugin.json` and the SKILL.md frontmatter `version` in sync (semver);
+  `quick_validate.py` enforces this.
+- Follow the existing commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
+
+### Reporting vulnerabilities
+
+Security-sensitive bugs (release-gate bypasses, hook failures,
+managed-settings weaknesses) should not be filed as public issues. See
+`SECURITY.md` for how to report them privately.
+
+By contributing, you agree your contributions are licensed under the MIT
+license (see `LICENSE`).
+
 ## Attribution and license
 
 Based on [The AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) by Anthropic's Applied AI team (2026). MIT licensed — see `LICENSE`.
