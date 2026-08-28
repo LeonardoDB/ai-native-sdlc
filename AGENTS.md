@@ -30,3 +30,4 @@ this.
 - Keep `SKILL.md` short; put phase detail in references.
 - Keep artifacts (intent/spec/plan templates) generic; org specifics belong in the adopter's own skills and hooks.
 - Never add hooks or secrets for a specific adopter into the shared templates.
+- Commit with the repo-local git identity (`bashebr <43511789+bashebr@users.noreply.github.com>`); never fall back to the global git identity.
