@@ -7,6 +7,7 @@ This repo is a reusable skill and plugin bundle implementing the AI-native SDLC 
 - The workflow lives in `skills/ai-native-sdlc/SKILL.md`. Read it first, then the references it routes to (`references/playbook.md`, `references/adoption.md`).
 - Templates in `skills/ai-native-sdlc/assets/` are copied into target projects — never edited to fit one project.
 - `skills/ai-native-sdlc/scripts/init_workflow.py` performs that copy; change the script when the scaffold layout changes.
+- `skills/ai-native-sdlc/scripts/init_org.py` scaffolds the optional agent org (roles, protocol, intake); change it when the org templates change.
 
 ## Validation
 
@@ -29,3 +30,4 @@ this.
 - Keep `SKILL.md` short; put phase detail in references.
 - Keep artifacts (intent/spec/plan templates) generic; org specifics belong in the adopter's own skills and hooks.
 - Never add hooks or secrets for a specific adopter into the shared templates.
+- Commit with the repo-local git identity (`bashebr <43511789+bashebr@users.noreply.github.com>`); never fall back to the global git identity.
