@@ -171,7 +171,6 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
 │   ├── README.md
 │   └── expense-tracker/           # worked example + real static app (Vercel-ready)
 ├── tests/                         # gate, scaffold, band-detector, eval-runner tests
-├── docs/superpowers/specs/        # design docs (this feature's spec lives here)
 └── skills/
     └── ai-native-sdlc/
         ├── SKILL.md               # skill entrypoint (versioned; rule→enforcement matrix)

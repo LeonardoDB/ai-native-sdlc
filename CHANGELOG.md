@@ -17,7 +17,6 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
   and `push` feature tickets.
 - Expense-tracker static demo app (`examples/expense-tracker/`): a working
   HTML/CSS/vanilla-JS app with localStorage persistence, deployable to Vercel.
-- Design doc: `docs/superpowers/specs/2026-08-28-agent-org-design.md`.
 - `scripts/gate_ledger.py` — hash-chained, version-controlled approval ledger:
   every gate decision is a tamper-evident record (`record`/`list`/`verify`);
   `verify --require-committed` and `--graph … --require-gates` completeness
