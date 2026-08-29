@@ -48,6 +48,22 @@ def gh_list_stdout() -> str:
     )
 
 
+def many_issues(start: int, count: int) -> str:
+    return json.dumps(
+        [
+            {
+                "number": n,
+                "title": f"Issue {n}",
+                "body": "body",
+                "labels": [],
+                "createdAt": "2026-08-29T00:00:00Z",
+                "author": {"login": "alice"},
+            }
+            for n in range(start, start + count)
+        ]
+    )
+
+
 class SyncIssuesTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
@@ -80,14 +96,68 @@ class SyncIssuesTests(unittest.TestCase):
         self.assertIn("## Status", content)
         self.assertIn("ai-native", content)
         state = json.loads((self.root / ".state.json").read_text(encoding="utf-8"))
-        self.assertEqual(state["acme/app"], 3)
+        self.assertEqual(state["acme/app"], [1, 3])
 
         # Second run with the same issues: nothing new.
         res = sync._pull(self.config, dry_run=False)
         self.assertEqual(res, 0)
         self.assertEqual(len(list((self.root / "github").glob("*.md"))), 2)
         state = json.loads((self.root / ".state.json").read_text(encoding="utf-8"))
-        self.assertEqual(state["acme/app"], 3)
+        self.assertEqual(state["acme/app"], [1, 3])
+
+    @patch.object(sync, "_gh")
+    def test_pull_paginates_and_does_not_skip_low_issues(self, mock_gh) -> None:
+        mock_gh.side_effect = [
+            many_issues(101, 100),  # page 1: exactly 100 issues
+            json.dumps(  # page 2: a low-numbered open issue below the first page
+                [
+                    {
+                        "number": 5,
+                        "title": "Low issue",
+                        "body": "body",
+                        "labels": [],
+                        "createdAt": "2026-08-29T00:00:00Z",
+                        "author": {"login": "bob"},
+                    }
+                ]
+            ),
+        ]
+        res = sync._pull(self.config, dry_run=False)
+        self.assertEqual(res, 0)
+        records = [p.name for p in (self.root / "github").glob("*.md")]
+        self.assertIn("acme-app-5.md", records)
+        self.assertIn("acme-app-101.md", records)
+        self.assertEqual(len(records), 101)
+        state = json.loads((self.root / ".state.json").read_text(encoding="utf-8"))
+        self.assertIn(5, state["acme/app"])
+        self.assertEqual(len(state["acme/app"]), 101)
+        pages = [
+            call.args[0][call.args[0].index("--page") + 1]
+            for call in mock_gh.call_args_list
+        ]
+        self.assertEqual(pages, ["1", "2"])
+
+    @patch.object(sync, "_gh", return_value=gh_list_stdout())
+    def test_pull_resolves_relative_paths_against_project_root(self, mock_gh) -> None:
+        config = self.root / "relative-config.json"
+        config.write_text(
+            json.dumps(
+                {
+                    "github": {
+                        "repos": ["acme/app"],
+                        "labels": [],
+                        "state_file": "org/intake/.state.json",
+                        "output_dir": "org/intake/github",
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        with patch.object(sync, "PROJECT_ROOT", self.root):
+            res = sync._pull(config, dry_run=False)
+        self.assertEqual(res, 0)
+        self.assertTrue((self.root / "org" / "intake" / ".state.json").is_file())
+        self.assertTrue((self.root / "org" / "intake" / "github" / "acme-app-3.md").is_file())
 
     @patch.object(sync, "_gh")
     def test_pull_dry_run_writes_nothing(self, mock_gh) -> None:

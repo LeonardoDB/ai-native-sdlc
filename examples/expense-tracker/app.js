@@ -16,7 +16,12 @@ const state = {
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(isValidExpense).map(sanitizeExpense);
+      }
+    }
   } catch (_) {
     /* fall through to seed */
   }
@@ -32,6 +37,33 @@ function todayIso(daysAgo) {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
   return d.toISOString().slice(0, 10);
+}
+
+function isValidExpense(expense) {
+  return (
+    expense &&
+    typeof expense.description === "string" &&
+    expense.description.trim() !== "" &&
+    typeof expense.amount === "number" &&
+    Number.isFinite(expense.amount) &&
+    expense.amount > 0 &&
+    typeof expense.category === "string" &&
+    typeof expense.date === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(expense.date)
+  );
+}
+
+function sanitizeExpense(expense) {
+  return {
+    id:
+      typeof expense.id === "string" && expense.id
+        ? expense.id
+        : `e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    description: expense.description.trim(),
+    amount: Number(expense.amount),
+    category: expense.category,
+    date: expense.date,
+  };
 }
 
 function money(amount) {
@@ -147,9 +179,15 @@ document.getElementById("import-file").addEventListener("change", (event) => {
     try {
       const imported = JSON.parse(String(reader.result));
       if (!Array.isArray(imported)) throw new Error("not an array");
-      state.expenses = [...state.expenses, ...imported];
+      const valid = imported.filter(isValidExpense).map(sanitizeExpense);
+      if (valid.length === 0) throw new Error("no valid expenses");
+      state.expenses = [...state.expenses, ...valid];
       save();
       render();
+      const skipped = imported.length - valid.length;
+      if (skipped > 0) {
+        alert(`Imported ${valid.length} expense(s); skipped ${skipped} invalid record(s).`);
+      }
     } catch (_) {
       alert("That file does not look like an expense export.");
     }

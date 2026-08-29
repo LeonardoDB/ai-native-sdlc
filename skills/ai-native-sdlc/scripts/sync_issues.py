@@ -9,8 +9,12 @@ Usage:
 pull:
     Fetch open issues for the configured repo(s), write
     org/intake/github/<repo>-<number>.md for new issues, and remember the
-    latest seen issue number per repo in the state file. Idempotent:
-    already-seen issues are skipped. Uses the gh CLI (must be authenticated).
+    seen issue numbers per repo in the state file. Paginates through all
+    matching issues, so repos with more than 100 open issues are fully
+    ingested. Idempotent: already-seen issues are skipped. Default paths are
+    resolved against the project root (the scaffolded project the script
+    lives in), not the current working directory. Uses the gh CLI (must be
+    authenticated).
 
 push:
     Create a GitHub issue from a record (e.g. a consolidated intake record).
@@ -27,7 +31,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-DEFAULT_CONFIG = "org/intake/config.json"
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+DEFAULT_CONFIG = PROJECT_ROOT / "org" / "intake" / "config.json"
+
+
+def _resolve(base: Path, value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else base / path
 
 
 def _gh(args: list[str]) -> str:
@@ -69,71 +80,87 @@ def _pull(config_path: Path, dry_run: bool) -> int:
     github = config.get("github", {})
     repos = github.get("repos") or []
     labels = github.get("labels") or []
-    state_path = Path(github.get("state_file", "org/intake/.state.json"))
-    output_dir = Path(github.get("output_dir", "org/intake/github"))
+    state_path = _resolve(PROJECT_ROOT, github.get("state_file", "org/intake/.state.json"))
+    output_dir = _resolve(PROJECT_ROOT, github.get("output_dir", "org/intake/github"))
     state = _load_json(state_path, {})
 
     total_new = 0
     for repo in repos or [None]:
         key = repo or "current"
-        args = [
-            "issue",
-            "list",
-            "--state",
-            "open",
-            "--limit",
-            "100",
-            "--json",
-            "number,title,body,labels,createdAt,author",
-        ]
-        if repo:
-            args += ["--repo", repo]
-        for label in labels:
-            args += ["--label", label]
+        seen = state.get(key)
+        if isinstance(seen, int):  # migrate old max-number watermark
+            seen = list(range(1, seen + 1))
+        seen = [int(n) for n in seen] if isinstance(seen, list) else []
 
-        if dry_run:
-            print(f"  would run: gh {' '.join(args)}")
-            continue
+        page = 1
+        while True:
+            args = [
+                "issue",
+                "list",
+                "--state",
+                "open",
+                "--limit",
+                "100",
+                "--page",
+                str(page),
+                "--json",
+                "number,title,body,labels,createdAt,author",
+            ]
+            if repo:
+                args += ["--repo", repo]
+            for label in labels:
+                args += ["--label", label]
 
-        stdout = _gh(args)
-        try:
-            issues = json.loads(stdout or "[]")
-        except json.JSONDecodeError:
-            print(f"error: gh returned invalid JSON for {key}", file=sys.stderr)
-            return 1
+            if dry_run:
+                print(f"  would run: gh {' '.join(args)}")
+                break
 
-        last_seen = int(state.get(key, 0))
-        new_issues = [i for i in issues if int(i.get("number", 0)) > last_seen]
-        new_issues.sort(key=lambda i: int(i["number"]))
+            stdout = _gh(args)
+            try:
+                issues = json.loads(stdout or "[]")
+            except json.JSONDecodeError:
+                print(f"error: gh returned invalid JSON for {key}", file=sys.stderr)
+                return 1
 
-        for issue in new_issues:
-            number = int(issue["number"])
-            author = (issue.get("author") or {}).get("login", "unknown")
-            label_names = ", ".join(sorted(l.get("name", "") for l in issue.get("labels", [])))
-            record = (
-                "---\n"
-                f"source: github\n"
-                f"record_id: {key}-{number}\n"
-                f"received_at: {issue.get('createdAt', '')}\n"
-                f"author: {author}\n"
-                "priority: normal\n"
-                "---\n\n"
-                "## Summary\n\n"
-                f"{issue.get('title', '').strip()}\n\n"
-                "## Details\n\n"
-                f"{issue.get('body', '').strip()}\n\n"
-                "## Labels\n\n"
-                f"{label_names or '(none)'}\n\n"
-                "## Status\n\nnew\n"
-            )
-            output_dir.mkdir(parents=True, exist_ok=True)
-            record_path = output_dir / f"{_safe_name(repo, number)}.md"
-            record_path.write_text(record, encoding="utf-8")
-            print(f"  wrote {record_path}")
-            total_new += 1
+            if not issues:
+                break
 
-        max_seen = max([last_seen] + [int(i["number"]) for i in new_issues])
-        state[key] = max_seen
+            for issue in issues:
+                number = int(issue["number"])
+                record_path = output_dir / f"{_safe_name(repo, number)}.md"
+                if number in seen or record_path.exists():
+                    continue
+                author = (issue.get("author") or {}).get("login", "unknown")
+                label_names = ", ".join(
+                    sorted(l.get("name", "") for l in issue.get("labels", []))
+                )
+                record = (
+                    "---\n"
+                    f"source: github\n"
+                    f"record_id: {key}-{number}\n"
+                    f"received_at: {issue.get('createdAt', '')}\n"
+                    f"author: {author}\n"
+                    "priority: normal\n"
+                    "---\n\n"
+                    "## Summary\n\n"
+                    f"{issue.get('title', '').strip()}\n\n"
+                    "## Details\n\n"
+                    f"{issue.get('body', '').strip()}\n\n"
+                    "## Labels\n\n"
+                    f"{label_names or '(none)'}\n\n"
+                    "## Status\n\nnew\n"
+                )
+                output_dir.mkdir(parents=True, exist_ok=True)
+                record_path.write_text(record, encoding="utf-8")
+                print(f"  wrote {record_path}")
+                total_new += 1
+                seen.append(number)
+
+            if len(issues) < 100:
+                break
+            page += 1
+
+        state[key] = sorted(set(seen))
 
     if not dry_run:
         state_path.parent.mkdir(parents=True, exist_ok=True)
