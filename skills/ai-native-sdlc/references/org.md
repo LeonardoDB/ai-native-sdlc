@@ -23,6 +23,18 @@ CEO (human, owner)
 Role cards live in `org/roles/*.md` and state in `org/status.yaml`. The status
 file is the "who is busy" mechanism: an agent marks itself busy when it accepts
 work and idle when it finishes; reviewers accept a review only when idle.
+`scripts/org_status.py` performs those updates so the file stays validated:
+
+```bash
+python3 scripts/org_status.py status --json
+python3 scripts/org_status.py agent engineer-1 busy --assignment "spec.md"
+python3 scripts/org_status.py agent engineer-1 idle --last-report "spec approved"
+python3 scripts/org_status.py review assign --id review-3 --artifact spec.md \
+  --writer engineer-1 --reviewer reviewer-1
+python3 scripts/org_status.py review submit --id review-3 \
+  --verdict changes --evidence "https://github.com/org/repo/reviews/3"
+python3 scripts/org_status.py review escalate --id review-4
+```
 
 ## Reporting
 
@@ -42,6 +54,11 @@ writes `org/reviews/<artifact>-<id>.md` — severity-ranked findings with
 evidence and a verdict (`approved` | `changes`) — and the writer addresses the
 findings. Two unresolved rounds escalate to the CTO, then the CEO for
 spec/plan conflicts.
+
+Assignments, verdicts, rounds, and escalation are recorded through
+`org_status.py review …` commands (never by hand-editing the status file), so
+the CLI can enforce idle-reviewer assignment, no self-review, the two-round
+limit, and consistent busy/idle states.
 
 Review standards are the same as the base workflow: REVIEW.md passes (bugs,
 security, compliance), evidence required, at most 5 nits per review.
@@ -69,6 +86,15 @@ in `org/intake/`:
 - `forms/` and `email/` — one markdown record per submission/message, same
   frontmatter format as GitHub records (source, record_id, received_at,
   author, priority).
+
+Forms and email are ingested with `scripts/intake.py`:
+
+```bash
+python3 scripts/intake.py add --source form --record-id form-2026-091 \
+  --author alice --priority high --summary "Export is missing" \
+  --details-file /tmp/form-details.txt
+python3 scripts/intake.py list --source email --status new
+```
 
 The product engineering agent consolidates records, files public feature
 tickets with `scripts/sync_issues.py push`, and drafts `intent.md` from the

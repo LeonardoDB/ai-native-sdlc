@@ -15,31 +15,37 @@ nodes:
     artifact: intent/intent.md
     gate: product_owner_accept
     status: not_started
+    done_status: accepted
   spec:
     stage: design
     artifact: spec.md
     gate: product_owner_approve
     status: not_started
+    done_status: approved
   plan:
     stage: build
     artifact: plan.md
     gate: engineer_approve
     status: not_started
+    done_status: approved
   implementation:
     stage: build
     artifact: code + tests
     gate: code_owner_approve
     status: not_started
+    done_status: merged
   release:
     stage: deploy
     artifact: authorized release
     gate: release_authorization
     status: pending
+    done_status: done
   diagnosis:
     stage: maintain
     artifact: new intent.md
     gate: on_call_triage
     status: not_started
+    done_status: done
 
 edges:
   - { from: intent, to: spec, trigger: acceptance }

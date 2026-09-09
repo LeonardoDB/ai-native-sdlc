@@ -11,6 +11,20 @@ and drafts `intent.md` for PM review.
 - `forms/` — user feedback from app forms (one file per submission)
 - `email/` — feedback and complaints from email (one file per message)
 
+`scripts/intake.py` writes the form/email records:
+
+```bash
+python3 scripts/intake.py add --source form --record-id form-001 \
+  --author alice --priority high --summary "Export is missing." \
+  --details-file /tmp/form-details.txt
+python3 scripts/intake.py add --source email --record-id email-2026-001 \
+  --author bob --summary "Cannot upload receipts."
+python3 scripts/intake.py list --source form --status new
+```
+
+Record ids must be unique across the intake queue and match
+`[A-Za-z0-9._-]+`; paths are validated to stay inside `org/intake/`.
+
 ## Record format (all channels)
 
 ```markdown

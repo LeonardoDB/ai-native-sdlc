@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -46,6 +47,10 @@ PROMISED = [
     "scripts/gate_ledger.py",
     "scripts/run_evals.py",
     "scripts/detect_bands.py",
+    "scripts/workflow_state.py",
+    "scripts/check_plan_sync.py",
+    "scripts/org_status.py",
+    "scripts/intake.py",
     "assets/intent.md",
     "assets/spec.md",
     "assets/plan.md",
@@ -132,9 +137,20 @@ def yaml_ok(path: Path) -> bool:
         return False
 
 
-def run(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
+def run(
+    cmd: list[str],
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
+) -> tuple[int, str]:
     try:
-        res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=180)
+        res = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=180,
+            env=env,
+        )
         return res.returncode, (res.stdout + res.stderr).strip()
     except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
         return -1, str(exc)
@@ -224,6 +240,8 @@ def main() -> int:
         check((smoke / "intent" / "intent.md").is_file(), "scaffold writes intent/intent.md")
         check((smoke / "workflow-graph.yaml").is_file(), "scaffold writes workflow-graph.yaml")
         check((smoke / "hooks" / "production-gate.sh").is_file(), "scaffold writes hooks/production-gate.sh")
+        check((smoke / "scripts" / "workflow_state.py").is_file(), "scaffold writes workflow_state.py")
+        check((smoke / "scripts" / "check_plan_sync.py").is_file(), "scaffold writes check_plan_sync.py")
 
     # 9. Org scaffold smoke test.
     with tempfile.TemporaryDirectory() as td:
@@ -235,11 +253,30 @@ def main() -> int:
         check((org / "org" / "roles" / "cto.md").is_file(), "org scaffold writes role cards")
         check((org / "org" / "intake" / "README.md").is_file(), "org scaffold writes intake README")
         check((org / "scripts" / "sync_issues.py").is_file(), "org scaffold writes scripts/sync_issues.py")
+        check((org / "scripts" / "org_status.py").is_file(), "org scaffold writes scripts/org_status.py")
+        check((org / "scripts" / "intake.py").is_file(), "org scaffold writes scripts/intake.py")
 
     # 10. Python scripts compile cleanly.
-    for script in ("run_evals.py", "detect_bands.py", "gate_ledger.py", "init_org.py", "sync_issues.py"):
-        code, _ = run(["python3", "-m", "py_compile", str(skill / "scripts" / script)])
-        check(code == 0, f"py_compile: {script}")
+    with tempfile.TemporaryDirectory(prefix="quickvalidate-pycache-") as pycache:
+        compile_env = {**os.environ, "PYTHONPYCACHEPREFIX": pycache}
+        for script in (
+            "run_evals.py",
+            "detect_bands.py",
+            "gate_ledger.py",
+            "init_org.py",
+            "init_workflow.py",
+            "sync_issues.py",
+            "workflow_state.py",
+            "check_plan_sync.py",
+            "org_status.py",
+            "intake.py",
+            "quick_validate.py",
+        ):
+            code, _ = run(
+                ["python3", "-m", "py_compile", str(skill / "scripts" / script)],
+                env=compile_env,
+            )
+            check(code == 0, f"py_compile: {script}")
 
     print()
     print(f"quick_validate: {len(passes)} passed, {len(failures)} failed")

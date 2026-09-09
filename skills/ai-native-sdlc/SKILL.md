@@ -38,7 +38,7 @@ deterministic layer (makes violation nearly impossible), or a review pass
 | 3. Verify before review | CLAUDE.md "Verifying your work" | single `make`-style verify commands | PR template evidence |
 | 4. Encode repeated lessons | CLAUDE.md "Things the agent gets wrong" | protected-path hooks | second-time-mistake rule in reviews |
 | 5. Evidence in reviews | REVIEW.md | — | review passes, 5-nit cap |
-| 6. Plan mode first | plan.md template | plan-sync pre-commit hook (optional) | plan-vs-diff check in PR review |
+| 6. Plan mode first | plan.md template | `check_plan_sync.py` (optional pre-commit hook / PR gate) | plan-vs-diff check in PR review |
 | 7. Reviews feed back | CLAUDE.md | — | review comments → CLAUDE.md |
 | 8. Subagents named/visible | this hard rule | subagent definitions committed in git | subagent reports in session |
 
@@ -91,7 +91,7 @@ The scaffold script copies the core skeleton into a new project (`intent.md`,
 `CLAUDE.md`/`AGENTS.md`, `REVIEW.md`, `bands.yaml`, `production-gate.sh`,
 `workflow-graph.yaml`, `.gitignore`, `evals/example.md`, `evals/README.md`,
 `gates/README.md`, and the tool scripts `gate_ledger.py`/`run_evals.py`/
-`detect_bands.py`); copy these manually when extending an existing repo. `spec.md` and `plan.md`
+`detect_bands.py`/`workflow_state.py`/`check_plan_sync.py`); copy these manually when extending an existing repo. `spec.md` and `plan.md`
 are produced by the workflow itself during Design and Build — copy the blank
 forms only when you want them as starting points:
 
@@ -112,7 +112,7 @@ forms only when you want them as starting points:
 - `assets/runbooks/rollback-deploy.md` + `assets/runbooks/README.md` — pre-approved action paths that `bands.yaml` 3σ routes may trigger
 - `assets/PULL_REQUEST_TEMPLATE.md` — change request mapped to REVIEW.md passes + evidence
 - `assets/org/org-chart.yaml` — agent org role model (roles, reports-to, authority, gates; copied by `scripts/init_org.py`)
-- `assets/org/status.yaml` — live agent states (busy/idle) + review queue
+- `assets/org/status.yaml` — live agent states (busy/idle) + review queue (maintained by `scripts/org_status.py`)
 - `assets/org/roles/*.md` — role cards (CEO, CTO, product manager, product engineering agent, engineer, reviewer)
 - `assets/org/protocol.md` — reporting, peer review, escalation, and gate rules for the org
 - `assets/org/intake/` + `assets/org/reviews/README.md` — demand intake (github/forms/email) and evidence-backed review record formats
@@ -131,7 +131,11 @@ Organization-level examples to wire up during adoption:
 - `scripts/run_evals.py` — run the eval suite locally or in CI (Phase 4), with `--min-pass-rate` gating
 - `scripts/detect_bands.py` — deterministic control-band detection (Phase 6 reference implementation: rolling window, Western Electric rules, drift rule)
 - `scripts/gate_ledger.py` — hash-chained approval ledger: every gate decision is a committed, tamper-evident record; the release gate verifies `RELEASE_APPROVAL=ledger:<id>` against it
+- `scripts/workflow_state.py` — deterministic workflow state runtime (`status`/`advance`/`check`): graph nodes advance only through matching, chain-verified ledger records
+- `scripts/check_plan_sync.py` — deterministic plan-sync enforcement: implementation changes require an approved plan.md manifest in PR/CI or pre-commit mode
 - `scripts/sync_issues.py` — GitHub issue intake for the product engineering agent (`pull` open issues into `org/intake/github/`, `push` a feature ticket)
+- `scripts/org_status.py` — agent busy/idle and review-queue management (`status`, `agent`, `review`) against `org/status.yaml`
+- `scripts/intake.py` — form/email demand intake into `org/intake/` (`add`, `list`)
 
 ## Self-test (after installing)
 

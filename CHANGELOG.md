@@ -8,6 +8,21 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Deterministic workflow state runtime (`scripts/workflow_state.py`): `status`
+  reports pipeline state and drift warnings, `advance` closes a graph node only
+  through a matching chain-verified ledger record, and `check` validates graph
+  schema/ledger consistency (`--strict` also rejects uncommitted
+  advance-ready records). Scaffolded by `init_workflow.py`; `done_status` added
+  to graph templates and the expense-tracker example.
+- Deterministic plan-sync enforcement (`scripts/check_plan_sync.py`): PR/CI
+  (`--base/--head`) and pre-commit (`--hook`) modes verify implementation
+  changes against an approved `plan.md` "Files that change" manifest, with
+  glob matching, process-file exclusions, and optional ledger-gate
+  verification delegated to `gate_ledger.py`. Scaffolded by `init_workflow.py`.
+- Agent-org operations tooling: `scripts/org_status.py` (validated busy/idle
+  and review-queue transitions: assign, submit, escalate) and
+  `scripts/intake.py` (form/email record ingestion and queue listing).
+  Scaffolded by `init_org.py`.
 - Autonomous agent org: `scripts/init_org.py` scaffolds named roles (CEO-human,
   CTO, product manager, product engineering agent, engineers, reviewer) with
   an org chart, status tracking, peer review, escalation, and multi-channel
@@ -47,6 +62,12 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Changed
 
+- `assets/plan.md` — "Files that change" is now a bullet list of exact paths or
+  globs so `check_plan_sync.py` can treat the plan as a machine-readable
+  manifest.
+- `assets/workflow-graph.yaml`, `assets/workflow-graph.example.yaml`, and
+  `examples/expense-tracker/workflow-graph.yaml` — nodes now carry
+  `done_status` for the workflow state runtime.
 - `assets/production-gate.sh` — replaced naive `deploy`+`production` word
   matching with deploy-action patterns (`DEPLOY_PATTERNS`), production-context
   matching, and a read-only allowlist (`READ_ONLY_PATTERNS`). Previously the

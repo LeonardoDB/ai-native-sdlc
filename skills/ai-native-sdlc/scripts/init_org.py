@@ -14,6 +14,8 @@ Creates:
     org/intake/config.json      GitHub intake configuration
     org/reviews/README.md       evidence-backed review record format
     scripts/sync_issues.py      GitHub issue intake helper
+    scripts/org_status.py       agent busy/idle + review-queue management
+    scripts/intake.py           form/email demand intake
 
 Existing files are skipped unless --force is passed. --dry-run prints the
 plan without writing anything (not even the project directory).
@@ -46,6 +48,8 @@ FILES = {
     "org/intake/email/.gitkeep": "assets/org/intake/email/.gitkeep",
     "org/reviews/README.md": "assets/org/reviews/README.md",
     "scripts/sync_issues.py": "scripts/sync_issues.py",
+    "scripts/org_status.py": "scripts/org_status.py",
+    "scripts/intake.py": "scripts/intake.py",
 }
 
 
