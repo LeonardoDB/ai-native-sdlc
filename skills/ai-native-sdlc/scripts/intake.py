@@ -193,6 +193,22 @@ def _queue_files() -> list[Path]:
     return sorted(INTAKE_ROOT.rglob("*.md"))
 
 
+def _record_status(text: str) -> str:
+    """Read the status only from the record's '## Status' section."""
+    in_status = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.lower() == "## status":
+            in_status = True
+            continue
+        if in_status:
+            if stripped.startswith("## "):
+                break
+            if stripped in VALID_STATUSES:
+                return stripped
+    return "unknown"
+
+
 def cmd_list(args: argparse.Namespace) -> int:
     records = []
     for path in _queue_files():
@@ -200,8 +216,7 @@ def cmd_list(args: argparse.Namespace) -> int:
         meta = _frontmatter(text)
         if args.source and meta.get("source") != args.source:
             continue
-        status_match = re.search(r"(?m)^(new|triaged|ticket_filed|intent_drafted|done)\s*$", text)
-        status = status_match.group(1) if status_match else "unknown"
+        status = _record_status(text)
         if args.status and status != args.status:
             continue
         records.append((path, meta, status))

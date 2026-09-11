@@ -122,6 +122,18 @@ class IntakeTests(unittest.TestCase):
         self.assertIn("f-1", res.stdout)
         self.assertIn("e-1", res.stdout)
 
+    def test_list_status_uses_status_section(self) -> None:
+        self.run_cli(
+            "add", "--source", "form", "--record-id", "status-1",
+            "--summary", "done",
+        )
+        res = self.run_cli("list", "--status", "new")
+        self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
+        self.assertIn("status-1", res.stdout)
+        res = self.run_cli("list", "--status", "done")
+        self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
+        self.assertNotIn("status-1", res.stdout)
+
     def test_validation_errors(self) -> None:
         res = self.run_cli(
             "add", "--source", "slack", "--record-id", "x", "--summary", "Bad source.",

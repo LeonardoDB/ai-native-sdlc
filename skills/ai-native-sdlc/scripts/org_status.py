@@ -331,6 +331,7 @@ def _check_queue_violations(
     violations: list[str] = []
     agents = status.get("agents", {})
     queue = status.get("review_queue", [])
+    latest = _latest_by_artifact(queue)
     seen_ids: set[str] = set()
 
     for i, entry in enumerate(queue):
@@ -357,14 +358,15 @@ def _check_queue_violations(
         entry_status = entry.get("status")
         reviewer = entry.get("reviewer")
         writer = entry.get("writer")
-        if entry_status == "assigned":
+        is_latest = latest.get(entry.get("artifact")) is entry
+        if is_latest and entry_status == "assigned":
             if isinstance(reviewer, str):
                 agent_state = agents.get(reviewer, {})
                 if isinstance(agent_state, dict) and agent_state.get("status") != "busy":
                     violations.append(
                         f"reviewer {reviewer} has active review {entry_id!r} but is not busy"
                     )
-        if entry_status in ("assigned", "changes_requested"):
+        if is_latest and entry_status in ("assigned", "changes_requested"):
             if isinstance(writer, str):
                 agent_state = agents.get(writer, {})
                 if isinstance(agent_state, dict) and agent_state.get("status") != "busy":
@@ -384,7 +386,7 @@ def _check_queue_violations(
         if agent_status not in VALID_STATUSES:
             violations.append(f"agent {name!r} has invalid status {agent_status!r}")
         active = [
-            e for e in queue
+            e for e in latest.values()
             if isinstance(e, dict)
             and e.get("status") in ("assigned", "changes_requested")
             and (
@@ -469,8 +471,9 @@ def cmd_agent(args: argparse.Namespace) -> int:
         state["status"] = "busy"
         state["assignment"] = args.assignment
     else:  # idle
+        latest = _latest_by_artifact(status.get("review_queue", []))
         active = [
-            e for e in status.get("review_queue", [])
+            e for e in latest.values()
             if isinstance(e, dict)
             and e.get("status") in ("assigned", "changes_requested")
             and (
@@ -491,6 +494,14 @@ def cmd_agent(args: argparse.Namespace) -> int:
     return _save(Path(args.status), status)
 
 
+def _latest_by_artifact(queue: list) -> dict[str, dict]:
+    latest: dict[str, dict] = {}
+    for entry in queue:
+        if isinstance(entry, dict) and isinstance(entry.get("artifact"), str):
+            latest[entry["artifact"]] = entry
+    return latest
+
+
 def _previous_rounds(status: dict, artifact: str) -> int:
     previous = [
         e for e in status.get("review_queue", [])
@@ -505,7 +516,7 @@ def _previous_rounds(status: dict, artifact: str) -> int:
 
 def cmd_review_assign(args: argparse.Namespace) -> int:
     try:
-        status, _, role_by_name, human_by_name, _ = _load_org(
+        status, _, role_by_name, human_by_name, max_rounds = _load_org(
             Path(args.org_chart), Path(args.status)
         )
     except ValueError as exc:
@@ -533,6 +544,17 @@ def cmd_review_assign(args: argparse.Namespace) -> int:
     if any(isinstance(e, dict) and e.get("id") == args.id for e in queue):
         print(f"error: review id {args.id!r} already exists", file=sys.stderr)
         return 1
+
+    previous = _latest_by_artifact(queue).get(args.artifact)
+    if isinstance(previous, dict) and previous.get("status") == "changes_requested":
+        rounds = previous.get("rounds", 0)
+        if isinstance(rounds, int) and rounds >= max_rounds:
+            print(
+                f"error: review rounds for {args.artifact} reached {rounds}; "
+                "escalation to the CTO is required before another assignment",
+                file=sys.stderr,
+            )
+            return 1
 
     reviewer_state = status["agents"].get(args.reviewer)
     if not isinstance(reviewer_state, dict) or reviewer_state.get("status") != "idle":

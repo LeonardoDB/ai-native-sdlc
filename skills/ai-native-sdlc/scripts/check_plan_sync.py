@@ -164,7 +164,13 @@ def _plan_is_approved(text: str) -> bool:
 def _added_manifest_entries(old_text: str | None, new_text: str) -> list[str]:
     old_lines = (old_text or "").splitlines()
     new_lines = new_text.splitlines()
-    old_entries = _manifest_entries("\n".join(old_lines)) if old_text is not None else []
+    try:
+        old_entries = _manifest_entries("\n".join(old_lines)) if old_text is not None else []
+    except ValueError:
+        # Legacy plans may still be prose; migrating them to the bullet
+        # manifest in the same change is supported. The head manifest is
+        # authoritative, so treat the old manifest as empty.
+        old_entries = []
     added: list[str] = []
     if old_entries:
         diff = difflib.unified_diff(old_lines, new_lines, lineterm="", n=0)

@@ -149,6 +149,20 @@ class PlanSyncTests(unittest.TestCase):
         res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
         self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
 
+    def test_legacy_prose_plan_can_migrate_to_manifest(self) -> None:
+        self.write("src/base.py", "BASE = 1\n")
+        self.write(
+            "plan.md",
+            "# Feature\n\n- Status: Approved\n\n## Files that change\n\n"
+            "<Files to create and modify.>\n",
+        )
+        self.commit("base with legacy plan")
+        self.write("src/new.py", "NEW = 1\n")
+        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py"))
+        self.commit("migrate plan to bullet manifest")
+        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
+
     def test_unrelated_plan_edit_does_not_exempt_file(self) -> None:
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")

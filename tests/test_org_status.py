@@ -263,6 +263,41 @@ class OrgStatusTests(unittest.TestCase):
         self.assertEqual(entry["status"], "escalated")
         self.assertEqual(entry["escalated_to"], "cto")
 
+    def test_assignment_blocked_after_max_rounds(self) -> None:
+        self.assign("review-1")
+        self.run_cli(
+            "review", "submit", "--id", "review-1", "--verdict", "changes",
+            "--evidence", "round-1",
+        )
+        self.assign("review-2")
+        self.run_cli(
+            "review", "submit", "--id", "review-2", "--verdict", "changes",
+            "--evidence", "round-2",
+        )
+        res = self.run_cli(
+            "review", "assign", "--id", "review-3", "--artifact", "spec.md",
+            "--writer", "engineer-1", "--reviewer", "reviewer-1",
+        )
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("escalat", (res.stdout + res.stderr).lower())
+
+    def test_writer_can_idle_after_resolved_rereview(self) -> None:
+        self.assign("review-1")
+        self.run_cli(
+            "review", "submit", "--id", "review-1", "--verdict", "changes",
+            "--evidence", "round-1",
+        )
+        self.assign("review-2")
+        self.run_cli(
+            "review", "submit", "--id", "review-2", "--verdict", "approved",
+            "--evidence", "round-2",
+        )
+        res = self.run_cli("agent", "engineer-1", "idle", "--last-report", "resolved")
+        self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
+        data = self.status_json()
+        self.assertEqual(data["agents"]["engineer-1"]["status"], "idle")
+        self.assertEqual(data["violations"], [])
+
     def test_status_flags_protocol_violations(self) -> None:
         text = self.status_text().replace(
             "review_queue: []",
