@@ -71,6 +71,26 @@ The engineer starts the session in plan mode, gives the agent intent.md and spec
 
 plan.md contents: files that change; order of work; risks; proof (tests that cover the change; screenshot matching the approved mock where relevant).
 
+### Deterministic plan-sync
+
+`scripts/check_plan_sync.py` turns the plan-mode rule into a check that can run
+at PR/CI time or as a pre-commit hook:
+
+```bash
+# PR/CI: require an approved plan whose manifest covers changed files
+python3 scripts/check_plan_sync.py --base origin/main --head HEAD \
+  --graph workflow-graph.yaml --ledger gates/ledger.jsonl
+
+# Optional pre-commit hook wrapper (.git/hooks/pre-commit)
+python3 scripts/check_plan_sync.py --hook --graph workflow-graph.yaml
+```
+
+`plan.md`'s `## Files that change` section is a bullet list of exact paths or
+globs (no prose). A change that departs from the approved manifest must add the
+file to that section in the same change set; editing prose or toggling Status
+does not exempt unplanned files. Process artifacts (`docs/`, `gates/`, `org/`,
+evals, workflow-graph.yaml, etc.) never trigger the plan requirement.
+
 ### Auto mode
 
 Once the guardrails mature — a tuned CLAUDE.md, skills that encode policy, hooks that block unsafe actions, a test suite the agent can run — auto-accept becomes the default for routine work: approve the plan, then let the agent apply changes without per-edit prompts. Review shifts from watching edits to reviewing artifacts after longer autonomous sessions. Auto mode enables parallelism across individuals via worktrees and is what makes the Phase 6 loop runnable.

@@ -15,6 +15,30 @@ intent.md → (accepted) → spec.md → (approved) → plan.md → (approved) �
 
 The machine-readable form ships in `assets/workflow-graph.example.yaml`.
 
+## Running the graph
+
+`scripts/workflow_state.py` treats `workflow-graph.yaml` as the live state
+machine and `gates/ledger.jsonl` as the approval history:
+
+```bash
+# What is in flight, what is blocked, and what fires next
+python3 scripts/workflow_state.py status
+
+# Close a gate only through a matching, chain-verified ledger record
+python3 scripts/gate_ledger.py record \
+  --gate product_owner_accept --artifact intent/intent.md \
+  --commit abc123 --approver "Ada" --evidence "intent review"
+python3 scripts/workflow_state.py advance --node intent --record product_owner_accept-001
+
+# Drift and schema validation (add --strict for uncommitted advance-ready records)
+python3 scripts/workflow_state.py check --strict
+```
+
+Graph nodes carry `status` (working state) plus an optional `done_status`
+(the terminal state that closes the node). `advance` refuses a record whose
+gate does not match the node, re-advancing an already-done node, or firing an
+edge without approval; it does not auto-start downstream nodes.
+
 ## The adoption graph
 
 The plays also form a dependency graph for adoption, separate from the runtime order. Start at a leaf play — nothing points into it: capture intent, CLAUDE.md, feedback loop, build-time hooks, plan mode. Then adopt the plays that depend on them: skills, subagents, continuous evals; then requirements and design and PR review; then CI/CD and approval gates; and finally close the loop. Adopting in this order means every new play arrives with its prerequisites already in place.

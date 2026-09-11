@@ -6,7 +6,10 @@
 
 ## Files that change
 
-<Files to create and modify.>
+<One path or glob per bullet — no prose. Examples:>
+
+- src/main.py
+- tests/test_main.py
 
 ## Order of work
 

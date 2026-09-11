@@ -131,6 +131,11 @@ through GitHub issues (`scripts/sync_issues.py pull`), app feedback forms, and
 email, all landing as versioned records in `org/intake/` that the product
 engineering agent turns into tickets and intents.
 
+Org bookkeeping is command-driven: `scripts/org_status.py` keeps agent
+busy/idle state and the review queue valid against `org/org-chart.yaml`, and
+`scripts/intake.py add|list` normalizes form/email demand into the same intake
+format GitHub issues use.
+
 See `skills/ai-native-sdlc/references/org.md` for the full protocol.
 
 ## Examples
@@ -208,7 +213,11 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
             ├── quick_validate.py  # skill/plugin self-check
             ├── run_evals.py       # eval-suite runner (Phase 4)
             ├── detect_bands.py    # control-band detection (Phase 6)
-            └── gate_ledger.py     # hash-chained approval ledger (all gates)
+            ├── gate_ledger.py     # hash-chained approval ledger (all gates)
+            ├── workflow_state.py  # graph state runtime (status/advance/check)
+            ├── check_plan_sync.py # deterministic plan-sync enforcement
+            ├── org_status.py      # agent busy/idle + review queue
+            └── intake.py          # form/email demand intake
 ```
 
 ## Contributing

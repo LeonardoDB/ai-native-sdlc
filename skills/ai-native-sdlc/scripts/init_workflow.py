@@ -13,6 +13,8 @@ Creates:
     scripts/gate_ledger.py      approval-record ledger (hash-chained)
     scripts/run_evals.py        eval-suite runner (Phase 4)
     scripts/detect_bands.py     control-band detection (Phase 6)
+    scripts/workflow_state.py   workflow graph state runtime (status/advance/check)
+    scripts/check_plan_sync.py  deterministic plan-sync enforcement
     bands.yaml                  monitoring control bands
     workflow-graph.yaml         project state on the loop graph
     evals/example.md            eval case example (markdown)
@@ -43,6 +45,8 @@ FILES = {
     "scripts/gate_ledger.py": "scripts/gate_ledger.py",
     "scripts/run_evals.py": "scripts/run_evals.py",
     "scripts/detect_bands.py": "scripts/detect_bands.py",
+    "scripts/workflow_state.py": "scripts/workflow_state.py",
+    "scripts/check_plan_sync.py": "scripts/check_plan_sync.py",
     "bands.yaml": "assets/bands.yaml",
     "workflow-graph.yaml": "assets/workflow-graph.yaml",
     "evals/example.md": "assets/evals.example.md",

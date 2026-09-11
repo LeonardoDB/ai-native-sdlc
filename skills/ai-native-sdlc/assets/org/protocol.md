@@ -9,7 +9,8 @@ and escalation so the loop runs with less human steering.
 1. Every agent commits its artifact (intent.md, spec.md, plan.md, code+tests,
    review findings) with evidence.
 2. When an agent accepts or finishes work, it updates `org/status.yaml`
-   (busy/idle, assignment, last_report) in the same commit.
+   (busy/idle, assignment, last_report) in the same commit, using
+   `scripts/org_status.py` so the org-chart rules are enforced.
 3. Reports flow up one level: engineers → CTO; PM and product → CTO; CTO →
    CEO. Routine reporting is the status file plus artifact commits; the CEO
    reads them at the gates and on escalation.
@@ -24,6 +25,9 @@ and escalation so the loop runs with less human steering.
 4. The writer addresses findings; a second review round happens if needed.
 5. Two unresolved rounds → CTO decides; if the artifact is a spec or plan and
    the conflict persists → CEO.
+
+`org_status.py review assign|submit|escalate` records every queue transition;
+hand-editing the queue is not supported.
 
 ## Escalation
 
@@ -43,8 +47,8 @@ and escalation so the loop runs with less human steering.
 ## Intake
 
 - GitHub issues: `scripts/sync_issues.py pull` → `org/intake/github/<repo>-<n>.md`
-- Forms: `org/intake/forms/<record>.md`
-- Email: `org/intake/email/<record>.md`
+- Forms/email: `scripts/intake.py add --source form|email …` writes
+  `org/intake/forms/<record>.md` / `org/intake/email/<record>.md`.
 
 The product engineering agent consolidates intake records, files tickets
 (`scripts/sync_issues.py push`), and drafts intents for PM review.
