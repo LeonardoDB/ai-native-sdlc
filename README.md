@@ -8,6 +8,7 @@ This repo is three things at once:
 
 - A **Codex skill** at `skills/ai-native-sdlc/`, installable into `~/.codex/skills`.
 - A **Claude Code skill** — the same folder, installable into `~/.claude/skills`.
+- A **Claude Code plugin** and marketplace (`.claude-plugin/`) bundling the skill and the gate hook.
 - A **Codex plugin** (`.codex-plugin/plugin.json` at the repo root) that bundles the skill.
 
 **Learn more:** [Phase-by-phase playbook](skills/ai-native-sdlc/references/playbook.md) · [Task links and delivery](skills/ai-native-sdlc/references/trackers.md) · [Tailoring to a team](skills/ai-native-sdlc/references/adoption.md)
@@ -31,11 +32,24 @@ One folder per task keeps parallel branches in a repo from touching the same fil
 
 ## Install
 
-### As a Claude Code skill
+### As a Claude Code plugin (recommended)
+
+Installs the skill **and** the gate hook in one step, and updates with the repo:
+
+```bash
+claude plugin marketplace add LeonardoDB/ai-native-sdlc
+claude plugin install ai-native-sdlc@ai-native-sdlc
+```
+
+(Inside a session: `/plugin marketplace add LeonardoDB/ai-native-sdlc`, then `/plugin install ai-native-sdlc@ai-native-sdlc`.) Update later with `claude plugin marketplace update ai-native-sdlc`. While developing the skill itself, load it straight from the checkout with `claude --plugin-dir ~/path/to/ai-native-sdlc`.
+
+### As a Claude Code skill only
+
+The skill without the hook. Link it rather than copying, so a `git pull` updates it (use `$CLAUDE_CONFIG_DIR/skills` if you set that variable):
 
 ```bash
 mkdir -p ~/.claude/skills
-cp -R skills/ai-native-sdlc ~/.claude/skills/
+ln -s "$PWD/skills/ai-native-sdlc" ~/.claude/skills/ai-native-sdlc
 ```
 
 ### As a Codex skill
@@ -112,7 +126,7 @@ Nothing from this repo has to be copied into yours: the skill and its scripts ru
 
    Many repos sharing the same setup? Claude Code also reads `CLAUDE.md` from parent directories, so one file in the folder that holds them (for example `~/work/<company>/CLAUDE.md`) covers every repo below it. Codex needs the sections in each repo's `AGENTS.md`.
 4. **Add the typecheck command** to `## Commands` in CLAUDE.md, and optionally a `## Code tooling` section naming the LSP and the library-docs tool.
-5. **Wire the gate hook** so the red lines hold outside the prompt — merges, pushes to the default branch, `--no-verify`, and bare force-pushes are blocked, and a task branch is published only with the checks passing. In your user `settings.json` (the Claude Code plugin does it for you):
+5. **Wire the gate hook** so the red lines hold outside the prompt — merges, pushes to the default branch, `--no-verify`, and bare force-pushes are blocked, and a task branch is published only with the checks passing. The plugin install does this for you; with the skill-only install, add it to your user `settings.json`:
 
    ```json
    {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [
@@ -147,7 +161,9 @@ No task yet? Describe the idea; the agent interviews you, drafts the task descri
 
 ```text
 .
-├── .codex-plugin/plugin.json      # Codex plugin manifest (repo root is the plugin)
+├── .claude-plugin/                # Claude Code plugin + marketplace manifests (repo root is the plugin)
+├── .codex-plugin/plugin.json      # Codex plugin manifest
+├── hooks/hooks.json               # the plugin's hook wiring (gate.py on PreToolUse Bash)
 ├── .github/workflows/self-check.yml  # CI for this repo itself (validate + tests)
 ├── AGENTS.md                      # guidance for agents working in this repo
 ├── README.md

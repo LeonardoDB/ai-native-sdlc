@@ -175,6 +175,30 @@ def main() -> int:
     else:
         bad("plugin.json not found")
 
+    # 3b. Claude Code plugin + marketplace consistency.
+    claude = repo_root / ".claude-plugin" / "plugin.json"
+    market = repo_root / ".claude-plugin" / "marketplace.json"
+    if claude.is_file():
+        try:
+            data = json.loads(claude.read_text(encoding="utf-8"))
+            check(data.get("name") == fm.get("name"), "Claude plugin.json name matches SKILL.md")
+            check(data.get("version") == fm.get("version"), "Claude plugin.json version matches SKILL.md")
+            check((repo_root / "hooks" / "hooks.json").is_file(),
+                  "Claude plugin hooks/hooks.json exists (auto-loaded; not listed in plugin.json)")
+            check("hooks" not in data or data["hooks"] not in ("./hooks/hooks.json", ["./hooks/hooks.json"]),
+                  "plugin.json does not re-list the default hooks/hooks.json (it would load twice)")
+        except json.JSONDecodeError as exc:
+            bad(f"Claude plugin.json is not valid JSON: {exc}")
+    if market.is_file():
+        try:
+            entries = json.loads(market.read_text(encoding="utf-8")).get("plugins") or []
+            entry = next((p for p in entries if p.get("name") == fm.get("name")), None)
+            check(entry is not None, "marketplace.json lists the plugin")
+            if entry:
+                check(entry.get("version") in (None, fm.get("version")), "marketplace.json version matches SKILL.md")
+        except json.JSONDecodeError as exc:
+            bad(f"marketplace.json is not valid JSON: {exc}")
+
     # 4. Promised files exist.
     for rel in PROMISED:
         check((skill / rel).exists(), f"promised file exists: {rel}")

@@ -8,6 +8,13 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Claude Code plugin: `.claude-plugin/plugin.json` and `marketplace.json`
+  (the repo root is the plugin), with `hooks/hooks.json` wiring the gate on
+  PreToolUse Bash. Install with `claude plugin marketplace add
+  LeonardoDB/ai-native-sdlc` and `claude plugin install
+  ai-native-sdlc@ai-native-sdlc`. `quick_validate.py` checks both manifests
+  against SKILL.md; the README recommends the plugin and a symlink for the
+  skill-only install.
 - MR/PR feedback: `tracker_link.py` accepts MR/PR links (`kind:
   merge_request`, ref `group/project!12` or `owner/repo#12`), and
   `references/feedback.md` runs one round — read every thread, check out the

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "ai-native-sdlc",
+  "owner": {
+    "name": "Leonardo Dalbosco"
+  },
+  "description": "The AI-native SDLC workflow, from task to MR/PR.",
+  "plugins": [
+    {
+      "name": "ai-native-sdlc",
+      "source": "./",
+      "description": "Take a Linear, GitLab, or GitHub task to a reviewed, opened MR/PR — test-first, typed, with deterministic checks and a gate hook.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Leonardo Dalbosco"
+      },
+      "license": "MIT",
+      "category": "workflow"
+    }
+  ]
+}

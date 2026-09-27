@@ -21,8 +21,9 @@ python3 -m unittest discover -s tests -v
 
 All must pass before finishing; CI runs the same checks
 (`.github/workflows/self-check.yml`). Keep `plugin.json` and `SKILL.md`
-consistent in name, description, and version — `quick_validate.py` enforces
-this.
+consistent in name, description, and version, and the same for
+`.claude-plugin/plugin.json` and `marketplace.json` — `quick_validate.py`
+enforces this; `claude plugin validate .` checks the Claude manifests.
 
 ## Conventions
 
