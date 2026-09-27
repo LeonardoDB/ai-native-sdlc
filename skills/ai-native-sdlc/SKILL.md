@@ -12,7 +12,7 @@ Every phase ends with a versioned artifact the next phase reads. The agent does 
 
 ## Where the loop ends
 
-**The loop ends when the MR/PR is opened.** Opening it is the agent's last action. Merge, deploy, release, and production monitoring are outside this workflow: they belong to the team and its own pipeline, and the agent never merges, deploys, or releases.
+**The loop ends when the MR/PR is opened.** Opening it is the agent's last action. Merge, deploy, release, and production monitoring are outside this workflow: they belong to the team and its own pipeline, and the agent never merges, deploys, or releases. With the gate hook wired (`hooks/gate.py`), that is enforced: merges, pushes to the default branch, `--no-verify`, and bare force-pushes are blocked, and publishing a task branch requires the checks to pass.
 
 ## Artifacts
 
@@ -45,14 +45,14 @@ deterministic layer (makes violation nearly impossible), or a review pass
 | Hard rule | Advisory (skill/CLAUDE.md) | Deterministic (hook/file) | Checked at |
 |---|---|---|---|
 | 1. Gates are real | this skill | the board holds the task; `Status: Approved` in spec.md and plan.md | spec and plan approval |
-| 2. Stop at the MR/PR | this skill | branch protection on the forge (the agent cannot merge its own MR/PR) | MR/PR opened |
+| 2. Stop at the MR/PR | this skill | `hooks/gate.py` blocks `glab mr merge`/`gh pr merge`, pushes to the default branch, `--no-verify`, and force-pushes without a lease; branch protection on the forge | MR/PR opened |
 | 3. Verify before review | CLAUDE.md "Verifying your work" | single `make`-style verify commands | MR/PR template evidence |
 | 4. Encode repeated lessons | CLAUDE.md "Things the agent gets wrong" | protected-path hooks | second-time-mistake rule in reviews |
 | 5. Evidence in reviews | REVIEW.md | — | review passes, 5-nit cap |
 | 6. Plan mode first | plan.md template | `check_plan_sync.py` (pre-commit hook / MR/PR CI); `impact_map.py --check` (risky paths named in the plan) | plan-vs-diff check in review |
 | 7. Reviews feed back | CLAUDE.md | — | review comments → CLAUDE.md |
 | 8. Subagents named/visible | this hard rule; briefs in `references/agents/` | — | subagent reports in session |
-| 9. Test first, typed | plan.md Proof, Types first, Build log | `check_tdd.py` (AC coverage; green with the change, red without); `check_mutations.py` (mutants on the changed lines must die); `check_diff_hygiene.py` (suppressions, skips, rewritten tests); the project's typecheck | Review, before the reviewer; MR/PR CI with `--base` |
+| 9. Test first, typed | plan.md Proof, Types first, Build log | `check_tdd.py` (AC coverage; green with the change, red without); `check_mutations.py` (mutants on the changed lines must die); `check_diff_hygiene.py` (suppressions, skips, rewritten tests); the project's typecheck | Review, before the reviewer; `hooks/gate.py` before any push or MR/PR; MR/PR CI with `--base` |
 
 Anything in the deterministic column must always hold — enforce it with code,
 not prose.
@@ -122,6 +122,7 @@ Read `references/playbook.md` for the phase-by-phase procedure.
 - `scripts/check_mutations.py` — mutation check on the changed lines only: flipped comparisons, swapped and/or, off-by-one constants, inverted booleans; a mutant the Proof commands still pass fails unless plan.md lists it under Surviving mutants with a reason
 - `scripts/impact_map.py` — dependents (imports), callers of the changed symbols, git-history fix rate, and a high/mid/low risk per file; `--from-plan` before the change, `--check` in Review (every high-risk file named under plan.md's Impact)
 - `scripts/check_diff_hygiene.py` — added type/lint suppressions and skipped or focused tests need a `reason:`; rewritten or deleted existing tests must be listed under plan.md's Test changes
+- `hooks/gate.py` — Claude Code PreToolUse hook: blocks merges, pushes to the default branch, `--no-verify`, and bare force-pushes; lets a task branch be pushed or its MR/PR opened only on a clean tree with the checks passing (`SDLC_GATE_MUTATIONS=1` adds the mutation check). No Stop hook — red is a normal state mid-slice
 - `scripts/init_workflow.py` — scaffold `CLAUDE.md`/`AGENTS.md`, `REVIEW.md`, `.gitignore`, and the check scripts into a repo (`--dry-run`, `--framework`, `--git`; existing files are skipped)
 - `scripts/quick_validate.py` — validate this skill/plugin bundle (self-check; CI runs it)
 

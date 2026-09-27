@@ -26,6 +26,9 @@ not include real credentials or production data.
   the repo root, and temporarily removes implementation files (git stash, or a
   checkout of `--base`) — anything that loses work or leaves the tree changed
   after a run is a bug.
+- Bypasses of `hooks/gate.py`: a merge, a push to the default branch, a
+  `--no-verify`, a bare force-push, or a publish with failing checks that the
+  gate lets through.
 - Skill instructions that lead the agent to merge, deploy, push without the
   user's go-ahead, or write to a tracker task without confirmation.
 - Command or path injection in the scripts beyond the Proof commands a

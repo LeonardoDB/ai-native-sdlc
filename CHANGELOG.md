@@ -8,6 +8,13 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- `hooks/gate.py`: Claude Code PreToolUse hook enforcing the red lines —
+  blocks `glab mr merge`/`gh pr merge`, pushes to the default branch,
+  `--no-verify`/`--no-gpg-sign`, and force-pushes without a lease; lets a task
+  branch be pushed or its MR/PR opened only on a clean tree with
+  `check_plan_sync`, `check_tdd`, `check_diff_hygiene`, and
+  `impact_map --check` passing (`SDLC_GATE_MUTATIONS=1` adds mutations).
+  No Stop hook, by design. Tested in `tests/test_gate.py`.
 - `scripts/impact_map.py`: per changed file, the files that import it
   (Python and JS/TS), the files using the symbols the change adds or edits,
   the last year's commits and fix rate, and a high/mid/low risk. Run with

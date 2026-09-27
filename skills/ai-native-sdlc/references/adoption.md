@@ -32,22 +32,26 @@ Point the workflow at those skills from CLAUDE.md: a style skill in `## Conventi
 
 ## Wiring hooks
 
-Hooks are the deterministic backstop for red lines: block protected paths, auto-format, keep credentials out of diffs. Team hooks live in the repo's settings file; non-negotiable ones belong in managed settings owned by platform/IT so individuals cannot disable them. Example wiring for Claude Code:
+Hooks are the deterministic backstop for red lines. The workflow ships one: `hooks/gate.py`, a PreToolUse hook on Bash that blocks merges (`glab mr merge`, `gh pr merge`), pushes to the default branch, `--no-verify`, and force-pushes without a lease, and lets a task branch be pushed or its MR/PR opened only when the tree is committed and `check_plan_sync`, `check_tdd`, `check_diff_hygiene`, and `impact_map --check` pass against the default branch (`SDLC_GATE_MUTATIONS=1` adds `check_mutations`). Branches without a `docs/changes/<task>/plan.md` are left alone. It uses the repo's scaffolded `scripts/` when present, else the skill's.
+
+Wire it once, for every repo, in your user settings (`~/.claude/settings.json`, or `$CLAUDE_CONFIG_DIR/settings.json`) — the Claude Code plugin does this for you:
 
 ```json
 {
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/protected-paths.sh" }
+          { "type": "command", "command": "python3 ~/.claude/skills/ai-native-sdlc/hooks/gate.py" }
         ]
       }
     ]
   }
 }
 ```
+
+There is deliberately no Stop hook: a failing test is a normal state in the middle of a TDD slice, and the agent must stay free to stop and ask. Add your own hooks for protected paths, formatting, and secrets; non-negotiable ones belong in managed settings owned by platform/IT.
 
 ## Review culture
 

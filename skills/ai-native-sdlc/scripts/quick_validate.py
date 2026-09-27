@@ -47,6 +47,7 @@ PROMISED = [
     "scripts/check_diff_hygiene.py",
     "scripts/check_mutations.py",
     "scripts/impact_map.py",
+    "hooks/gate.py",
     "assets/intent.md",
     "assets/spec.md",
     "assets/plan.md",
@@ -213,10 +214,11 @@ def main() -> int:
             "check_diff_hygiene.py",
             "check_mutations.py",
             "impact_map.py",
+            "gate.py",
             "quick_validate.py",
         ):
             code, _ = run(
-                ["python3", "-m", "py_compile", str(skill / "scripts" / script)],
+                ["python3", "-m", "py_compile", str(skill / ("hooks" if script == "gate.py" else "scripts") / script)],
                 env=compile_env,
             )
             check(code == 0, f"py_compile: {script}")

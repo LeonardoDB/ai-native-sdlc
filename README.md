@@ -112,7 +112,13 @@ Nothing from this repo has to be copied into yours: the skill and its scripts ru
 
    Many repos sharing the same setup? Claude Code also reads `CLAUDE.md` from parent directories, so one file in the folder that holds them (for example `~/work/<company>/CLAUDE.md`) covers every repo below it. Codex needs the sections in each repo's `AGENTS.md`.
 4. **Add the typecheck command** to `## Commands` in CLAUDE.md, and optionally a `## Code tooling` section naming the LSP and the library-docs tool.
-5. **Enforce the checks in CI** (see the [playbook](skills/ai-native-sdlc/references/playbook.md#deterministic-checks)): `check_plan_sync.py --base origin/main --head HEAD`, `check_tdd.py --base origin/main`, `check_mutations.py --base origin/main`, `check_diff_hygiene.py --base origin/main`. To scaffold the four scripts together with a starter `CLAUDE.md` and `REVIEW.md` — existing files are skipped unless you pass `--force`:
+5. **Wire the gate hook** so the red lines hold outside the prompt — merges, pushes to the default branch, `--no-verify`, and bare force-pushes are blocked, and a task branch is published only with the checks passing. In your user `settings.json` (the Claude Code plugin does it for you):
+
+   ```json
+   {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [
+     {"type": "command", "command": "python3 ~/.claude/skills/ai-native-sdlc/hooks/gate.py"}]}]}}
+   ```
+6. **Enforce the checks in CI** (see the [playbook](skills/ai-native-sdlc/references/playbook.md#deterministic-checks)): `check_plan_sync.py --base origin/main --head HEAD`, `check_tdd.py --base origin/main`, `check_mutations.py --base origin/main`, `check_diff_hygiene.py --base origin/main`. To scaffold the four scripts together with a starter `CLAUDE.md` and `REVIEW.md` — existing files are skipped unless you pass `--force`:
 
    ```bash
    python3 skills/ai-native-sdlc/scripts/init_workflow.py path/to/your-repo
@@ -150,6 +156,8 @@ No task yet? Describe the idea; the agent interviews you, drafts the task descri
         │   ├── trackers.md        # task links, workspace, resuming, delivery
         │   ├── adoption.md        # tailoring the workflow to a team
         │   └── agents/            # explorer.md, reviewer.md — subagent briefs
+        ├── hooks/
+        │   └── gate.py            # PreToolUse gate: no merge, checks before publishing
         ├── assets/
         │   ├── intent.md          # shape of a new tracker task description
         │   ├── spec.md            # → docs/changes/<task>/spec.md
