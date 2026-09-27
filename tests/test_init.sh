@@ -17,7 +17,7 @@ python3 "$SCRIPT" "$tmp/dry" --name "Dry Run" --dry-run >/dev/null 2>&1 || { ech
 
 # codex scaffold
 python3 "$SCRIPT" "$tmp/proj" --name "Smoke Test" --framework codex >/dev/null 2>&1 || { echo "FAIL: scaffold exited non-zero"; fail=1; }
-for f in AGENTS.md REVIEW.md bands.yaml workflow-graph.yaml .gitignore hooks/production-gate.sh evals/example.md evals/README.md scripts/gate_ledger.py scripts/run_evals.py scripts/detect_bands.py scripts/workflow_state.py scripts/check_plan_sync.py gates/README.md; do
+for f in AGENTS.md REVIEW.md workflow-graph.yaml .gitignore scripts/gate_ledger.py scripts/workflow_state.py scripts/check_plan_sync.py gates/README.md; do
   [[ -e "$tmp/proj/$f" ]] || { echo "FAIL: missing $f"; fail=1; }
 done
 python3 -m py_compile "$tmp/proj/scripts/gate_ledger.py" || { echo "FAIL: scaffolded gate_ledger.py does not compile"; fail=1; }
@@ -29,8 +29,11 @@ grep -q 'gate: tracker_board' "$tmp/proj/workflow-graph.yaml" || { echo "FAIL: i
 grep -q '## Knowledge base' "$tmp/proj/AGENTS.md" || { echo "FAIL: repository memory missing Knowledge base section"; fail=1; }
 grep -q 'AGENTS.md' "$tmp/proj/AGENTS.md" || { echo "FAIL: codex variant header wrong"; fail=1; }
 [[ -f "$tmp/proj/CLAUDE.md" ]] && { echo "FAIL: codex scaffold also wrote CLAUDE.md"; fail=1; }
-[[ -x "$tmp/proj/hooks/production-gate.sh" ]] || { echo "FAIL: hook not executable"; fail=1; }
-grep -q 'release authorization' "$tmp/proj/hooks/production-gate.sh" || { echo "FAIL: hook content wrong"; fail=1; }
+# the loop ends at the MR/PR: nothing for deploy, monitoring, or evals is scaffolded
+for f in hooks/production-gate.sh bands.yaml evals scripts/run_evals.py scripts/detect_bands.py; do
+  [[ -e "$tmp/proj/$f" ]] && { echo "FAIL: scaffold wrote $f (outside the loop)"; fail=1; }
+done
+grep -q 'release\|diagnosis' "$tmp/proj/workflow-graph.yaml" && { echo "FAIL: graph still has deploy/maintain nodes"; fail=1; }
 
 # claude scaffold (default framework)
 python3 "$SCRIPT" "$tmp/proj2" --name "Claude Project" >/dev/null 2>&1 || { echo "FAIL: claude scaffold exited non-zero"; fail=1; }

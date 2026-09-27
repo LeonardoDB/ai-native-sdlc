@@ -1,5 +1,7 @@
 # Playbook — the six phases
 
+> **This bundle runs Phases 1–3 plus the review half of Phase 5, and ends at the opened MR/PR.** The agent never merges, deploys, or releases. The rest of Phase 5 (hooks as release gates, CI/CD), Phase 4 (Test — continuous evals), and Phase 6 (Maintain) are kept as reference for the optional extras (`production-gate.sh`, `run_evals.py`, `bands.yaml`); they are not part of the default loop.
+
 This is the operating detail for the AI-native SDLC loop. Read the section for the phase you are entering. Every stage ends by committing an artifact to version control — `intent.md`, `spec.md`, `plan.md`, the diff and its tests, the PR with its review findings, the incident record — and the next stage begins by reading it. The commit chain is the audit trail: who asked for what, what the agent produced, and who approved it.
 
 Humans stay accountable for every decision that requires judgment. Human attention concentrates at the gates, reviewing what the agent flagged rather than starting each stage from scratch.

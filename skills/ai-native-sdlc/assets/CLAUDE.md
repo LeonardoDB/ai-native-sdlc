@@ -42,6 +42,13 @@ never the knowledge itself. Read during Design, not every session. e.g.
 "docs/kb/ — decisions in docs/kb/decisions/, glossary in docs/kb/glossary.md", or
 "MCP <server-name> — search by service name or domain term".>
 
+## Commit and MR/PR
+
+<Optional. The project's own skills or rules for committing and opening MRs/PRs —
+they win over the workflow's defaults. e.g. "commit with the /commit skill",
+"open MRs with the /create-mr skill", "MR template: .gitlab/merge_request_templates/default.md",
+"Conventional Commits; title `<type>(<scope>): <summary> (#<issue>)`".>
+
 ## Hooks
 
 <Deterministic hooks and what they enforce.>

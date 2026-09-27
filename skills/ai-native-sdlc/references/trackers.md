@@ -65,10 +65,24 @@ the current checkout, and the forge comes from its `origin` remote.
    Continue the loop as usual: spec approved → `plan.md` → code + tests →
    MR/PR.
 
-6. **Close the loop in the tracker through the MR/PR.** Name the branch after
-   the ref (`eng-123-csv-export`, `42-csv-export`) and put the closing keyword
-   in the MR/PR description (`Closes group/project#42`, `Fixes ENG-123`), so
-   the tracker moves the task when the change merges.
+6. **Commit and open the MR/PR — the end of the loop.** If the project's
+   CLAUDE.md has a `## Commit and MR/PR` section, use the skills and rules it
+   names; they win over everything below. Otherwise:
+
+   - **Branch** after the ref (`feat/eng-123-csv-export`, `fix/42-date-off-by-one`)
+     unless the repo has its own rule.
+   - **Commit** only verified code, staging explicit paths (never `git add -A`),
+     one logical change per commit, in the repo's style (read `git log`),
+     citing the ref. Never bypass hooks or signing (`--no-verify`).
+   - **MR/PR body** from the repo's template (`.gitlab/merge_request_templates/`,
+     `.github/PULL_REQUEST_TEMPLATE.md`), else the skill's
+     `assets/PULL_REQUEST_TEMPLATE.md`, filled from spec.md, plan.md, and the
+     verify output — never an invented body. Put the closing keyword in it
+     (`Closes group/project#42`, `Fixes ENG-123`) so the tracker moves the
+     task on merge.
+   - **Open it on the user's go-ahead** with the forge from `current_repo`
+     (`glab mr create`, `gh pr create`), then stop. Merge and deploy are the
+     team's.
 
 ## Rules
 

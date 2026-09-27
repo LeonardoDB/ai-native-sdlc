@@ -18,8 +18,8 @@
   ],
   "interface": {
     "displayName": "AI-Native SDLC",
-    "shortDescription": "Run the AI-native SDLC loop from idea to production",
-    "longDescription": "Encodes Anthropic's AI-Native SDLC playbook as a reusable workflow: capture intent, design, plan, build, test, deploy, and maintain, with versioned artifacts and human approval gates at every handoff. Give your agent a goal and it scaffolds and drives the project through the full lifecycle.",
+    "shortDescription": "Take a tracker task to a reviewed MR/PR with approval gates",
+    "longDescription": "Encodes Anthropic's AI-Native SDLC playbook as a reusable workflow: take the intent from the tracker, then design, plan, build, and review, with versioned artifacts and human approval gates at every handoff. Give your agent a task link and it drives the work to an opened MR/PR — never merging or deploying.",
     "developerName": "AI-Native SDLC contributors",
     "category": "Productivity",
     "capabilities": [
@@ -29,7 +29,7 @@
     "defaultPrompt": [
       "Build my idea as an AI-native SDLC project",
       "Run the AI-native SDLC workflow for this Linear or GitLab task link",
-      "Run the full plan-build-test-deploy loop for this feature"
+      "Take this feature from spec to an opened MR/PR"
     ]
   }
 }

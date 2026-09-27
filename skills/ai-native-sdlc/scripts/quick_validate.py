@@ -12,7 +12,7 @@ YAML sanity check):
   4. Every asset referenced by the scaffold script exists.
   5. YAML/JSON assets parse.
   6. Shell assets pass `bash -n`.
-  7. The release gate passes its test suite (tests/test_gate.sh).
+  7. The optional release gate passes its test suite (tests/test_gate.sh).
   8. The scaffold script smoke-scaffolds into a temp dir.
 
 Exit 0 on success, 1 on any failure.
@@ -241,7 +241,7 @@ def main() -> int:
         check(code == 0, "init_workflow.py scaffold smoke test")
         check(not (smoke / "intent").exists(), "scaffold writes no intent/ (intent lives in the tracker)")
         check((smoke / "workflow-graph.yaml").is_file(), "scaffold writes workflow-graph.yaml")
-        check((smoke / "hooks" / "production-gate.sh").is_file(), "scaffold writes hooks/production-gate.sh")
+        check(not (smoke / "hooks").exists(), "scaffold writes no release hook (the loop ends at the MR/PR)")
         check((smoke / "scripts" / "workflow_state.py").is_file(), "scaffold writes workflow_state.py")
         check((smoke / "scripts" / "check_plan_sync.py").is_file(), "scaffold writes check_plan_sync.py")
 

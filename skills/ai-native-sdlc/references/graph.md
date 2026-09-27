@@ -7,11 +7,11 @@ The AI-native SDLC is a directed graph, not a linear pipeline. Treating it as a 
 - **Plays** — the work units: capture intent, requirements and design, plan mode, build, continuous evals, PR review, hooks, CI/CD, closing the loop.
 - **Artifacts** — the evidence each play produces: the tracker task (the intent — it lives in Linear/GitLab/GitHub, not the repo), spec.md, plan.md, the diff and its tests, the PR with its review findings, the incident record.
 - **Gates** — human judgment points where an artifact is accepted, approved, or rejected. Gates are the only nodes automation may never skip.
-- **Triggers** — directed edges that fire the next play when a gate passes: a task on the board (an accepted intent) fires Design; an approved spec fires plan mode; a merged PR fires the pipeline; a breached control band drafts the next tracker task.
+- **Triggers** — directed edges that fire the next play when a gate passes: a task on the board (an accepted intent) fires Design; an approved spec fires plan mode; an approved plan fires the build, which ends at the opened MR/PR.
 
 ## The runtime loop
 
-tracker task → (on the board) → spec.md → (approved) → plan.md → (approved) → code + tests → (PR merged) → release → (authorized) → monitoring → (band breach) → new tracker task → back to the start.
+tracker task → (on the board) → spec.md → (approved) → plan.md → (approved) → code + tests → MR/PR opened. **The loop ends there**: the agent stops at the opened MR/PR, and the team's review and merge close the last node. Release, monitoring, and the path back from a band breach to a new task belong to the upstream playbook and are outside this workflow.
 
 The machine-readable form ships in `assets/workflow-graph.example.yaml`.
 

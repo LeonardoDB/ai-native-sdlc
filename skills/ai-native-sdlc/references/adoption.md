@@ -1,5 +1,7 @@
 # Adoption — staged rollout
 
+> In this bundle the loop ends at the opened MR/PR. The later layers below (CI/CD integration, release gates, closing the loop from monitoring) describe the upstream playbook and are optional extras here.
+
 The plays have dependencies. Start with any play that nothing points into (a leaf play — it needs nothing first), then adopt the plays that depend on it. The adoption order is not the phase order: several later-phase plays are cheap and come first.
 
 ## Dependency order

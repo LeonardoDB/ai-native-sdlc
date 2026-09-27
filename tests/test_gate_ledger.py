@@ -42,7 +42,7 @@ class RecordAndChainTests(unittest.TestCase):
     def test_duplicate_id_rejected(self):
         td, ledger = make_ledger()
         self.addCleanup(lambda: os.system(f"rm -rf {td}"))
-        common = dict(ledger=ledger, gate="release_authorization", decision="approved",
+        common = dict(ledger=ledger, gate="engineer_approve", decision="approved",
                       artifact="x", commit=None, approver="Ada", evidence="e", expires_at=None)
         self.assertEqual(gate_ledger.cmd_record(gate_ledger.argparse.Namespace(**common, id="r-1")), 0)
         self.assertEqual(gate_ledger.cmd_record(gate_ledger.argparse.Namespace(**common, id="r-1")), 1)

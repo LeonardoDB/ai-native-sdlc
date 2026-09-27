@@ -1,8 +1,10 @@
 # AI-Native SDLC — reusable workflow repo
 
-![AI-Native SDLC workflow loop: Plan → Design → Build → Test → Deploy → Maintain](assets/ai-native-sdlc-banner.png)
+![The upstream AI-Native SDLC loop (Plan → Design → Build → Test → Deploy → Maintain); this fork runs Plan → Design → Build → Review and stops at the opened MR/PR](assets/ai-native-sdlc-banner.png)
 
-A ready-to-inherit implementation of Anthropic's [AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook): give your coding agent a goal or idea, and it scaffolds and drives the project through the full lifecycle — planning, design, build, test, deploy, and maintain — with human approval gates at every handoff.
+A ready-to-inherit implementation of Anthropic's [AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook): give your coding agent a task link from Linear, GitLab, or GitHub, and it drives the work through design, build, and review to an opened MR/PR — with human approval gates at every handoff.
+
+> **Where this fork stops: the loop ends when the MR/PR is opened.** The agent never merges, deploys, or releases — the team reviews and merges, and deployment is the team's own pipeline. The upstream playbook's Test, Deploy, and Maintain phases (evals, release gate, monitoring) are kept only as optional extras; they are not scaffolded and not part of the default flow.
 
 This repo is three things at once:
 
@@ -14,18 +16,18 @@ This repo is three things at once:
 
 ## What this is about
 
-Writing code is no longer the bottleneck — agents produce it in hours. The bottleneck moved to the process around the code: planning, review, deployment, and governance still run at human speed and human scale. This repo reworks the SDLC so those stages keep up with the build. The loop is Plan → Design → Build → Test → Deploy → Maintain; every stage ends by committing a versioned artifact the next stage reads, human judgment concentrates at gates instead of line-by-line review, guardrails run as deterministic hooks rather than habits, and continuous evals replace stage-gate QA. The operating principle, in one sentence: the agent can do everything up to the production gate, but never crosses it.
+Writing code is no longer the bottleneck — agents produce it in hours. The bottleneck moved to the process around the code: planning, review, deployment, and governance still run at human speed and human scale. This repo reworks the SDLC so those stages keep up with the build. The upstream loop is Plan → Design → Build → Test → Deploy → Maintain; this fork runs its first half — Plan (the tracker board) → Design → Build → Review — and stops at the opened MR/PR. Every stage ends by committing a versioned artifact the next stage reads, human judgment concentrates at gates instead of line-by-line review, and guardrails run as deterministic hooks rather than habits. The operating principle, in one sentence: the agent does everything up to the opened MR/PR, and nothing after it.
 
 ## Graph engineering
 
-The loop is a directed graph, not a linear pipeline. Plays and artifacts are nodes, gates are human approval points, and triggers are the edges that fire the next stage: an accepted intent fires Design, an approved spec fires plan mode, a merged PR fires the pipeline, and a breached control band writes the next intent. Treating the workflow as a graph makes it automatable, parallelizable (independent branches run in separate worktrees), and auditable (node history is the record). The plays also form a separate adoption graph — start at the leaf plays (capture intent, CLAUDE.md, feedback loop, hooks, plan mode) and build outward. The machine-readable form is `skills/ai-native-sdlc/assets/workflow-graph.example.yaml`; full detail in `skills/ai-native-sdlc/references/graph.md`.
+The loop is a directed graph, not a linear pipeline. Plays and artifacts are nodes, gates are human approval points, and triggers are the edges that fire the next stage: a task on the board fires Design, an approved spec fires plan mode, and an approved plan fires the build that ends at the opened MR/PR. Treating the workflow as a graph makes it automatable, parallelizable (independent branches run in separate worktrees), and auditable (node history is the record). The plays also form a separate adoption graph — start at the leaf plays (capture intent, CLAUDE.md, feedback loop, hooks, plan mode) and build outward. The machine-readable form is `skills/ai-native-sdlc/assets/workflow-graph.example.yaml`; full detail in `skills/ai-native-sdlc/references/graph.md`.
 
 ## The workflow
 
 ```
-Plan → Design → Build → Test → Deploy → Maintain
-  ↑                                              │
-  └────────────────── back to Plan ←─────────────┘
+Plan (tracker board) → Design → Build → Review → MR/PR opened ■ end
+                                                   │
+                        team review, merge, deploy: outside this workflow
 ```
 
 Each phase ends by committing a versioned artifact; the next phase starts by
@@ -33,11 +35,10 @@ reading it. The full phase → artifact → gate contract lives in
 `skills/ai-native-sdlc/SKILL.md` (single source of truth). The short version:
 **Plan** is the tracker: a task on the Linear/GitLab/GitHub board is an
 accepted intent (no `intent.md` in the repo). **Design** commits `spec.md`,
-**Build** commits `plan.md` then code + tests, **Test** reports eval results,
-**Deploy** ships an authorized release, **Maintain** drafts its diagnosis as a
-new tracker task.
+**Build** commits `plan.md` then code + tests, **Review** runs the REVIEW.md
+passes and verification, then opens the MR/PR — the last thing the agent does.
 
-The agent does the generation, verification, and mechanical work. Humans keep the judgment calls: the agent goes all the way to the production gate and never crosses it.
+The agent does the generation, verification, and mechanical work. Humans keep the judgment calls: approving the spec and the plan, the go-ahead to open the MR/PR, and the review and merge that follow it.
 
 **Framework mapping.** The skill is framework-neutral: Claude Code calls repository memory CLAUDE.md and keeps skills in `.claude/skills/`; Codex calls it AGENTS.md and installs skills into `~/.codex/skills/`. The templates, artifacts, and scaffold script are the same either way.
 
@@ -104,7 +105,7 @@ Then tell your agent:
 
 > $ai-native-sdlc: run the workflow for https://linear.app/acme/issue/ENG-123
 
-Run it from the repo the task belongs to. The agent resolves the link (`scripts/tracker_link.py`, no config — self-hosted GitLab is recognized by its `/-/` link shape), reads the task — it never edits it — and starts at Design. From there it moves through spec → plan → build → test → deploy, stopping at each approval gate, and the MR/PR closes the task on merge. Authentication stays with the tracker's own MCP connector or CLI (`glab`, `gh`); see `skills/ai-native-sdlc/references/trackers.md`.
+Run it from the repo the task belongs to. The agent resolves the link (`scripts/tracker_link.py`, no config — self-hosted GitLab is recognized by its `/-/` link shape), reads the task — it never edits it — and starts at Design. From there it moves through spec → plan → build → review, stopping at each approval gate, and opens the MR/PR — where it stops. The MR/PR closes the task when the team merges it. Authentication stays with the tracker's own MCP connector or CLI (`glab`, `gh`); see `skills/ai-native-sdlc/references/trackers.md`.
 
 No task yet? Describe the idea; the agent interviews you, drafts the task description, and creates it in the tracker once you confirm.
 
@@ -134,12 +135,18 @@ and `tracker_link.py` run from the installed skill.
 
    - `docs/kb/` — decisions in `docs/kb/decisions/`, glossary in `docs/kb/glossary.md`
    - MCP `<server-name>` — search by service name or domain term
+
+   ## Commit and MR/PR
+
+   - Commit with the `/commit` skill; open MRs with the `/create-mr` skill.
+   - MR template: `.gitlab/merge_request_templates/default.md`
    ```
 
    | Section | Without it | Add it when |
    |---|---|---|
    | `## Tracker` | the repo is the current checkout; the forge comes from `git remote get-url origin` (`gh` + PRs, `glab` + MRs) | tasks live somewhere the link and remote don't reveal (another project, another tracker) |
    | `## Knowledge base` | Design skips the knowledge search | the project has a knowledge base (repo folder or MCP store); Design reads it before writing `spec.md` |
+   | `## Commit and MR/PR` | commits follow the repo's `git log` style and cite the task; the MR/PR body comes from the repo's template (else the skill's) with the closing keyword | the project has its own commit or MR/PR skills, a template elsewhere, or title/body rules |
 
    Many repos sharing the same setup? Claude Code also reads `CLAUDE.md` from
    parent directories, so one file in the folder that holds them (for example
@@ -148,8 +155,9 @@ and `tracker_link.py` run from the installed skill.
 4. **Run it from the repo:** `/ai-native-sdlc <task link>` in Claude Code, or
    `$ai-native-sdlc: run the workflow for <task link>` in Codex.
 
-Want the gate ledger, release hook, and evals too? Scaffold them — existing
-files, including your `CLAUDE.md`, are skipped unless you pass `--force`:
+Want the gate ledger and plan-sync check too? Scaffold them — existing
+files, including your `CLAUDE.md`, are skipped unless you pass `--force`
+(nothing for deploy, monitoring, or evals is scaffolded):
 
 ```bash
 python3 skills/ai-native-sdlc/scripts/init_workflow.py path/to/your-repo
@@ -169,7 +177,7 @@ The default org: **CEO (you, human)** → **CTO (agent)** → product manager,
 product engineering agent, engineers, and reviewer. Agents run the phases,
 review each other's work (reviewers accept only when idle), and report up the
 chain; the human CEO is involved at the critical points — intent ambiguity,
-unresolved spec/plan disagreement, PR merge, and release. Demand enters
+unresolved spec/plan disagreement, and MR/PR merge. Demand enters
 through GitHub issues (`scripts/sync_issues.py pull`), app feedback forms, and
 email, all landing as versioned records in `org/intake/` that the product
 engineering agent turns into tickets and intents.
@@ -196,11 +204,15 @@ with the script above.
 ## Customizing for your organization
 
 - **Standards as skills** — encode brand, security, UX, and compliance policies as skills so Design and Build apply them consistently.
-- **Hooks as red lines** — protected paths, secrets, and the release gate go in deterministic hooks, not prose. `production-gate.sh` blocks deploys without human authorization; `hook-settings.example.json` shows the wiring; `managed-settings.example.json` is the regulated-enterprise starting point.
-- **Evals** — collect 20–50 real tasks with expected outcomes; run them in CI on every config change and after every incident (`agent-evals.yml.example`).
+- **Hooks as red lines** — protected paths and secrets go in deterministic hooks, not prose; `hook-settings.example.json` shows the wiring.
 - **Review culture** — `REVIEW.md` sets the passes (bugs, security, compliance), the evidence requirement, and the 5-nit cap.
-- **CI/CD and autonomy tiers** — agent triage runs non-interactively in the pipeline; dev is open, production needs a release manager; rollbacks are rehearsed.
-- **Monitoring** — `bands.yaml` defines the control bands; 1σ logs, 2σ diagnoses, 3σ proposes a fix or runbook and writes the diagnosis back as a new intent.
+- **Commit and MR/PR** — point the workflow at the project's own commit and MR/PR skills in the `## Commit and MR/PR` section.
+
+Optional extras, outside the loop (kept from the upstream playbook, not scaffolded):
+
+- **Release gate** — `production-gate.sh` blocks deploys without human authorization; `managed-settings.example.json` is the regulated-enterprise starting point.
+- **Evals** — `run_evals.py` + `agent-evals.yml.example` run a suite of real tasks in CI.
+- **Monitoring** — `bands.yaml` + `detect_bands.py` define control bands; `incident.md` and `runbooks/` cover the response.
 
 See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
 
@@ -235,8 +247,8 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
         │   ├── plan.md
         │   ├── CLAUDE.md
         │   ├── REVIEW.md
-        │   ├── bands.yaml
-        │   ├── production-gate.sh
+        │   ├── bands.yaml         # optional extra (monitoring)
+        │   ├── production-gate.sh # optional extra (release gate)
         │   ├── org/               # agent org templates (chart, roles, protocol)
         │   ├── evals.example.md
         │   ├── evals.example.json

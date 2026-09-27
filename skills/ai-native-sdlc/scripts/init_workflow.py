@@ -8,21 +8,17 @@ Usage:
 Creates:
     CLAUDE.md / AGENTS.md       repository-memory starter (--framework claude|codex)
     REVIEW.md                   review standards
-    hooks/production-gate.sh    release authorization hook (executable)
     scripts/gate_ledger.py      approval-record ledger (hash-chained)
-    scripts/run_evals.py        eval-suite runner (Phase 4)
-    scripts/detect_bands.py     control-band detection (Phase 6)
     scripts/workflow_state.py   workflow graph state runtime (status/advance/check)
     scripts/check_plan_sync.py  deterministic plan-sync enforcement
-    bands.yaml                  monitoring control bands
     workflow-graph.yaml         project state on the loop graph
-    evals/example.md            eval case example (markdown)
-    evals/README.md             how to add evals (JSON format)
     gates/README.md             gate ledger usage
     .gitignore                  basic ignore rules
 
 No intent.md: the intent lives in the tracker (Linear, GitLab, GitHub); a
-task on the board is an accepted intent (references/trackers.md).
+task on the board is an accepted intent (references/trackers.md). Nothing for
+deploy or monitoring either: the loop ends at the opened MR/PR. The release
+gate, control bands, and eval runner stay in the skill as optional extras.
 
 Existing files are skipped unless --force is passed. --dry-run prints the
 plan without writing anything (not even the project directory).
@@ -42,16 +38,10 @@ ASSET_DIR = SKILL_DIR / "assets"
 FILES = {
     "CLAUDE.md": "assets/CLAUDE.md",
     "REVIEW.md": "assets/REVIEW.md",
-    "hooks/production-gate.sh": "assets/production-gate.sh",
     "scripts/gate_ledger.py": "scripts/gate_ledger.py",
-    "scripts/run_evals.py": "scripts/run_evals.py",
-    "scripts/detect_bands.py": "scripts/detect_bands.py",
     "scripts/workflow_state.py": "scripts/workflow_state.py",
     "scripts/check_plan_sync.py": "scripts/check_plan_sync.py",
-    "bands.yaml": "assets/bands.yaml",
     "workflow-graph.yaml": "assets/workflow-graph.yaml",
-    "evals/example.md": "assets/evals.example.md",
-    "evals/README.md": "assets/evals-README.md",
     "gates/README.md": "assets/gates-README.md",
     ".gitignore": "assets/.gitignore",
 }
@@ -164,8 +154,6 @@ def main() -> int:
             text = text.replace("<Title>", args.name).replace("<Project>", args.name)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text, encoding="utf-8")
-        if dest.name == "production-gate.sh":
-            dest.chmod(dest.stat().st_mode | 0o111)
         written.append(str(dest.relative_to(root)))
 
     print(f"Scaffolded AI-native SDLC skeleton in {root}")

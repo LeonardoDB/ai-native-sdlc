@@ -73,6 +73,17 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Changed
 
+- The loop ends at the opened MR/PR: Plan (tracker) → Design → Build → Review.
+  The agent never merges, deploys, or releases. `init_workflow.py` no longer
+  scaffolds the release hook, control bands, eval runner, or band detector;
+  the graph ends at the `implementation` node; SKILL.md, README, playbook,
+  graph, adoption, gates README, and plugin metadata say so. Test, Deploy, and
+  Maintain tooling stays in the bundle as optional extras.
+- Commit and MR/PR: the CLAUDE.md template gains an optional
+  `## Commit and MR/PR` section pointing at the project's own commit and
+  MR/PR skills or rules, which win over the defaults in
+  `references/trackers.md` (repo commit style, the repo's MR/PR template,
+  closing keyword, open on the user's go-ahead).
 - The intent lives in the tracker, not the repo: a task on the board is an
   accepted intent, and the agent starts at Design from the task link without
   editing the task. `init_workflow.py` no longer scaffolds `intent/intent.md`
