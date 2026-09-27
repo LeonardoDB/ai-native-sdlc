@@ -1,6 +1,6 @@
 # <Title> — Build Plan
 
-- Derived from: spec.md <commit or path>
+- Task: <task ref> — spec: docs/changes/<task>/spec.md
 - Status: Draft | Approved
 - Date: <YYYY-MM-DD>
 

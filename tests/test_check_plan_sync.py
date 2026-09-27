@@ -1,8 +1,7 @@
-"""Tests for scripts/check_plan_sync.py (F2 — deterministic plan-sync)."""
+"""Tests for scripts/check_plan_sync.py (deterministic plan-sync)."""
 
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import sys
@@ -14,11 +13,8 @@ SCRIPT = (
     Path(__file__).resolve().parent.parent
     / "skills" / "ai-native-sdlc" / "scripts" / "check_plan_sync.py"
 )
-GATE_LEDGER = (
-    Path(__file__).resolve().parent.parent
-    / "skills" / "ai-native-sdlc" / "scripts" / "gate_ledger.py"
-)
 
+PLAN_PATH = "docs/changes/eng-1/plan.md"
 
 PLAN = """\
 # Feature
@@ -39,7 +35,7 @@ class PlanSyncTests(unittest.TestCase):
     def setUp(self) -> None:
         self.root = Path(tempfile.mkdtemp())
         self.addCleanup(lambda: os.system(f"rm -rf {self.root}"))
-        git(self.root, "init", "-q")
+        git(self.root, "init", "-q", "-b", "main")
         git(self.root, "config", "user.email", "test@example.com")
         git(self.root, "config", "user.name", "Test")
 
@@ -61,182 +57,149 @@ class PlanSyncTests(unittest.TestCase):
             text=True,
         )
 
-    def base_plan(self) -> str:
-        return PLAN.format(files="- src/base.py")
-
     def initial_commit(self) -> None:
         self.write("src/base.py", "BASE = 1\n")
-        self.write("plan.md", self.base_plan())
         self.commit("base")
 
-    def record_plan_approval(self) -> None:
-        self.write("src/base.py", "BASE = 1\n")
-        self.write("plan.md", self.base_plan())
-        ledger = self.root / "gates" / "ledger.jsonl"
-        ledger.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            [
-                sys.executable,
-                str(GATE_LEDGER),
-                "--ledger",
-                str(ledger),
-                "record",
-                "--gate",
-                "engineer_approve",
-                "--artifact",
-                "plan.md",
-                "--approver",
-                "Ada",
-                "--evidence",
-                "review-plan-1",
-                "--id",
-                "engineer_approve-001",
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        self.commit("plan approval")
+    def pr(self, *extra: str) -> subprocess.CompletedProcess[str]:
+        return self.run_cli("--base", "HEAD~1", "--head", "HEAD", *extra)
 
     def test_process_only_changes_pass_without_plan(self) -> None:
         self.initial_commit()
         self.write("docs/note.md", "# note\n")
         self.write("README.md", "readme\n")
+        self.write(".gitlab/merge_request_templates/default.md", "tmpl\n")
         self.commit("docs only")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        res = self.pr()
         self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
 
     def test_missing_plan_fails(self) -> None:
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", "")
         self.commit("code without plan")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        res = self.pr()
         self.assertEqual(res.returncode, 1)
-        self.assertIn("plan.md", (res.stdout + res.stderr).lower())
+        self.assertIn("docs/changes/<task>/plan.md", res.stderr)
 
     def test_draft_plan_fails(self) -> None:
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/new.py").replace("Approved", "Draft"))
+        self.write(PLAN_PATH, PLAN.format(files="- src/new.py").replace("Approved", "Draft"))
         self.commit("draft plan")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        res = self.pr()
         self.assertEqual(res.returncode, 1)
-        self.assertIn("not approved", (res.stdout + res.stderr).lower())
+        self.assertIn("not approved", res.stderr.lower())
 
     def test_planned_files_pass(self) -> None:
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py"))
+        self.write(PLAN_PATH, PLAN.format(files="- src/new.py"))
         self.commit("planned change")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        res = self.pr()
         self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
 
     def test_unplanned_file_fails(self) -> None:
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py"))
+        self.write("src/extra.py", "EXTRA = 1\n")
+        self.write(PLAN_PATH, PLAN.format(files="- src/new.py"))
         self.commit("unplanned change")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        res = self.pr()
         self.assertEqual(res.returncode, 1)
-        self.assertIn("unplanned", (res.stdout + res.stderr).lower())
+        self.assertIn("unplanned", res.stderr.lower())
+        self.assertIn("src/extra.py", res.stderr)
 
     def test_plan_diff_adding_matching_entry_passes(self) -> None:
         self.initial_commit()
+        self.write(PLAN_PATH, PLAN.format(files="- src/base.py"))
+        self.commit("plan")
         self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py"))
+        self.write(PLAN_PATH, PLAN.format(files="- src/base.py\n- src/new.py"))
         self.commit("declare departure in plan")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
-        self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
-
-    def test_legacy_prose_plan_can_migrate_to_manifest(self) -> None:
-        self.write("src/base.py", "BASE = 1\n")
-        self.write(
-            "plan.md",
-            "# Feature\n\n- Status: Approved\n\n## Files that change\n\n"
-            "<Files to create and modify.>\n",
-        )
-        self.commit("base with legacy plan")
-        self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py"))
-        self.commit("migrate plan to bullet manifest")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        res = self.pr()
         self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
 
     def test_unrelated_plan_edit_does_not_exempt_file(self) -> None:
         self.initial_commit()
+        self.write(PLAN_PATH, PLAN.format(files="- src/base.py"))
+        self.commit("plan")
         self.write("src/new.py", "NEW = 1\n")
-        plan = PLAN.format(files="- src/base.py").replace(
-            "## Proof", "## Proof\n\nEdited prose only."
-        )
-        self.write("plan.md", plan)
+        self.write(PLAN_PATH, PLAN.format(files="- src/base.py").replace(
+            "## Proof", "## Proof\n\nEdited prose only."))
         self.commit("prose-only plan change")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        res = self.pr()
         self.assertEqual(res.returncode, 1)
-        self.assertIn("unplanned", (res.stdout + res.stderr).lower())
+        self.assertIn("unplanned", res.stderr.lower())
 
     def test_glob_entry_matches_file(self) -> None:
         self.initial_commit()
         self.write("src/util/helper.py", "HELPER = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/*.py\n- src/util/helper.py"))
+        self.write(PLAN_PATH, PLAN.format(files="- src/util/*.py"))
         self.commit("globbed change")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD")
+        res = self.pr()
         self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
 
-    def test_ledger_gate_requirement(self) -> None:
+    def test_another_tasks_plan_is_not_used(self) -> None:
+        self.write("docs/changes/eng-0/plan.md", PLAN.format(files="- src/*"))
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py"))
-        self.commit("planned change")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD", "--ledger", "gates/ledger.jsonl")
+        self.commit("code relying on an old plan")
+        res = self.pr()
         self.assertEqual(res.returncode, 1)
-        self.assertIn("engineer_approve", (res.stdout + res.stderr).lower())
+        self.assertIn("no plan", res.stderr)
 
-        self.record_plan_approval()
-        self.write("src/next.py", "NEXT = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py\n- src/next.py"))
-        self.commit("next planned change")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD", "--ledger", "gates/ledger.jsonl")
+    def test_several_plans_need_explicit_plan(self) -> None:
+        self.initial_commit()
+        self.write("src/new.py", "NEW = 1\n")
+        self.write(PLAN_PATH, PLAN.format(files="- src/new.py"))
+        self.write("docs/changes/eng-2/plan.md", PLAN.format(files="- other/*"))
+        self.commit("two plans")
+        res = self.pr()
+        self.assertEqual(res.returncode, 2)
+        self.assertIn("--plan", res.stderr)
+        res = self.pr("--plan", PLAN_PATH)
         self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
-
-    def test_ledger_chain_break_fails(self) -> None:
-        self.initial_commit()
-        self.record_plan_approval()
-        ledger = self.root / "gates" / "ledger.jsonl"
-        rec = json.loads(ledger.read_text(encoding="utf-8").splitlines()[0])
-        rec["approver"] = "Mallory"
-        ledger.write_text(json.dumps(rec, sort_keys=True) + "\n", encoding="utf-8")
-        self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py"))
-        self.commit("change after tamper")
-        res = self.run_cli("--base", "HEAD~1", "--head", "HEAD", "--ledger", "gates/ledger.jsonl")
-        self.assertEqual(res.returncode, 1)
-        self.assertIn("hash", (res.stdout + res.stderr).lower())
 
     def test_hook_mode_uses_staged_plan(self) -> None:
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py"))
+        self.write(PLAN_PATH, PLAN.format(files="- src/new.py"))
         git(self.root, "add", "-A")
         res = self.run_cli("--hook")
         self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
 
-    def test_hook_mode_requires_plan_staged_when_code_departs(self) -> None:
+    def test_hook_mode_finds_plan_from_branch_name(self) -> None:
         self.initial_commit()
+        git(self.root, "switch", "-qc", "feat/eng-1-csv-export")
+        self.write(PLAN_PATH, PLAN.format(files="- src/new.py"))
+        self.commit("plan first")
+        self.write("src/new.py", "NEW = 1\n")
+        git(self.root, "add", "src/new.py")
+        res = self.run_cli("--hook")
+        self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
+        self.write("src/extra.py", "EXTRA = 1\n")
+        git(self.root, "add", "src/extra.py")
+        res = self.run_cli("--hook")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("unplanned", res.stderr.lower())
+
+    def test_hook_mode_without_any_plan_fails(self) -> None:
+        self.initial_commit()
+        git(self.root, "switch", "-qc", "feat/eng-9-other")
         self.write("src/new.py", "NEW = 1\n")
         git(self.root, "add", "src/new.py")
         res = self.run_cli("--hook")
         self.assertEqual(res.returncode, 1)
-        self.assertIn("plan.md", (res.stdout + res.stderr).lower())
+        self.assertIn("no plan", res.stderr)
 
     def test_hook_mode_draft_staged_plan_fails(self) -> None:
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")
-        self.write("plan.md", PLAN.format(files="- src/base.py\n- src/new.py").replace("Approved", "Draft"))
+        self.write(PLAN_PATH, PLAN.format(files="- src/new.py").replace("Approved", "Draft"))
         git(self.root, "add", "-A")
         res = self.run_cli("--hook")
         self.assertEqual(res.returncode, 1)
-        self.assertIn("not approved", (res.stdout + res.stderr).lower())
+        self.assertIn("not approved", res.stderr.lower())
 
 
 def git(repo: Path, *args: str) -> None:

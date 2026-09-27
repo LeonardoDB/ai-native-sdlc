@@ -2,9 +2,8 @@
 
 The intent lives in the tracker (Linear, GitLab, GitHub), not in the repo.
 A task on the board is an accepted intent: it was refined and prioritized
-there, so the tracker board *is* the Plan gate (`tracker_board` in
-`workflow-graph.yaml`). The agent reads the task and starts at Design. There
-is no `intent.md` in the project.
+there, so the tracker board *is* the Plan gate. The agent reads the task and
+starts at Design. There is no `intent.md` in the project.
 
 ## Starting from a link
 
@@ -20,7 +19,9 @@ the current checkout, and the forge comes from its `origin` remote.
 
    The JSON names the `system`, the native `ref` (`ENG-123`,
    `group/project#42`, `owner/repo#42`), the `current_repo` (from
-   `git remote get-url origin`, with its `forge`), and `repo_matches`.
+   `git remote get-url origin`, with its `forge`), `repo_matches`, and the
+   task's `slug` and `change_dir` (`docs/changes/<slug>`, where its spec.md
+   and plan.md go).
    Detection is by link shape — `linear.app`, GitLab's `/-/` separator on any
    host (self-hosted included), `github.com` — so no host list is kept.
    Exit 1 means the link is not a task (board, epic, project, MR) or is
@@ -46,34 +47,28 @@ the current checkout, and the forge comes from its `origin` remote.
    carries no repo (`repo_matches: null`): the current checkout is the repo;
    outside a repo (`current_repo: null`), ask which one.
 
-4. **Record the source (optional, when the project uses the gate ledger).**
-   The board is the gate, so the record names the task, not a human approver:
-
-   ```bash
-   python3 scripts/gate_ledger.py record --gate tracker_board \
-     --artifact "<ref>" --approver tracker --evidence "<link>"
-   ```
-
-5. **Design.** If the project's CLAUDE.md has a `## Knowledge base` section,
+4. **Design.** If the project's CLAUDE.md has a `## Knowledge base` section,
    search it for what the task touches (prior decisions, domain terms, known
    constraints) before writing — extend settled decisions instead of
-   re-deciding them. Produce `spec.md` from the task, the knowledge base, and
-   the org's skills. Its header cites the source
+   re-deciding them. Write `<change_dir>/spec.md` from the task, the knowledge
+   base, and the org's skills. Its header cites the source
    (`Intent: <ref> <link> (read <YYYY-MM-DD>)`) and the knowledge used; a
    conflict between the task and the knowledge base is an open question, not
    a silent choice. An unreachable store is reported, not skipped silently.
-   Continue the loop as usual: spec approved → `plan.md` → code + tests →
-   MR/PR.
+   Continue the loop as usual: spec approved → `<change_dir>/plan.md` →
+   code + tests → Review.
 
-6. **Commit and open the MR/PR — the end of the loop.** Nothing is committed
+5. **Commit and open the MR/PR — the end of the loop.** Nothing is committed
    during Build. When Review is done, ask once: *commit, push, and open the
    MR/PR?* — one go-ahead covers all three, and nothing leaves the machine or
    enters history without it. Then, if the project's CLAUDE.md has a
    `## Commit and MR/PR` section, use the skills and rules it names; they win
    over everything below. Otherwise:
 
-   - **Branch** after the ref (`feat/eng-123-csv-export`, `fix/42-date-off-by-one`)
-     unless the repo has its own rule.
+   - **Branch** `<type>/<slug>-<summary>` (`feat/eng-123-csv-export`,
+     `fix/42-date-off-by-one`) unless the repo has its own rule. Starting the
+     leaf with the slug is what lets `check_plan_sync.py --hook` find the
+     task's plan.
    - **Commit** only verified code, staging explicit paths (never `git add -A`),
      one logical change per commit, in the repo's style (read `git log`),
      citing the ref. Never bypass hooks or signing (`--no-verify`).
@@ -102,8 +97,7 @@ the current checkout, and the forge comes from its `origin` remote.
 
 ## New work without a task
 
-When the user brings an idea, or Maintain produces a diagnosis, draft the
-task description in the shape of `assets/intent.md` and create it in the
+When the user brings an idea with no task yet, draft the task description in the shape of `assets/intent.md` and create it in the
 tracker only after the user confirms. It enters the loop once it is on the
 board.
 

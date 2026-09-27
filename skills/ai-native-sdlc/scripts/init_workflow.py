@@ -1,24 +1,20 @@
 #!/usr/bin/env python3
-"""Scaffold the AI-native SDLC artifact skeleton in a project directory.
+"""Scaffold the AI-native SDLC skeleton in a project directory.
 
 Usage:
-    python3 init_workflow.py <project-dir> [--name "<project name>"]
-        [--framework codex|claude] [--dry-run] [--force] [--git]
+    python3 init_workflow.py <project-dir> [--framework codex|claude]
+        [--dry-run] [--force] [--git]
 
 Creates:
     CLAUDE.md / AGENTS.md       repository-memory starter (--framework claude|codex)
     REVIEW.md                   review standards
-    scripts/gate_ledger.py      approval-record ledger (hash-chained)
-    scripts/workflow_state.py   workflow graph state runtime (status/advance/check)
-    scripts/check_plan_sync.py  deterministic plan-sync enforcement
-    workflow-graph.yaml         project state on the loop graph
-    gates/README.md             gate ledger usage
+    scripts/check_plan_sync.py  deterministic plan-sync check (pre-commit / MR/PR CI)
     .gitignore                  basic ignore rules
 
 No intent.md: the intent lives in the tracker (Linear, GitLab, GitHub); a
-task on the board is an accepted intent (references/trackers.md). Nothing for
-deploy or monitoring either: the loop ends at the opened MR/PR. The release
-gate, control bands, and eval runner stay in the skill as optional extras.
+task on the board is an accepted intent (references/trackers.md). Each task's
+spec.md and plan.md are written by the workflow into docs/changes/<task>/.
+The loop ends at the opened MR/PR, so nothing for deploy or monitoring.
 
 Existing files are skipped unless --force is passed. --dry-run prints the
 plan without writing anything (not even the project directory).
@@ -32,23 +28,14 @@ import sys
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
-ASSET_DIR = SKILL_DIR / "assets"
 
 # dest -> skill-relative source (assets/ for templates, scripts/ for tooling)
 FILES = {
     "CLAUDE.md": "assets/CLAUDE.md",
     "REVIEW.md": "assets/REVIEW.md",
-    "scripts/gate_ledger.py": "scripts/gate_ledger.py",
-    "scripts/workflow_state.py": "scripts/workflow_state.py",
     "scripts/check_plan_sync.py": "scripts/check_plan_sync.py",
-    "workflow-graph.yaml": "assets/workflow-graph.yaml",
-    "gates/README.md": "assets/gates-README.md",
     ".gitignore": "assets/.gitignore",
 }
-
-
-def _bad_name(name: str) -> bool:
-    return not name or any(c in name for c in "\r\n\t") or name.startswith("-")
 
 
 def _git_init_and_commit(root: Path) -> None:
@@ -78,10 +65,6 @@ def main() -> int:
         help="target project directory (default: current directory)",
     )
     parser.add_argument(
-        "--name",
-        help="project/product name to fill into the workflow graph title",
-    )
-    parser.add_argument(
         "--framework",
         choices=["claude", "codex"],
         default="claude",
@@ -106,12 +89,6 @@ def main() -> int:
 
     if not SKILL_DIR.is_dir():
         print(f"error: skill directory not found at {SKILL_DIR}", file=sys.stderr)
-        return 1
-    if args.name is not None and _bad_name(args.name):
-        print(
-            "error: --name must be non-empty, contain no control characters, and not start with '-'",
-            file=sys.stderr,
-        )
         return 1
 
     root = Path(args.project_dir).expanduser().resolve()
@@ -144,14 +121,12 @@ def main() -> int:
         text = (SKILL_DIR / rel_src).read_text(encoding="utf-8")
         if dest.name == "AGENTS.md":
             text = text.replace(
-                "# CLAUDE.md \u2014 repository memory", "# AGENTS.md \u2014 repository memory"
+                "# CLAUDE.md — repository memory", "# AGENTS.md — repository memory"
             )
             text = text.replace(
                 "\n\n> In Codex projects, the same content lives in AGENTS.md; the role is identical.\n",
                 "\n",
             )
-        if args.name:
-            text = text.replace("<Title>", args.name).replace("<Project>", args.name)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text, encoding="utf-8")
         written.append(str(dest.relative_to(root)))
@@ -171,9 +146,9 @@ def main() -> int:
 
     print()
     print("Next steps:")
-    print("  1. Pick a task on your board (Linear, GitLab, GitHub).")
+    print("  1. Fill in CLAUDE.md (commands, conventions, optional Tracker /")
+    print("     Knowledge base / Commit and MR/PR sections).")
     print("  2. Tell your agent: run the AI-native SDLC workflow for <task link>.")
-    print("  3. Commit the skeleton: git add -A && git commit -m 'scaffold ai-native-sdlc workflow'")
     return 0
 
 

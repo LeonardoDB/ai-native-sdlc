@@ -30,6 +30,9 @@ Output: one JSON object on stdout:
                   (ENG-123, group/project#42, owner/repo#42), null if not a task
     id            task number or key, null if not a task
     project       GitLab namespace path, GitHub owner/repo, or Linear team key
+    slug          short task id for folders and branches: eng-123 (Linear), 42
+                  (a task of the current repo), backlog-42 (another project)
+    change_dir    docs/changes/<slug> — where the task's spec.md and plan.md go
     url           the normalized link
     current_repo  {remote, host, project, forge} of --repo-dir, or null
     repo_matches  true | false | null (unknown, or a Linear task)
@@ -166,6 +169,14 @@ def parse(url: str, repo: dict | None = None) -> tuple[dict | None, str | None]:
         # Project path only: SSH host aliases (git@gitlab-work:group/app.git)
         # make the remote host differ from the link host for the same repo.
         result["repo_matches"] = repo["project"].lower() == result["project"].lower()
+    result["slug"] = result["change_dir"] = None
+    if result["kind"] == "issue":
+        if result["system"] == "linear" or result["repo_matches"]:
+            slug = str(result["id"]).lower()
+        else:
+            slug = f"{result['project'].rsplit('/', 1)[-1].lower()}-{result['id']}"
+        result["slug"] = re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
+        result["change_dir"] = f"docs/changes/{result['slug']}"
     if result["kind"] != "issue":
         return result, (f"{result['system']} {result['kind']} link, not a task; "
                         "open the task itself and pass its link")

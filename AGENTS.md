@@ -7,7 +7,7 @@ This repo is a reusable skill and plugin bundle implementing the AI-native SDLC 
 - The workflow lives in `skills/ai-native-sdlc/SKILL.md`. Read it first, then the references it routes to (`references/playbook.md`, `references/adoption.md`).
 - Templates in `skills/ai-native-sdlc/assets/` are copied into target projects — never edited to fit one project.
 - `skills/ai-native-sdlc/scripts/init_workflow.py` performs that copy; change the script when the scaffold layout changes.
-- `skills/ai-native-sdlc/scripts/init_org.py` scaffolds the optional agent org (roles, protocol, intake); change it when the org templates change.
+- `references/trackers.md` holds the task-link flow and its delivery defaults; `scripts/tracker_link.py` and `scripts/check_plan_sync.py` are its deterministic parts.
 
 ## Validation
 
@@ -15,7 +15,6 @@ After changing the skill or plugin, run the self-check suite (from the repo root
 
 ```bash
 python3 skills/ai-native-sdlc/scripts/quick_validate.py skills/ai-native-sdlc
-bash tests/test_gate.sh
 bash tests/test_init.sh
 python3 -m unittest discover -s tests -v
 ```

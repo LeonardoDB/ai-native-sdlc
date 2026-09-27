@@ -6,6 +6,32 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ## [Unreleased]
 
+### Removed
+
+- Everything outside the task → MR/PR loop, and what did not fit it: the
+  release gate (`production-gate.sh`, hook and managed-settings examples,
+  `tests/test_gate.sh`), evals (`run_evals.py` and its assets), monitoring
+  (`bands.yaml`, `detect_bands.py`, `incident.md`, `runbooks/`), the agent org
+  (`init_org.py`, `org_status.py`, `intake.py`, `sync_issues.py`,
+  `assets/org/`, `references/org.md`), the gate ledger and graph state
+  (`gate_ledger.py`, `workflow_state.py`, `workflow-graph*.yaml`,
+  `gates-README.md`, `references/graph.md`), the expense-tracker example, and
+  the six-phase banner. One pipeline state per repo could not track parallel
+  tasks, and the board, the spec/plan approvals, and the MR/PR already record
+  the gates.
+
+### Changed
+
+- Per-task artifacts: spec.md and plan.md live in `docs/changes/<task>/`, so
+  parallel branches never collide. `tracker_link.py` outputs the task `slug`
+  and `change_dir`; `check_plan_sync.py` finds the plan the diff touches (or,
+  in hook mode, the folder named by the branch), no longer depends on the
+  ledger, and treats `.github/`/`.gitlab/` as process paths (the old
+  `lstrip("./")` stripped their leading dot). `init_workflow.py` scaffolds only
+  CLAUDE.md/AGENTS.md, REVIEW.md, `.gitignore`, and `check_plan_sync.py`
+  (`--name` removed). SKILL.md, playbook, adoption, trackers, README, AGENTS,
+  SECURITY, and CI describe the four-phase loop.
+
 ### Added
 
 - Knowledge base in Design: the CLAUDE.md template gains an optional

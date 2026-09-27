@@ -12,43 +12,34 @@ export PYTHONPYCACHEPREFIX="$tmp/pycache"
 fail=0
 
 # --dry-run must not write anything (not even the project dir)
-python3 "$SCRIPT" "$tmp/dry" --name "Dry Run" --dry-run >/dev/null 2>&1 || { echo "FAIL: --dry-run exited non-zero"; fail=1; }
+python3 "$SCRIPT" "$tmp/dry" --dry-run >/dev/null 2>&1 || { echo "FAIL: --dry-run exited non-zero"; fail=1; }
 [[ -e "$tmp/dry" ]] && { echo "FAIL: --dry-run created the project dir"; fail=1; }
 
 # codex scaffold
-python3 "$SCRIPT" "$tmp/proj" --name "Smoke Test" --framework codex >/dev/null 2>&1 || { echo "FAIL: scaffold exited non-zero"; fail=1; }
-for f in AGENTS.md REVIEW.md workflow-graph.yaml .gitignore scripts/gate_ledger.py scripts/workflow_state.py scripts/check_plan_sync.py gates/README.md; do
+python3 "$SCRIPT" "$tmp/proj" --framework codex >/dev/null 2>&1 || { echo "FAIL: scaffold exited non-zero"; fail=1; }
+for f in AGENTS.md REVIEW.md .gitignore scripts/check_plan_sync.py; do
   [[ -e "$tmp/proj/$f" ]] || { echo "FAIL: missing $f"; fail=1; }
 done
-python3 -m py_compile "$tmp/proj/scripts/gate_ledger.py" || { echo "FAIL: scaffolded gate_ledger.py does not compile"; fail=1; }
-python3 -m py_compile "$tmp/proj/scripts/workflow_state.py" || { echo "FAIL: scaffolded workflow_state.py does not compile"; fail=1; }
 python3 -m py_compile "$tmp/proj/scripts/check_plan_sync.py" || { echo "FAIL: scaffolded check_plan_sync.py does not compile"; fail=1; }
-grep -q '# Smoke Test' "$tmp/proj/workflow-graph.yaml" || { echo "FAIL: --name not interpolated"; fail=1; }
-[[ -e "$tmp/proj/intent" ]] && { echo "FAIL: scaffold wrote intent/ (intent lives in the tracker)"; fail=1; }
-grep -q 'gate: tracker_board' "$tmp/proj/workflow-graph.yaml" || { echo "FAIL: intent node not gated by the tracker board"; fail=1; }
-grep -q '## Knowledge base' "$tmp/proj/AGENTS.md" || { echo "FAIL: repository memory missing Knowledge base section"; fail=1; }
+# the intent lives in the tracker and the loop ends at the MR/PR: nothing else is scaffolded
+for f in intent hooks bands.yaml evals gates workflow-graph.yaml scripts/gate_ledger.py scripts/workflow_state.py; do
+  [[ -e "$tmp/proj/$f" ]] && { echo "FAIL: scaffold wrote $f"; fail=1; }
+done
+for section in '## Tracker' '## Knowledge base' '## Commit and MR/PR'; do
+  grep -q "$section" "$tmp/proj/AGENTS.md" || { echo "FAIL: repository memory missing $section"; fail=1; }
+done
 grep -q 'AGENTS.md' "$tmp/proj/AGENTS.md" || { echo "FAIL: codex variant header wrong"; fail=1; }
 [[ -f "$tmp/proj/CLAUDE.md" ]] && { echo "FAIL: codex scaffold also wrote CLAUDE.md"; fail=1; }
-# the loop ends at the MR/PR: nothing for deploy, monitoring, or evals is scaffolded
-for f in hooks/production-gate.sh bands.yaml evals scripts/run_evals.py scripts/detect_bands.py; do
-  [[ -e "$tmp/proj/$f" ]] && { echo "FAIL: scaffold wrote $f (outside the loop)"; fail=1; }
-done
-grep -q 'release\|diagnosis' "$tmp/proj/workflow-graph.yaml" && { echo "FAIL: graph still has deploy/maintain nodes"; fail=1; }
 
 # claude scaffold (default framework)
-python3 "$SCRIPT" "$tmp/proj2" --name "Claude Project" >/dev/null 2>&1 || { echo "FAIL: claude scaffold exited non-zero"; fail=1; }
+python3 "$SCRIPT" "$tmp/proj2" >/dev/null 2>&1 || { echo "FAIL: claude scaffold exited non-zero"; fail=1; }
 [[ -f "$tmp/proj2/CLAUDE.md" ]] || { echo "FAIL: claude scaffold missing CLAUDE.md"; fail=1; }
 [[ -f "$tmp/proj2/AGENTS.md" ]] && { echo "FAIL: claude scaffold also wrote AGENTS.md"; fail=1; }
 
-# idempotent re-run: no overwrite without --force, exit 0
-before="$(head -1 "$tmp/proj/workflow-graph.yaml")"
-python3 "$SCRIPT" "$tmp/proj" --name "Other Name" >/dev/null 2>&1 || { echo "FAIL: re-run exited non-zero"; fail=1; }
-after="$(head -1 "$tmp/proj/workflow-graph.yaml")"
-[[ "$before" == "$after" ]] || { echo "FAIL: re-run overwrote existing graph without --force"; fail=1; }
-
-# --name validation: control characters rejected
-python3 "$SCRIPT" "$tmp/bad" --name "$(printf 'Bad\nName')" >/dev/null 2>&1 && { echo "FAIL: newline in --name accepted"; fail=1; }
-python3 "$SCRIPT" "$tmp/bad" --name "" >/dev/null 2>&1 && { echo "FAIL: empty --name accepted"; fail=1; }
+# idempotent re-run: an existing CLAUDE.md is never overwritten without --force
+echo "# my own memory" > "$tmp/proj2/CLAUDE.md"
+python3 "$SCRIPT" "$tmp/proj2" >/dev/null 2>&1 || { echo "FAIL: re-run exited non-zero"; fail=1; }
+[[ "$(head -1 "$tmp/proj2/CLAUDE.md")" == "# my own memory" ]] || { echo "FAIL: re-run overwrote an existing CLAUDE.md without --force"; fail=1; }
 
 if [[ "$fail" -eq 0 ]]; then
   echo "init: all checks passed"

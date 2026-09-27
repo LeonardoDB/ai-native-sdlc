@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-"""Deterministic plan-sync enforcement (F2).
+"""Deterministic plan-sync enforcement.
 
-Backs the "Plan mode first" hard rule: implementation changes cannot pass a PR
-or pre-commit check without an approved plan.md whose "Files that change"
+Backs the "Plan mode first" hard rule: implementation changes cannot pass an
+MR/PR or pre-commit check without an approved plan whose "Files that change"
 manifest covers the files, and departures from the plan must be declared in
-plan.md in the same change set.
+the plan in the same change set.
+
+Each task keeps its artifacts in its own folder, docs/changes/<task>/ (spec.md
+and plan.md), so parallel branches in one repo never touch the same files.
+The plan for a change is the docs/changes/*/plan.md the diff touches; pass
+--plan when the diff touches several.
 
 Usage:
-    check_plan_sync.py --base <rev> --head <rev>
-                       [--graph workflow-graph.yaml]
-                       [--ledger gates/ledger.jsonl]
+    check_plan_sync.py --base <rev> --head <rev> [--plan <path>]
                        [--ignore <glob>]... [--two-dot]
-    check_plan_sync.py --hook [--graph workflow-graph.yaml]
-                              [--ledger gates/ledger.jsonl]
-                              [--ignore <glob>]...
+    check_plan_sync.py --hook [--plan <path>] [--ignore <glob>]...
 
-PR mode defaults to a three-dot diff (merge-base). Hook mode validates the
-staged diff (HEAD vs index) and reads plan.md from the index. Ledger chain
-verification is delegated to gate_ledger.py.
+MR/PR mode defaults to a three-dot diff (merge-base). Hook mode validates the
+staged diff (HEAD vs index) and reads the plan from the index; when the plan
+is not staged (it went in an earlier commit), the task folder named by the
+current branch is used (branch fix/42-date-bug -> docs/changes/42/plan.md).
 
 Exit codes: 0 = pass, 1 = violation, 2 = usage error.
 """
@@ -32,29 +34,17 @@ import subprocess
 import sys
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-import gate_ledger as gl  # noqa: E402
-
-DEFAULT_PLAN_GATE = "engineer_approve"
+CHANGES_DIR = "docs/changes"
 
 # Paths that are process artifacts, not implementation. The checker never
 # requires a plan for these; adopters may add more via --ignore.
 PROCESS_ENTRIES = (
-    "intent/",
-    "spec.md",
-    "plan.md",
-    "REVIEW.md",
-    "workflow-graph.yaml",
-    "gates/",
-    "org/",
-    "evals/",
-    "bands.yaml",
-    "hooks/",
     "docs/",
+    "REVIEW.md",
+    "CLAUDE.md",
+    "AGENTS.md",
     ".github/",
+    ".gitlab/",
     "CHANGELOG.md",
     "README.md",
     "LICENSE",
@@ -63,7 +53,6 @@ PROCESS_ENTRIES = (
 
 STATUS_RE = re.compile(r"(?im)^\s*[-*]\s*Status\s*:\s*Approved\s*$")
 BULLET_RE = re.compile(r"^\s*[-*]\s+(.*)$")
-PREFIX_RE = re.compile(r"^\s*(?:new|modified|deleted|renamed)\s*[\):]?\s*$", re.I)
 
 
 def _git(repo: Path, args: list[str]) -> tuple[bool, str]:
@@ -84,7 +73,7 @@ def _git(repo: Path, args: list[str]) -> tuple[bool, str]:
 def _is_process_path(path: str, ignores: list[str]) -> bool:
     if any(fnmatch.fnmatch(path, pattern) for pattern in ignores):
         return True
-    normalized = path.lstrip("./")
+    normalized = path[2:] if path.startswith("./") else path
     for entry in PROCESS_ENTRIES:
         if entry.endswith("/"):
             if normalized == entry.rstrip("/") or normalized.startswith(entry):
@@ -109,8 +98,16 @@ def _changed_files_hook(repo: Path) -> tuple[bool, list[str] | str]:
     return True, [line for line in out.splitlines() if line.strip()]
 
 
-def _show(repo: Path, spec: str) -> tuple[bool, str]:
-    return _git(repo, ["show", f"{spec}:plan.md"])
+def _show(repo: Path, rev: str, path: str) -> tuple[bool, str]:
+    return _git(repo, ["show", f"{rev}:{path}"])
+
+
+def _plan_candidates(changed: list[str]) -> list[str]:
+    return sorted(
+        path for path in changed
+        if path.startswith(CHANGES_DIR + "/") and path.endswith("/plan.md")
+        and path.count("/") == CHANGES_DIR.count("/") + 2
+    )
 
 
 def _manifest_entries(text: str) -> list[str]:
@@ -187,54 +184,45 @@ def _added_manifest_entries(old_text: str | None, new_text: str) -> list[str]:
     return added
 
 
-def _plan_gate(repo: Path, graph_path: str | None) -> str:
-    if graph_path:
-        path = Path(graph_path)
-        if path.is_file():
-            try:
-                graph = gl.load_yaml(path)
-                nodes = graph.get("nodes", {})
-                plan = nodes.get("plan") if isinstance(nodes, dict) else None
-                if isinstance(plan, dict) and isinstance(plan.get("gate"), str):
-                    return plan["gate"]
-            except Exception:
-                pass
-    return DEFAULT_PLAN_GATE
+def _branch_plan(repo: Path) -> str | None:
+    """The plan whose task folder names the current branch (fix/42-x -> docs/changes/42)."""
+    ok, branch = _git(repo, ["rev-parse", "--abbrev-ref", "HEAD"])
+    if not ok:
+        return None
+    leaf = branch.strip().rsplit("/", 1)[-1].lower()
+    root = repo / CHANGES_DIR
+    if not leaf or not root.is_dir():
+        return None
+    matches = [
+        d.name for d in root.iterdir()
+        if d.is_dir() and (d / "plan.md").is_file()
+        and (leaf == d.name.lower() or leaf.startswith(d.name.lower() + "-"))
+    ]
+    # Prefer the longest folder name: "42" and "42-1" cannot both win.
+    return f"{CHANGES_DIR}/{max(matches, key=len)}/plan.md" if matches else None
 
 
-def _approved_plan_record(repo: Path, ledger_path: Path, gate: str) -> tuple[bool, dict | None]:
-    if not ledger_path.is_file():
-        return False, None
-    try:
-        records = gl.read_ledger(ledger_path)
-    except ValueError as exc:
-        raise ValueError(f"cannot read ledger {ledger_path}: {exc}") from exc
-    for record in records:
-        if record.get("gate") == gate and record.get("decision") == "approved":
-            return True, record
-    return False, None
-
-
-def _verify_ledger_record(repo: Path, ledger_path: Path, record: dict) -> bool:
-    args = argparse.Namespace(
-        ledger=str(ledger_path),
-        record=record.get("id"),
-        require_committed=False,
-        graph=None,
-        require_gates=False,
-    )
-    return gl.cmd_verify(args) == 0
+def _resolve_plan(
+    repo: Path, changed: list[str], explicit: str | None, use_branch: bool
+) -> tuple[str | None, str | None]:
+    """Return (plan path, error)."""
+    if explicit:
+        return explicit, None
+    candidates = _plan_candidates(changed)
+    if len(candidates) > 1:
+        return None, f"several plans changed ({', '.join(candidates)}); pass --plan"
+    if candidates:
+        return candidates[0], None
+    return (_branch_plan(repo) if use_branch else None), None
 
 
 def _check(
     repo: Path,
     changed: list[str],
+    plan_path: str | None,
     plan_text: str | None,
     plan_diff_base: str | None,
-    ledger_path: str | None,
-    graph_path: str | None,
     ignores: list[str],
-    hook_mode: bool,
 ) -> int:
     implementation = [
         path for path in changed if not _is_process_path(path, ignores)
@@ -242,54 +230,28 @@ def _check(
     if not implementation:
         return 0
 
-    if plan_text is None:
-        print("error: no plan.md", file=sys.stderr)
+    if plan_path is None or plan_text is None:
+        print(
+            f"error: no plan: add {CHANGES_DIR}/<task>/plan.md to this change "
+            "(or pass --plan)",
+            file=sys.stderr,
+        )
         return 1
     if not _plan_is_approved(plan_text):
-        print("error: plan.md not Approved", file=sys.stderr)
+        print(f"error: {plan_path} not Approved", file=sys.stderr)
         return 1
 
     try:
         entries = _manifest_entries(plan_text)
     except ValueError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(f"error: {plan_path}: {exc}", file=sys.stderr)
         return 1
 
-    gate = _plan_gate(repo, graph_path)
-    if ledger_path is not None:
-        path = Path(ledger_path)
-        found, record = _approved_plan_record(repo, path, gate)
-        if hook_mode:
-            # The plan approval may be committed in the same change; only
-            # enforce when a plan approval record already exists.
-            if found and not _verify_ledger_record(repo, path, record):
-                print(
-                    f"error: ledger record {record.get('id')} for gate {gate} "
-                    "failed verification",
-                    file=sys.stderr,
-                )
-                return 1
-        else:
-            if not found:
-                print(
-                    f"error: no approved plan record for gate {gate}",
-                    file=sys.stderr,
-                )
-                return 1
-            if not _verify_ledger_record(repo, path, record):
-                print(
-                    f"error: ledger record {record.get('id')} for gate {gate} "
-                    "failed verification",
-                    file=sys.stderr,
-                )
-                return 1
-
+    old_text = None
     if plan_diff_base is not None:
-        old_ok, old_text = _show(repo, plan_diff_base)
+        old_ok, old_text = _show(repo, plan_diff_base, plan_path)
         if not old_ok:
             old_text = None
-    else:
-        old_text = None
     added = _added_manifest_entries(old_text, plan_text) if old_text is not None else []
 
     unplanned: list[str] = []
@@ -302,7 +264,7 @@ def _check(
 
     if unplanned:
         details = " ".join(
-            f'{path} (add a matching entry under "Files that change" in plan.md)'
+            f'{path} (add a matching entry under "Files that change" in {plan_path})'
             for path in sorted(unplanned)
         )
         print(f"error: unplanned files: {details}", file=sys.stderr)
@@ -310,26 +272,24 @@ def _check(
     return 0
 
 
+def _read_plan(repo: Path, rev: str, plan_path: str | None) -> str | None:
+    if plan_path is None:
+        return None
+    ok, text = _show(repo, rev, plan_path)
+    return text if ok and text.strip() else None
+
+
 def cmd_pr(args: argparse.Namespace, repo: Path) -> int:
     ok, changed = _changed_files_pr(repo, args.base, args.head, args.two_dot)
     if not ok:
         print(f"error: git diff failed: {changed}", file=sys.stderr)
         return 1
-    ok, head_plan = _show(repo, args.head)
-    if not ok:
-        head_plan = ""
-    if not head_plan.strip():
-        head_plan = None
-    return _check(
-        repo,
-        changed,
-        head_plan,
-        args.base,
-        args.ledger,
-        args.graph,
-        args.ignore,
-        hook_mode=False,
-    )
+    plan_path, error = _resolve_plan(repo, changed, args.plan, use_branch=False)
+    if error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    plan_text = _read_plan(repo, args.head, plan_path)
+    return _check(repo, changed, plan_path, plan_text, args.base, args.ignore)
 
 
 def cmd_hook(args: argparse.Namespace, repo: Path) -> int:
@@ -337,34 +297,12 @@ def cmd_hook(args: argparse.Namespace, repo: Path) -> int:
     if not ok:
         print(f"error: git diff failed: {changed}", file=sys.stderr)
         return 1
-    ok, staged_plan = _show(repo, "")
-    if not ok:
-        staged_plan = ""
-    if not staged_plan.strip():
-        staged_plan = None
-    if staged_plan is None:
-        # Only fail when implementation files actually need a plan; process-only
-        # changes pass in cmd_pr/_check before this branch.
-        implementation = [
-            path for path in changed if not _is_process_path(path, args.ignore)
-        ]
-        if implementation:
-            print(
-                "error: plan.md is not staged; stage plan.md with the implementation",
-                file=sys.stderr,
-            )
-            return 1
-        return 0
-    return _check(
-        repo,
-        changed,
-        staged_plan,
-        "HEAD",
-        args.ledger,
-        args.graph,
-        args.ignore,
-        hook_mode=True,
-    )
+    plan_path, error = _resolve_plan(repo, changed, args.plan, use_branch=True)
+    if error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    plan_text = _read_plan(repo, "", plan_path)  # "" = the index
+    return _check(repo, changed, plan_path, plan_text, "HEAD", args.ignore)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -372,8 +310,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hook", action="store_true", help="check the staged diff")
     parser.add_argument("--base", default=None, help="base revision (PR mode)")
     parser.add_argument("--head", default=None, help="head revision (PR mode)")
-    parser.add_argument("--graph", default=None, help="workflow-graph.yaml (default: plan gate engineer_approve)")
-    parser.add_argument("--ledger", default=None, help="gates/ledger.jsonl when ledger-gating is wanted")
+    parser.add_argument("--plan", default=None,
+                        help=f"plan path (default: the {CHANGES_DIR}/*/plan.md the diff touches)")
     parser.add_argument("--ignore", action="append", default=[], help="additional process-path glob")
     parser.add_argument(
         "--two-dot",

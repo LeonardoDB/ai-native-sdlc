@@ -38,6 +38,8 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(result["kind"], "issue")
         self.assertEqual(result["ref"], "squad/pay/api#42")
         self.assertTrue(result["repo_matches"])
+        self.assertEqual(result["slug"], "42")
+        self.assertEqual(result["change_dir"], "docs/changes/42")
 
     def test_gitlab_on_non_gitlab_hostname(self) -> None:
         result, error = tl.parse("https://code.acme.io/team/app/-/work_items/7")
@@ -56,6 +58,7 @@ class ParseTests(unittest.TestCase):
         result, error = tl.parse("https://gitlab.acme.com.br/squad/web/-/issues/3", REPO)
         self.assertIsNone(error)
         self.assertFalse(result["repo_matches"])
+        self.assertEqual(result["slug"], "web-3")
 
     def test_gitlab_board_epic_and_mr_are_rejected(self) -> None:
         for url, kind in (
@@ -76,6 +79,7 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(result["ref"], "ENG-123")
         self.assertEqual(result["project"], "ENG")
         self.assertIsNone(result["repo_matches"])
+        self.assertEqual(result["change_dir"], "docs/changes/eng-123")
         self.assertEqual(result["current_repo"], REPO)
 
     def test_linear_board_is_rejected(self) -> None:

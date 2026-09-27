@@ -9,11 +9,11 @@ YAML sanity check):
   1. SKILL.md exists with name/description/version frontmatter.
   2. Every relative path linked from SKILL.md exists.
   3. plugin.json (repo root) name/version match the skill frontmatter.
-  4. Every asset referenced by the scaffold script exists.
+  4. Every file the skill promises exists.
   5. YAML/JSON assets parse.
   6. Shell assets pass `bash -n`.
-  7. The optional release gate passes its test suite (tests/test_gate.sh).
-  8. The scaffold script smoke-scaffolds into a temp dir.
+  7. The scaffold script smoke-scaffolds into a temp dir.
+  8. Python scripts compile.
 
 Exit 0 on success, 1 on any failure.
 """
@@ -24,9 +24,7 @@ import argparse
 import json
 import os
 import re
-import shutil
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
@@ -39,55 +37,17 @@ PROMISED = [
     "agents/openai.yaml",
     "references/playbook.md",
     "references/adoption.md",
-    "references/graph.md",
-    "references/org.md",
     "references/trackers.md",
     "scripts/init_workflow.py",
-    "scripts/init_org.py",
-    "scripts/sync_issues.py",
-    "scripts/gate_ledger.py",
-    "scripts/run_evals.py",
-    "scripts/detect_bands.py",
-    "scripts/workflow_state.py",
-    "scripts/check_plan_sync.py",
-    "scripts/org_status.py",
-    "scripts/intake.py",
     "scripts/tracker_link.py",
+    "scripts/check_plan_sync.py",
     "assets/intent.md",
     "assets/spec.md",
     "assets/plan.md",
     "assets/CLAUDE.md",
     "assets/REVIEW.md",
-    "assets/bands.yaml",
-    "assets/production-gate.sh",
-    "assets/evals.example.md",
-    "assets/evals.example.json",
-    "assets/evals-README.md",
-    "assets/gates-README.md",
-    "assets/workflow-graph.example.yaml",
-    "assets/workflow-graph.yaml",
-    "assets/incident.md",
     "assets/PULL_REQUEST_TEMPLATE.md",
-    "assets/runbooks/rollback-deploy.md",
-    "assets/hook-settings.example.json",
-    "assets/agent-evals.yml.example",
-    "assets/managed-settings.example.json",
     "assets/.gitignore",
-    "assets/org/org-chart.yaml",
-    "assets/org/status.yaml",
-    "assets/org/protocol.md",
-    "assets/org/roles/ceo.md",
-    "assets/org/roles/cto.md",
-    "assets/org/roles/product-manager.md",
-    "assets/org/roles/product-engineer.md",
-    "assets/org/roles/engineer.md",
-    "assets/org/roles/reviewer.md",
-    "assets/org/intake/README.md",
-    "assets/org/intake/config.json",
-    "assets/org/intake/github/.gitkeep",
-    "assets/org/intake/forms/.gitkeep",
-    "assets/org/intake/email/.gitkeep",
-    "assets/org/reviews/README.md",
 ]
 
 failures: list[str] = []
@@ -225,54 +185,23 @@ def main() -> int:
         code, _ = run(["bash", "-n", str(path)])
         check(code == 0, f"bash -n: {path.name}")
 
-    # 7. Release gate test suite.
-    gate_tests = repo_root / "tests" / "test_gate.sh"
-    if gate_tests.is_file():
-        code, out = run(["bash", str(gate_tests)])
-        last_line = out.splitlines()[-1] if out else ""
-        check(code == 0 and "failed" in last_line and last_line.endswith("0 failed"), "release gate test suite passes")
-    else:
-        bad("tests/test_gate.sh not found")
-
-    # 8. Scaffold smoke test.
+    # 7. Scaffold smoke test.
     with tempfile.TemporaryDirectory() as td:
         smoke = Path(td) / "smoke"
-        code, out = run(["python3", str(skill / "scripts" / "init_workflow.py"), str(smoke), "--name", "Smoke"])
+        code, out = run(["python3", str(skill / "scripts" / "init_workflow.py"), str(smoke)])
         check(code == 0, "init_workflow.py scaffold smoke test")
-        check(not (smoke / "intent").exists(), "scaffold writes no intent/ (intent lives in the tracker)")
-        check((smoke / "workflow-graph.yaml").is_file(), "scaffold writes workflow-graph.yaml")
-        check(not (smoke / "hooks").exists(), "scaffold writes no release hook (the loop ends at the MR/PR)")
-        check((smoke / "scripts" / "workflow_state.py").is_file(), "scaffold writes workflow_state.py")
+        check((smoke / "CLAUDE.md").is_file(), "scaffold writes CLAUDE.md")
         check((smoke / "scripts" / "check_plan_sync.py").is_file(), "scaffold writes check_plan_sync.py")
+        check(not (smoke / "intent").exists(), "scaffold writes no intent/ (intent lives in the tracker)")
+        check(not (smoke / "hooks").exists(), "scaffold writes no release hook (the loop ends at the MR/PR)")
 
-    # 9. Org scaffold smoke test.
-    with tempfile.TemporaryDirectory() as td:
-        org = Path(td) / "org-smoke"
-        code, out = run(["python3", str(skill / "scripts" / "init_org.py"), str(org)])
-        check(code == 0, "init_org.py scaffold smoke test")
-        check((org / "org" / "org-chart.yaml").is_file(), "org scaffold writes org/org-chart.yaml")
-        check((org / "org" / "status.yaml").is_file(), "org scaffold writes org/status.yaml")
-        check((org / "org" / "roles" / "cto.md").is_file(), "org scaffold writes role cards")
-        check((org / "org" / "intake" / "README.md").is_file(), "org scaffold writes intake README")
-        check((org / "scripts" / "sync_issues.py").is_file(), "org scaffold writes scripts/sync_issues.py")
-        check((org / "scripts" / "org_status.py").is_file(), "org scaffold writes scripts/org_status.py")
-        check((org / "scripts" / "intake.py").is_file(), "org scaffold writes scripts/intake.py")
-
-    # 10. Python scripts compile cleanly.
+    # 8. Python scripts compile cleanly.
     with tempfile.TemporaryDirectory(prefix="quickvalidate-pycache-") as pycache:
         compile_env = {**os.environ, "PYTHONPYCACHEPREFIX": pycache}
         for script in (
-            "run_evals.py",
-            "detect_bands.py",
-            "gate_ledger.py",
-            "init_org.py",
             "init_workflow.py",
-            "sync_issues.py",
-            "workflow_state.py",
-            "check_plan_sync.py",
-            "org_status.py",
-            "intake.py",
             "tracker_link.py",
+            "check_plan_sync.py",
             "quick_validate.py",
         ):
             code, _ = run(

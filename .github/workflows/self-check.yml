@@ -1,7 +1,7 @@
-# Self-check: validate the skill/plugin bundle, its tests, and the gate.
+# Self-check: validate the skill/plugin bundle and its tests.
 
-# The repo practices what it preaches: this workflow is the "continuous
-# evals / verify before asking for review" rule applied to the repo itself.
+# The repo practices what it preaches: this workflow is the "verify before
+# asking for review" rule applied to the repo itself.
 name: self-check
 on:
   pull_request:
@@ -22,14 +22,11 @@ jobs:
           set -e
           while IFS= read -r f; do bash -n "$f"; done < <(find . -name '*.sh' -not -path './node_modules/*')
 
-      - name: Unit tests (band detector, eval runner)
+      - name: Unit tests (tracker link, plan sync)
         run: python3 -m unittest discover -s tests -v
 
-      - name: Integration tests (release gate, scaffold)
-        run: |
-          bash tests/test_gate.sh
-          bash tests/test_init.sh
-          bash tests/test_init_org.sh
+      - name: Integration tests (scaffold)
+        run: bash tests/test_init.sh
 
       - name: Skill/plugin validation
         run: python3 skills/ai-native-sdlc/scripts/quick_validate.py skills/ai-native-sdlc
