@@ -97,21 +97,25 @@ Each acceptance criterion is a vertical slice: **one failing test → the least 
 
 ### Deterministic checks
 
-Four scripts turn the Build rules into checks that run the same way every time — on the working tree during Build and Review, and with `--base` in MR/PR CI:
+Five scripts turn the Build rules into checks that run the same way every time — on the working tree during Build and Review, and with `--base` in MR/PR CI:
 
 ```bash
 python3 scripts/check_plan_sync.py --hook      # the approved plan covers every changed file
 python3 scripts/check_tdd.py                    # every AC has proof; each test passes with the change and fails without it
+python3 scripts/check_mutations.py              # small mistakes on the changed lines must fail a test
 python3 scripts/check_diff_hygiene.py           # no unexplained suppressions, skips, or rewritten tests
 python3 scripts/tracker_link.py parse <link>    # where the task stands (resume)
 
 # MR/PR CI, on a clean checkout
 python3 scripts/check_plan_sync.py --base origin/main --head HEAD
 python3 scripts/check_tdd.py --base origin/main
+python3 scripts/check_mutations.py --base origin/main
 python3 scripts/check_diff_hygiene.py --base origin/main
 ```
 
 `check_tdd.py` is the one no prompt can replace: it runs each Proof command on the change (green), then removes the implementation files — keeping the tests — and runs them again (red). A test that passes without the change does not test it and fails the check. It prints each red run's last lines so the failure reason can be confirmed. Every acceptance criterion must appear in Proof, either as a command or as `manual:` evidence for the MR/PR.
+
+`check_mutations.py` goes one step finer. On the lines the change adds — implementation only — it makes one small, plausible mistake at a time (`>=` → `>`, `and` → `or`, `100` → `101`, `True` → `False`, `+` → `-`) and runs the Proof commands. A mutant the tests still pass is a bug of that shape that would ship unnoticed: add the test that kills it. Some mutants are equivalent — the mutation changes nothing observable — and no test can kill them; list those under plan.md's `## Surviving mutants` as `path:line — reason`. It runs at most `--max` mutants (default 25), in file and line order.
 
 ### Deterministic plan-sync
 
@@ -171,7 +175,7 @@ Nothing is committed during Build; the change stays in the working tree, on the 
 
 **How to execute it.**
 
-1. **Run the deterministic checks first** — `check_plan_sync.py --hook` (or its MR/PR form), `check_tdd.py`, `check_diff_hygiene.py`, plus the typecheck and the full suite against the baseline. Fix what they catch before any reviewer spends time on it.
+1. **Run the deterministic checks first** — `check_plan_sync.py --hook` (or its MR/PR form), `check_tdd.py`, `check_mutations.py`, `check_diff_hygiene.py`, plus the typecheck and the full suite against the baseline. Fix what they catch before any reviewer spends time on it.
 2. **Dispatch the reviewer** (`references/agents/reviewer.md`) in a fresh context, with the diff, the spec and plan, the task's acceptance criteria, the check outputs, `REVIEW.md`, the repo rules from CLAUDE.md, and a do-not-flag list (departures already recorded in plan.md). Scale it: one reviewer carrying all three lenses for a small, contained diff; three in parallel — correctness, spec + conventions, simplicity + security — when each lens has real surface. For a trivial diff (a config line, a one-file fix copying an existing pattern), review it yourself and say so.
 3. **Filter as the coordinator.** Reviewers report everything, scored; the filter is a separate pass. Dedupe across lenses; keep findings at confidence ≥ 80; for lower-confidence findings with high severity, read the cited code and promote or drop them on evidence; drop the rest. Record every rejection with a one-line reason in plan.md's `## Review`, so a second round does not re-raise it. Order what is left by severity; every kept finding has a `file:line` and a fix.
 4. **Check the acceptance criteria**, the task's, not just the plan's. Finishing every step of the plan is not the same as meeting the task: walk each criterion and point at the evidence — the `check_tdd.py` green/red line for its test, or the manual walkthrough or screenshot. One without evidence is unfinished work on this task, not a follow-up.

@@ -8,6 +8,13 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- `scripts/check_mutations.py`: mutation check on the lines a change adds
+  (implementation only) — flipped comparisons, swapped and/or, off-by-one
+  constants, inverted booleans, `+`/`-` — run one at a time against the
+  plan's Proof commands, with every file restored afterwards. A surviving
+  mutant fails unless plan.md lists it under `## Surviving mutants` with the
+  reason. Working tree or `--base` (CI); `--max` caps the run. Scaffolded and
+  tested (`tests/test_check_mutations.py`).
 - Test-first, typed Build: `scripts/check_tdd.py` proves every acceptance
   criterion maps to a Proof command (or manual evidence) and that each
   command passes with the change and fails with the implementation removed

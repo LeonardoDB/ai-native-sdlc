@@ -46,6 +46,11 @@ check_tdd.py runs each command: it must pass with the change and fail without it
 the behavior was intentionally removed). Empty when only new tests were added. Fix the
 code, not the test: a test is changed only when the test itself is wrong.>
 
+## Surviving mutants
+
+<Mutants check_mutations.py reports that no test can or should kill, as `path:line — reason`
+(equivalent: the mutation changes nothing observable). Empty by default.>
+
 ## Deviations
 
 <Departures from this plan or from frozen signatures, each with its reason. Empty by default.>
@@ -64,6 +69,7 @@ baseline; after it, zero new failures, and any pre-existing failure named.>
 - Lint: `<command>` — zero warnings
 - Tests: `<command>` — baseline <n passed, m failed> → after <…>
 - TDD proof: `python3 scripts/check_tdd.py` — every AC green with the change, red without
+- Mutations: `python3 scripts/check_mutations.py` — every mutant on the changed lines killed or listed
 - Diff hygiene: `python3 scripts/check_diff_hygiene.py` — no unexplained suppressions or test changes
 
 ## Parallelization

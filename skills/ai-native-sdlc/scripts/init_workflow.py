@@ -11,6 +11,7 @@ Creates:
     scripts/check_plan_sync.py  deterministic plan-sync check (pre-commit / MR/PR CI)
     scripts/check_tdd.py        deterministic TDD proof (AC coverage, green/red)
     scripts/check_diff_hygiene.py  suppressions, skipped tests, rewritten tests
+    scripts/check_mutations.py  mutation check on the changed lines
     .gitignore                  basic ignore rules
 
 No intent.md: the intent lives in the tracker (Linear, GitLab, GitHub); a
@@ -38,6 +39,7 @@ FILES = {
     "scripts/check_plan_sync.py": "scripts/check_plan_sync.py",
     "scripts/check_tdd.py": "scripts/check_tdd.py",
     "scripts/check_diff_hygiene.py": "scripts/check_diff_hygiene.py",
+    "scripts/check_mutations.py": "scripts/check_mutations.py",
     ".gitignore": "assets/.gitignore",
 }
 

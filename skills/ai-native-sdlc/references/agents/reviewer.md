@@ -11,7 +11,7 @@ this brief into the subagent's prompt, followed by the dispatch context below.
 - `docs/changes/<task>/spec.md` and `plan.md` (the light path has only plan.md),
   including the plan's Proof, Types first, Test changes, and Build log
 - the task's acceptance criteria, from the task description
-- the output of `check_tdd.py` and `check_diff_hygiene.py`
+- the output of `check_tdd.py`, `check_mutations.py`, and `check_diff_hygiene.py`
 - `REVIEW.md` and the CLAUDE.md sections that set repo rules (conventions, the
   style skill if one is named)
 - **do-not-flag**: departures already recorded in plan.md, so settled calls
@@ -47,8 +47,9 @@ this fail?* If none would, it tests nothing. Flag:
 - mocks of the project's own modules — mock only at system boundaries (external
   APIs, time, randomness);
 - an acceptance criterion whose test does not actually exercise it;
-- the mutations that would survive: flip a condition, change a constant, return
-  empty, drop a validation — which of them would the tests miss?
+- the mutants `check_mutations.py` could not reach (it only flips operators and
+  constants): return empty, drop a validation, skip a branch — which would the
+  tests miss? And for each survivor listed as equivalent, is it really?
 - red evidence in the Build log that failed for the wrong reason (a typo, an import
   path) rather than the missing behavior.
 
