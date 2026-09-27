@@ -157,6 +157,16 @@ Review came back? Pass the MR/PR link (`/ai-native-sdlc <MR link>`): the agent t
 
 No task yet? Describe the idea; the agent interviews you, drafts the task description, and creates it in the tracker once you confirm.
 
+## Evals
+
+`evals/` holds behavioral evals for Claude Code's native runner — offline
+fixtures (a Python repo, a GitLab origin that pushes locally, a logging `glab`
+stand-in) and mostly deterministic graders. See `evals/README.md`:
+
+```bash
+claude plugin eval . --scaffold --trust-plugin --no-publish --allow-tools Bash Edit Write
+```
+
 ## Layout
 
 ```text
@@ -170,6 +180,7 @@ No task yet? Describe the idea; the agent interviews you, drafts the task descri
 ├── CHANGELOG.md
 ├── LICENSE
 ├── SECURITY.md
+├── evals/                         # behavioral evals (claude plugin eval)
 ├── tests/                         # tests for every script and the scaffold
 └── skills/
     └── ai-native-sdlc/

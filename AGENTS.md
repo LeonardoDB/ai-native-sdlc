@@ -19,6 +19,11 @@ bash tests/test_init.sh
 python3 -m unittest discover -s tests -v
 ```
 
+After changing the skill's behavior (SKILL.md, references, briefs), also run
+the evals that cover it — `claude plugin eval . --scaffold --trust-plugin
+--no-publish --allow-tools Bash Edit Write --case '<glob>'` — and note the
+scores in the change; see `evals/README.md`.
+
 All must pass before finishing; CI runs the same checks
 (`.github/workflows/self-check.yml`). Keep `plugin.json` and `SKILL.md`
 consistent in name, description, and version, and the same for

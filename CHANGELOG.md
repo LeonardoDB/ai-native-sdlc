@@ -8,6 +8,15 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Evals for `claude plugin eval` (`evals/`): eight cases — the full loop to
+  an MR, stopping for plan approval, rejecting a board link, stopping on a
+  dirty tree, listing an existing test change, one MR feedback round, a bug
+  fixed from its root cause, and a plain question that must not start the
+  workflow. A shared offline fixture (`evals/_fixtures/shop.sh`) builds a
+  Python repo with a GitLab origin that pushes to a local bare repo and a
+  `glab` stand-in that logs every call, so most graders are deterministic
+  (files, tracker log, the `check_tdd` line in the trace). First runs:
+  `03-board-link-rejected` and `08-neg-explain` 1.00 on haiku.
 - Regression guards in Proof: an acceptance criterion that keeps behavior
   the code already has is marked `regression:` and `check_tdd.py` checks it
   green only — it cannot fail without the change, and flagging it made

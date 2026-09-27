@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: 02-waits-for-plan-approval
+tags: [gate]
+context:
+  scaffold_script: fixture.sh

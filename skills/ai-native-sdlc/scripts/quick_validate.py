@@ -199,6 +199,12 @@ def main() -> int:
         except json.JSONDecodeError as exc:
             bad(f"marketplace.json is not valid JSON: {exc}")
 
+    # 3c. Eval cases are complete (claude plugin eval format).
+    evals = repo_root / "evals"
+    for case in sorted(p for p in evals.iterdir() if p.is_dir() and p.name[:1].isdigit()) if evals.is_dir() else []:
+        check((case / "case.yaml").is_file() and (case / "prompt.md").is_file()
+              and any((case / "graders").glob("*.md")), f"eval case complete: {case.name}")
+
     # 4. Promised files exist.
     for rel in PROMISED:
         check((skill / rel).exists(), f"promised file exists: {rel}")

@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: 07-bug-root-cause
+tags: [e2e, bug]
+context:
+  scaffold_script: fixture.sh

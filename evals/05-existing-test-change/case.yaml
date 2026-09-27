@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: 05-existing-test-change
+tags: [e2e, tests]
+context:
+  scaffold_script: fixture.sh
