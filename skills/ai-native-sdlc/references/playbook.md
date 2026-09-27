@@ -73,6 +73,10 @@ The session starts in plan mode with the task and spec.md (on the light path, th
 
 plan.md contents: files that change; types first (when adding domain shapes); order of work as vertical slices; proof (each acceptance criterion → the command that proves it); test changes; deviations; risks; verification commands with the test-suite baseline; the build log.
 
+### Impact first
+
+Before approving the plan, map what the change can break: `python3 scripts/impact_map.py --from-plan` reads the plan's "Files that change" and reports, per file, who imports it, who uses the functions it defines, how often it changed in the last year and how many of those changes were fixes, and a high/mid/low risk. Every high-risk file goes under plan.md's `## Impact` with the callers at risk and the test that covers them — a caller the change could break gets a regression test in the slices. In Review, `impact_map.py --check` fails for a high-risk file the change touched that the plan does not name. Callers are found by name, so treat them as leads to read, and read them.
+
 Before writing code, record the baseline: run the full suite, typecheck, and lint, and note the result in plan.md's Verification. A failure that exists before the change is named there, not discovered later and blamed on the change.
 
 If the project's CLAUDE.md names a style skill in `## Conventions`, invoke it before writing code and repeat that instruction in every subagent brief. If it names an LSP or a library-docs tool in `## Code tooling`, use them: definitions and references from the LSP instead of grep, and a dependency's current API from its docs instead of memory.
@@ -97,13 +101,14 @@ Each acceptance criterion is a vertical slice: **one failing test → the least 
 
 ### Deterministic checks
 
-Five scripts turn the Build rules into checks that run the same way every time — on the working tree during Build and Review, and with `--base` in MR/PR CI:
+Six scripts turn the Build rules into checks that run the same way every time — on the working tree during Build and Review, and with `--base` in MR/PR CI:
 
 ```bash
 python3 scripts/check_plan_sync.py --hook      # the approved plan covers every changed file
 python3 scripts/check_tdd.py                    # every AC has proof; each test passes with the change and fails without it
 python3 scripts/check_mutations.py              # small mistakes on the changed lines must fail a test
 python3 scripts/check_diff_hygiene.py           # no unexplained suppressions, skips, or rewritten tests
+python3 scripts/impact_map.py --check           # every high-risk file is named in the plan's Impact
 python3 scripts/tracker_link.py parse <link>    # where the task stands (resume)
 
 # MR/PR CI, on a clean checkout
@@ -175,7 +180,7 @@ Nothing is committed during Build; the change stays in the working tree, on the 
 
 **How to execute it.**
 
-1. **Run the deterministic checks first** — `check_plan_sync.py --hook` (or its MR/PR form), `check_tdd.py`, `check_mutations.py`, `check_diff_hygiene.py`, plus the typecheck and the full suite against the baseline. Fix what they catch before any reviewer spends time on it.
+1. **Run the deterministic checks first** — `check_plan_sync.py --hook` (or its MR/PR form), `check_tdd.py`, `check_mutations.py`, `check_diff_hygiene.py`, `impact_map.py --check`, plus the typecheck and the full suite against the baseline. Fix what they catch before any reviewer spends time on it.
 2. **Dispatch the reviewer** (`references/agents/reviewer.md`) in a fresh context, with the diff, the spec and plan, the task's acceptance criteria, the check outputs, `REVIEW.md`, the repo rules from CLAUDE.md, and a do-not-flag list (departures already recorded in plan.md). Scale it: one reviewer carrying all three lenses for a small, contained diff; three in parallel — correctness, spec + conventions, simplicity + security — when each lens has real surface. For a trivial diff (a config line, a one-file fix copying an existing pattern), review it yourself and say so.
 3. **Filter as the coordinator.** Reviewers report everything, scored; the filter is a separate pass. Dedupe across lenses; keep findings at confidence ≥ 80; for lower-confidence findings with high severity, read the cited code and promote or drop them on evidence; drop the rest. Record every rejection with a one-line reason in plan.md's `## Review`, so a second round does not re-raise it. Order what is left by severity; every kept finding has a `file:line` and a fix.
 4. **Check the acceptance criteria**, the task's, not just the plan's. Finishing every step of the plan is not the same as meeting the task: walk each criterion and point at the evidence — the `check_tdd.py` green/red line for its test, or the manual walkthrough or screenshot. One without evidence is unfinished work on this task, not a follow-up.

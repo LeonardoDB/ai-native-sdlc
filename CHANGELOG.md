@@ -8,6 +8,12 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- `scripts/impact_map.py`: per changed file, the files that import it
+  (Python and JS/TS), the files using the symbols the change adds or edits,
+  the last year's commits and fix rate, and a high/mid/low risk. Run with
+  `--from-plan` before the change to fill plan.md's new `## Impact`, and with
+  `--check` in Review to fail a high-risk file the plan does not name.
+  Searches in Python over tracked files, so results match on every platform.
 - `scripts/check_mutations.py`: mutation check on the lines a change adds
   (implementation only) — flipped comparisons, swapped and/or, off-by-one
   constants, inverted booleans, `+`/`-` — run one at a time against the

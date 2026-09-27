@@ -18,6 +18,14 @@
 - src/main.py
 - tests/test_main.py
 
+## Impact
+
+<From `python3 scripts/impact_map.py --from-plan`: every high-risk file (many dependents or a
+high fix rate) with the callers that could break and the test that covers them. Review runs
+`impact_map.py --check`, which fails for a high-risk file not named here.>
+
+- <path> — <dependents/callers at risk> — covered by <test id, or AC-n>
+
 ## Types first
 
 <Only when the change adds new domain shapes (types, schemas, interfaces, public signatures).
@@ -71,6 +79,7 @@ baseline; after it, zero new failures, and any pre-existing failure named.>
 - TDD proof: `python3 scripts/check_tdd.py` — every AC green with the change, red without
 - Mutations: `python3 scripts/check_mutations.py` — every mutant on the changed lines killed or listed
 - Diff hygiene: `python3 scripts/check_diff_hygiene.py` — no unexplained suppressions or test changes
+- Impact: `python3 scripts/impact_map.py --check` — every high-risk file named under Impact
 
 ## Parallelization
 

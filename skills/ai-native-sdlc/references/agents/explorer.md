@@ -12,6 +12,8 @@ brief into the subagent's prompt, followed by the dispatch context below.
 - the task: title, description, acceptance criteria
 - the `## Knowledge base` pointers from CLAUDE.md, if any (paths or MCP store)
 - the repo's routing/architecture notes from CLAUDE.md, if any
+- `impact_map.py --files <paths>` output for the area, when you already know
+  which files it centers on
 
 ---
 

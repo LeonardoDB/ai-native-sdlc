@@ -22,7 +22,7 @@ Plan (tracker board) → Design → Build → Review → MR/PR opened ■ end
 
 - **Plan** is the tracker: a task on the board is an accepted intent. The agent reads it, never edits it, and gets onto the task's branch before touching code.
 - **Design** writes `docs/changes/<task>/spec.md`, after an **explorer** subagent maps unfamiliar code, with the org's skills and the project's knowledge base. Small, localized changes take the **light path** and skip the spec.
-- **Build** writes `docs/changes/<task>/plan.md` in plan mode, then works **test-first**: types first when the change adds domain shapes, then one acceptance criterion at a time, red → green — nothing committed yet.
+- **Build** writes `docs/changes/<task>/plan.md` in plan mode — with an **impact map** of who depends on the files it will change — then works **test-first**: types first when the change adds domain shapes, then one acceptance criterion at a time, red → green — nothing committed yet.
 - **Review** runs the deterministic checks — every acceptance criterion has a test that **fails without the change and passes with it** (`check_tdd.py`), small mistakes on the changed lines fail a test (`check_mutations.py`), no unexplained `any`/suppressions/skipped or rewritten tests (`check_diff_hygiene.py`), the plan covers the diff (`check_plan_sync.py`) — then hands the change to a fresh-context **reviewer** subagent, filters its scored findings, checks the task's acceptance criteria with evidence, re-verifies, then asks once to commit, push, and open the MR/PR — the last thing the agent does.
 
 Running the skill again with the same link resumes where the task stopped, read from its `docs/changes/<task>/` folder.
@@ -164,6 +164,7 @@ No task yet? Describe the idea; the agent interviews you, drafts the task descri
             ├── check_tdd.py       # AC coverage; each test green with the change, red without
             ├── check_mutations.py # mutants on the changed lines must fail a test
             ├── check_diff_hygiene.py  # suppressions, skipped and rewritten tests
+            ├── impact_map.py      # dependents, callers, fix rate, risk per changed file
             ├── init_workflow.py   # scaffold CLAUDE.md, REVIEW.md, the checks
             └── quick_validate.py  # skill/plugin self-check
 ```

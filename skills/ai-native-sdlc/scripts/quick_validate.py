@@ -46,6 +46,7 @@ PROMISED = [
     "scripts/check_tdd.py",
     "scripts/check_diff_hygiene.py",
     "scripts/check_mutations.py",
+    "scripts/impact_map.py",
     "assets/intent.md",
     "assets/spec.md",
     "assets/plan.md",
@@ -196,7 +197,7 @@ def main() -> int:
         code, out = run(["python3", str(skill / "scripts" / "init_workflow.py"), str(smoke)])
         check(code == 0, "init_workflow.py scaffold smoke test")
         check((smoke / "CLAUDE.md").is_file(), "scaffold writes CLAUDE.md")
-        for name in ("check_plan_sync.py", "check_tdd.py", "check_diff_hygiene.py", "check_mutations.py"):
+        for name in ("check_plan_sync.py", "check_tdd.py", "check_diff_hygiene.py", "check_mutations.py", "impact_map.py"):
             check((smoke / "scripts" / name).is_file(), f"scaffold writes {name}")
         check(not (smoke / "intent").exists(), "scaffold writes no intent/ (intent lives in the tracker)")
         check(not (smoke / "hooks").exists(), "scaffold writes no release hook (the loop ends at the MR/PR)")
@@ -211,6 +212,7 @@ def main() -> int:
             "check_tdd.py",
             "check_diff_hygiene.py",
             "check_mutations.py",
+            "impact_map.py",
             "quick_validate.py",
         ):
             code, _ = run(
