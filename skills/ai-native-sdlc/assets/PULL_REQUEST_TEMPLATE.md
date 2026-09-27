@@ -6,14 +6,18 @@
 
 ## Implements
 
-- intent: <task ref + link> (Closes group/project#42 · Fixes ENG-123)
-- spec: <commit>
-- plan: <commit>
+- task: <task ref + link> (Closes group/project#42 · Fixes ENG-123)
+- spec: docs/changes/<task>/spec.md (full path only)
+- plan: docs/changes/<task>/plan.md
 
 ## Files
 
 <Files changed — must match plan.md "Files that change", or plan.md was
-updated in this same PR.>
+updated in this same MR/PR.>
+
+## Acceptance criteria
+
+- [ ] <criterion from the task> — <evidence: test, walkthrough, screenshot>
 
 ## Evidence (verified before requesting review)
 
@@ -22,9 +26,10 @@ updated in this same PR.>
 - [ ] Lint: <paste output>
 - [ ] Screenshot matches the approved mock (UI changes)
 
-## Review passes run (REVIEW.md)
+## Review (REVIEW.md, independent reviewer)
 
-- [ ] Bugs · [ ] Security · [ ] Compliance
+- [ ] Correctness · [ ] Spec + conventions · [ ] Simplicity + security
+- Rounds: <n>; findings fixed and rejected are in plan.md `## Review`
 
 ## Notes
 

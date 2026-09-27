@@ -34,8 +34,15 @@ Output: one JSON object on stdout:
                   (a task of the current repo), backlog-42 (another project)
     change_dir    docs/changes/<slug> — where the task's spec.md and plan.md go
     url           the normalized link
-    current_repo  {remote, host, project, forge} of --repo-dir, or null
+    current_repo  {remote, host, project, forge, root, branch, default_branch,
+                  dirty} of --repo-dir, or null outside a repo with an origin
     repo_matches  true | false | null (unknown, or a Linear task)
+    on_task_branch  true when the checked-out branch belongs to this task
+                  (its last segment is the slug or starts with "<slug>-")
+    state         where the task stands, read from change_dir in the repo:
+                  {spec, plan: missing | draft | approved, next} with next one
+                  of design, approve-spec, plan, approve-plan, implement — so a
+                  second run with the same link resumes instead of restarting
 
 Exit codes: 0 = task link resolved, 1 = not a task link or unrecognized link
 (JSON still printed when the system is known), 2 = usage error.
@@ -48,10 +55,12 @@ import json
 import re
 import subprocess
 import sys
+from pathlib import Path
 from urllib.parse import urlsplit
 
 LINEAR_KEY_RE = re.compile(r"^([A-Za-z][A-Za-z0-9]*)-(\d+)$")
 SCP_REMOTE_RE = re.compile(r"^(?:[^@/]+@)?([^:/]+):(.+)$")
+STATUS_APPROVED_RE = re.compile(r"(?im)^\s*[-*]\s*Status\s*:\s*Approved\s*$")
 
 
 def _result(system: str, kind: str, host: str, url: str, **fields) -> dict:
@@ -130,15 +139,51 @@ def parse_remote(remote: str) -> dict | None:
     return {"remote": remote, "host": host, "project": path, "forge": forge}
 
 
-def current_repo(repo_dir: str) -> dict | None:
+def _git(repo_dir: str, *args: str) -> str | None:
     try:
-        res = subprocess.run(["git", "-C", repo_dir, "remote", "get-url", "origin"],
+        res = subprocess.run(["git", "-C", repo_dir, *args],
                              capture_output=True, text=True, timeout=30)
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return None
-    if res.returncode != 0:
+    return res.stdout.strip() if res.returncode == 0 else None
+
+
+def current_repo(repo_dir: str) -> dict | None:
+    remote = _git(repo_dir, "remote", "get-url", "origin")
+    repo = parse_remote(remote) if remote else None
+    if repo is None:
         return None
-    return parse_remote(res.stdout)
+    head = _git(repo_dir, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+    repo.update({
+        "root": _git(repo_dir, "rev-parse", "--show-toplevel"),
+        "branch": _git(repo_dir, "branch", "--show-current") or None,
+        "default_branch": head.split("/", 1)[1] if head and "/" in head else None,
+        "dirty": bool(_git(repo_dir, "status", "--porcelain")),
+    })
+    return repo
+
+
+def _artifact_status(path: Path) -> str:
+    if not path.is_file():
+        return "missing"
+    return "approved" if STATUS_APPROVED_RE.search(path.read_text(encoding="utf-8")) else "draft"
+
+
+def task_state(root: str, change_dir: str) -> dict:
+    """Where a task stands, from its spec.md and plan.md (the light path has no spec)."""
+    base = Path(root) / change_dir
+    spec, plan = _artifact_status(base / "spec.md"), _artifact_status(base / "plan.md")
+    if plan == "approved":
+        step = "implement"
+    elif plan == "draft":
+        step = "approve-plan"
+    elif spec == "approved":
+        step = "plan"
+    elif spec == "draft":
+        step = "approve-spec"
+    else:
+        step = "design"
+    return {"spec": spec, "plan": plan, "next": step}
 
 
 def parse(url: str, repo: dict | None = None) -> tuple[dict | None, str | None]:
@@ -177,6 +222,13 @@ def parse(url: str, repo: dict | None = None) -> tuple[dict | None, str | None]:
             slug = f"{result['project'].rsplit('/', 1)[-1].lower()}-{result['id']}"
         result["slug"] = re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
         result["change_dir"] = f"docs/changes/{result['slug']}"
+    result["on_task_branch"] = None
+    result["state"] = None
+    if result["slug"] and repo:
+        leaf = (repo.get("branch") or "").rsplit("/", 1)[-1].lower()
+        result["on_task_branch"] = leaf == result["slug"] or leaf.startswith(result["slug"] + "-")
+        if repo.get("root"):
+            result["state"] = task_state(repo["root"], result["change_dir"])
     if result["kind"] != "issue":
         return result, (f"{result['system']} {result['kind']} link, not a task; "
                         "open the task itself and pass its link")

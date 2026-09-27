@@ -6,6 +6,25 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ## [Unreleased]
 
+### Added
+
+- Subagents: `references/agents/explorer.md` (Design — read-only, `file:line`
+  map and ranked essential files, knowledge-base recall) and
+  `references/agents/reviewer.md` (Review — fresh context, three lenses,
+  every finding scored by confidence and severity). The coordinator filters
+  (keep ≥ 80, check high-severity lower ones), records rejections in plan.md
+  `## Review`, walks the task's acceptance criteria with evidence, and stops
+  after two review rounds.
+- Workspace before code: branch `<type>/<slug>-<summary>` off the fetched
+  default branch on the user's go-ahead, stop on a dirty tree, worktree only
+  on request (`.worktrees/` ignored by the scaffold).
+- Resuming: `tracker_link.py` reports the git state (branch, default branch,
+  dirty), `on_task_branch`, and the task `state` (`next`: design,
+  approve-spec, plan, approve-plan, implement) read from `docs/changes/<task>/`.
+- Light path: localized changes skip the spec; plan.md is the one approval.
+  plan.md gains `Path` and `## Review`; the MR/PR template gains acceptance
+  criteria and the reviewer lenses.
+
 ### Removed
 
 - Everything outside the task → MR/PR loop, and what did not fit it: the

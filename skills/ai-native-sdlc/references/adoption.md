@@ -55,7 +55,7 @@ REVIEW.md defines the passes (bugs, security, compliance) and the evidence requi
 
 ## Parallel sessions and subagents
 
-Split the plan into independent file sets; one worktree per session; start with 2–3. Each task already has its own `docs/changes/<task>/` folder, so parallel tasks in one repo do not collide. Subagents in `.claude/agents/*.md` package recurring jobs:
+Split the plan into independent file sets; one worktree per session (`.worktrees/<task>`, ignored by the scaffolded `.gitignore`); start with 2–3. Each task already has its own `docs/changes/<task>/` folder, so parallel tasks in one repo do not collide. The workflow's own subagents — explorer and reviewer — are briefs in `references/agents/`; extend a brief's dispatch context rather than editing the brief for one project. Subagents in `.claude/agents/*.md` package other recurring jobs:
 
 ```markdown
 ---

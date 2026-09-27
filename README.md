@@ -20,10 +20,12 @@ Plan (tracker board) → Design → Build → Review → MR/PR opened ■ end
                         team review, merge, deploy: outside this workflow
 ```
 
-- **Plan** is the tracker: a task on the board is an accepted intent. The agent reads it and never edits it.
-- **Design** writes `docs/changes/<task>/spec.md`, using the org's skills and the project's knowledge base.
+- **Plan** is the tracker: a task on the board is an accepted intent. The agent reads it, never edits it, and gets onto the task's branch before touching code.
+- **Design** writes `docs/changes/<task>/spec.md`, after an **explorer** subagent maps unfamiliar code, with the org's skills and the project's knowledge base. Small, localized changes take the **light path** and skip the spec.
 - **Build** writes `docs/changes/<task>/plan.md` in plan mode, then the code and tests — nothing committed yet.
-- **Review** runs the `REVIEW.md` passes and the verification, then asks once to commit, push, and open the MR/PR — the last thing the agent does.
+- **Review** hands the change to a fresh-context **reviewer** subagent, filters its scored findings, checks the task's acceptance criteria with evidence, re-verifies, then asks once to commit, push, and open the MR/PR — the last thing the agent does.
+
+Running the skill again with the same link resumes where the task stopped, read from its `docs/changes/<task>/` folder.
 
 One folder per task keeps parallel branches in a repo from touching the same files. The agent does the generation, verification, and mechanical work; humans approve the spec and the plan, give the go-ahead to open the MR/PR, and review and merge it. The full phase → artifact → gate contract lives in `skills/ai-native-sdlc/SKILL.md`.
 
@@ -144,8 +146,9 @@ No task yet? Describe the idea; the agent interviews you, drafts the task descri
         ├── agents/openai.yaml     # UI metadata
         ├── references/
         │   ├── playbook.md        # phase-by-phase procedures
-        │   ├── trackers.md        # task links, rules, and delivery defaults
-        │   └── adoption.md        # tailoring the workflow to a team
+        │   ├── trackers.md        # task links, workspace, resuming, delivery
+        │   ├── adoption.md        # tailoring the workflow to a team
+        │   └── agents/            # explorer.md, reviewer.md — subagent briefs
         ├── assets/
         │   ├── intent.md          # shape of a new tracker task description
         │   ├── spec.md            # → docs/changes/<task>/spec.md
@@ -155,7 +158,7 @@ No task yet? Describe the idea; the agent interviews you, drafts the task descri
         │   ├── PULL_REQUEST_TEMPLATE.md  # fallback MR/PR body
         │   └── .gitignore
         └── scripts/
-            ├── tracker_link.py    # resolve a task link (system, ref, slug, repo match)
+            ├── tracker_link.py    # resolve a task link (ref, slug, branch, resume state)
             ├── check_plan_sync.py # deterministic plan-vs-diff check
             ├── init_workflow.py   # scaffold CLAUDE.md, REVIEW.md, plan-sync
             └── quick_validate.py  # skill/plugin self-check

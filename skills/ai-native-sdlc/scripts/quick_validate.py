@@ -38,6 +38,8 @@ PROMISED = [
     "references/playbook.md",
     "references/adoption.md",
     "references/trackers.md",
+    "references/agents/explorer.md",
+    "references/agents/reviewer.md",
     "scripts/init_workflow.py",
     "scripts/tracker_link.py",
     "scripts/check_plan_sync.py",

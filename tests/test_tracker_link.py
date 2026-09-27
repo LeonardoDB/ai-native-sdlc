@@ -120,6 +120,49 @@ class RemoteTests(unittest.TestCase):
         self.assertIsNone(tl.parse_remote("not a remote"))
 
 
+class TaskStateTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.dir = Path(self.tmp.name) / "docs" / "changes" / "42"
+
+    def write(self, name: str, status: str) -> None:
+        self.dir.mkdir(parents=True, exist_ok=True)
+        (self.dir / name).write_text(f"# X\n\n- Status: {status}\n", encoding="utf-8")
+
+    def state(self) -> dict:
+        return tl.task_state(self.tmp.name, "docs/changes/42")
+
+    def test_progression(self) -> None:
+        self.assertEqual(self.state(), {"spec": "missing", "plan": "missing", "next": "design"})
+        self.write("spec.md", "Draft")
+        self.assertEqual(self.state()["next"], "approve-spec")
+        self.write("spec.md", "Approved")
+        self.assertEqual(self.state()["next"], "plan")
+        self.write("plan.md", "Draft | Approved")
+        self.assertEqual(self.state()["next"], "approve-plan")
+        self.write("plan.md", "Approved")
+        self.assertEqual(self.state()["next"], "implement")
+
+    def test_light_path_has_no_spec(self) -> None:
+        self.write("plan.md", "Approved")
+        self.assertEqual(self.state(), {"spec": "missing", "plan": "approved", "next": "implement"})
+
+
+class TaskBranchTests(unittest.TestCase):
+    def test_on_task_branch(self) -> None:
+        for branch, expected in (("fix/42-date-bug", True), ("42", True),
+                                 ("fix/420-other", False), ("main", False), (None, False)):
+            repo = dict(REPO, branch=branch)
+            result, _ = tl.parse("https://gitlab.acme.com.br/squad/pay/api/-/issues/42", repo)
+            self.assertIs(result["on_task_branch"], expected, branch)
+
+    def test_no_repo_means_unknown(self) -> None:
+        result, _ = tl.parse("https://linear.app/acme/issue/ENG-1")
+        self.assertIsNone(result["on_task_branch"])
+        self.assertIsNone(result["state"])
+
+
 class CliTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
@@ -143,6 +186,22 @@ class CliTests(unittest.TestCase):
         self.assertEqual(data["ref"], "squad/api#42")
         self.assertEqual(data["current_repo"]["forge"], "gitlab")
         self.assertTrue(data["repo_matches"])
+        self.assertFalse(data["current_repo"]["dirty"])
+        self.assertEqual(data["state"]["next"], "design")
+
+    def test_resume_on_task_branch(self) -> None:
+        subprocess.run(["git", "-C", str(self.repo), "switch", "-qc", "feat/42-export"], check=True)
+        plan = self.repo / "docs" / "changes" / "42" / "plan.md"
+        plan.parent.mkdir(parents=True)
+        plan.write_text("# P\n\n- Status: Approved\n", encoding="utf-8")
+        code, out, _ = self.run_cli(
+            "parse", "https://gitlab.acme.com.br/squad/api/-/issues/42", "--repo-dir", str(self.repo))
+        data = json.loads(out)
+        self.assertEqual(code, 0)
+        self.assertTrue(data["on_task_branch"])
+        self.assertTrue(data["current_repo"]["dirty"])
+        self.assertEqual(data["current_repo"]["branch"], "feat/42-export")
+        self.assertEqual(data["state"]["next"], "implement")
 
     def test_outside_a_repo(self) -> None:
         with tempfile.TemporaryDirectory() as plain:

@@ -1,6 +1,7 @@
 # <Title> — Build Plan
 
-- Task: <task ref> — spec: docs/changes/<task>/spec.md
+- Task: <task ref> <task link>
+- Path: Light | Full (full: spec in docs/changes/<task>/spec.md)
 - Status: Draft | Approved
 - Date: <YYYY-MM-DD>
 
@@ -32,3 +33,9 @@
 <Which sessions/subagents can work in isolation, and how changes stay separated.>
 
 - Each session/subagent has a functional name, a defined scope, and a visible report; no silent or unbounded background work.
+
+## Review
+
+<Filled during Review. Per round: reviewer lenses run; findings fixed (file:line → fix);
+findings rejected with a one-line reason, so a later round does not re-raise them;
+acceptance criteria with the evidence for each.>

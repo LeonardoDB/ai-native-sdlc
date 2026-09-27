@@ -34,4 +34,4 @@
 
 ## Verification plan
 
-<How this will be tested at build time and in the eval suite.>
+<How this will be tested at build time: the tests, and the evidence for each acceptance criterion.>

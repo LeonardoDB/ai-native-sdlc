@@ -4,11 +4,18 @@ Applies to agentic review passes. Evidence before opinions.
 
 ## Passes
 
-Run three passes and tag each finding with its pass:
+An independent reviewer (a fresh-context subagent) runs three lenses — one
+reviewer with all three for a small diff — and tags each finding with its lens:
 
-- Bugs: logic errors, broken edge cases, subtle regressions
-- Security: injection risks, authentication gaps, PII in logs
-- Compliance: the change matches spec.md, plan.md, and our design principles
+- Correctness: logic errors, broken edge cases, subtle regressions
+- Spec + conventions: the change matches spec.md, plan.md, our design principles,
+  and the repo's conventions
+- Simplicity + security: needless complexity; injection risks, authentication gaps,
+  PII in logs
+
+Every finding carries file:line, severity, and confidence; the coordinating agent
+keeps those at confidence 80+ and checks lower-confidence high-severity ones in the
+code before keeping or dropping them.
 
 ## What Important means here
 

@@ -17,7 +17,7 @@ Every phase ends with a versioned artifact the next phase reads. The agent does 
 ## Artifacts
 
 - **Intent** — the tracker task itself (Linear, GitLab, GitHub). Not a repo file; the agent never edits it.
-- **`docs/changes/<task>/spec.md`** and **`docs/changes/<task>/plan.md`** — one folder per task, so parallel branches in one repo never touch the same files. `<task>` is the `slug` from `tracker_link.py` (`eng-123`, `42`, `backlog-42`).
+- **`docs/changes/<task>/spec.md`** (full path only) and **`docs/changes/<task>/plan.md`** — one folder per task, so parallel branches in one repo never touch the same files. `<task>` is the `slug` from `tracker_link.py` (`eng-123`, `42`, `backlog-42`).
 - **Commits and the MR/PR** — citing the task ref, closing the task on merge.
 
 ## Frameworks
@@ -26,7 +26,7 @@ The workflow is framework-agnostic. Claude Code calls the repository-memory file
 
 ## Hard rules
 
-1. **Human gates are real gates.** Do not advance without approval: task on the board (accepted intent) → Design; spec approved → Build; plan approved → code.
+1. **Human gates are real gates.** Do not advance without approval: task on the board (accepted intent) → Design; spec approved → Build (full path); plan approved → code.
 2. **Stop at the MR/PR.** Open it and stop. Never merge, deploy, release, or change production config; those are the team's decisions, outside this workflow.
 3. **Verify before asking for review.** Run build, tests, lint, and screenshots yourself first; fix what fails; only then ask to commit and open the MR/PR.
 4. **Encode repeated lessons.** The same mistake twice → write the correction into the project's CLAUDE.md, a skill, or a hook.
@@ -50,7 +50,7 @@ deterministic layer (makes violation nearly impossible), or a review pass
 | 5. Evidence in reviews | REVIEW.md | — | review passes, 5-nit cap |
 | 6. Plan mode first | plan.md template | `check_plan_sync.py` (pre-commit hook / MR/PR CI) | plan-vs-diff check in review |
 | 7. Reviews feed back | CLAUDE.md | — | review comments → CLAUDE.md |
-| 8. Subagents named/visible | this hard rule | — | subagent reports in session |
+| 8. Subagents named/visible | this hard rule; briefs in `references/agents/` | — | subagent reports in session |
 
 Anything in the deterministic column must always hold — enforce it with code,
 not prose.
@@ -59,13 +59,28 @@ not prose.
 
 The intent lives in the tracker (Linear, GitLab, GitHub), not in the repo. A task on the board is an accepted intent — refined and prioritized there — so the board is the Plan gate and the agent starts at Design.
 
-1. From the repo you are working in, resolve the link with `scripts/tracker_link.py parse <link>`: system, native ref (`ENG-123`, `group/project#42`), whether the task belongs to this repo, and its `change_dir` (`docs/changes/<task>`). Detection is by link shape (GitLab's `/-/`, `linear.app`, `github.com`), so self-hosted GitLab needs no config. A board, epic, or unrecognized link exits 1 — ask for the task link instead.
-2. Read the task (description, labels, comments) through the tracker's MCP connector or CLI. Never edit it: gaps become open questions in `spec.md` or questions to the user.
-3. Run **Design** in that repo. If its CLAUDE.md has a `## Knowledge base` section, search it first for what the task touches — prior decisions, domain terms, known constraints. Write `<change_dir>/spec.md`, citing the task (`Intent: <ref> <link>`) and the knowledge used; a conflict between the task and the knowledge base becomes an open question.
-4. Run **Build** (plan mode → `<change_dir>/plan.md` → code + tests) and **Review**, invoking the project's style skill if `## Conventions` names one (and repeating that instruction in every subagent brief). Do not commit along the way.
-5. When Review is done, ask once: *commit, push, and open the MR/PR?* On the go-ahead, commit and open it with the project's own skills when its CLAUDE.md names them in `## Commit and MR/PR`; otherwise follow the defaults in `references/trackers.md` (repo commit style, the repo's MR/PR template, the closing keyword `Closes group/project#42` / `Fixes ENG-123`). Then stop.
+1. **Resolve** the link from the repo you are in: `scripts/tracker_link.py parse <link>` gives the system, native ref (`ENG-123`, `group/project#42`), `slug`, `change_dir` (`docs/changes/<slug>`), whether the task belongs to this repo, the git state (branch, default branch, dirty tree), and the task's `state`. Detection is by link shape (GitLab's `/-/`, `linear.app`, `github.com`), so self-hosted GitLab needs no config. A board, epic, or unrecognized link exits 1 — ask for the task link instead.
+2. **Read** the task (description, labels, comments, acceptance criteria) through the tracker's MCP connector or CLI. Never edit it: gaps become open questions in the spec or questions to the user.
+3. **Workspace** — before reading any code. Already `on_task_branch`: continue. Otherwise, with a clean tree, propose `<type>/<slug>-<summary>` off the fetched `default_branch` and create it once the user confirms; a dirty tree stops here for the user to decide. Offer a worktree only when the user wants the current checkout left alone.
+4. **Resume** from `state.next` instead of restarting: `design`, `approve-spec`, `plan`, `approve-plan`, or `implement` (then Review).
+5. **Size the change** and say which path you take, so the user can pull you back:
+   - **Light** — a localized bug, a config change, a small scoped edit: skip the spec; `plan.md` alone (files, proof, verification), one approval.
+   - **Full** — a feature, a behavior change, or anything crossing modules: spec, then plan, each approved.
+6. **Design** (full path). If the area is unfamiliar, dispatch the **explorer** first (`references/agents/explorer.md`) — one lens for a contained area, two or three distinct lenses for a cross-cutting one — then read the essential files it flags yourself. If CLAUDE.md has a `## Knowledge base`, search it for what the task touches. Write `<change_dir>/spec.md`, citing the task (`Intent: <ref> <link>`) and the knowledge used; a conflict between the task and the knowledge base becomes an open question.
+7. **Build**: plan mode → `<change_dir>/plan.md` → approval → code + tests, invoking the project's style skill if `## Conventions` names one (and repeating it in every subagent brief). Nothing is committed yet.
+8. **Review** with the **reviewer** (`references/agents/reviewer.md`) in a fresh context — one reviewer with all lenses for a small diff, three in parallel (correctness, spec + conventions, simplicity + security) when each has real surface; for a trivial diff, review it yourself and say so. Then filter as the coordinator, walk the task's acceptance criteria with evidence, fix, and re-verify — at most two review rounds before surfacing what is still open to the user. Record fixed and rejected findings in plan.md's `## Review`.
+9. **Deliver**: ask once — *commit, push, and open the MR/PR?* On the go-ahead, use the project's own skills when CLAUDE.md names them in `## Commit and MR/PR`, otherwise the defaults in `references/trackers.md`; put the closing keyword in the MR/PR (`Closes group/project#42`, `Fixes ENG-123`). Then stop.
 
-Read `references/trackers.md` for per-tracker read commands, the rules, the delivery defaults, and the optional per-project `## Tracker` section in CLAUDE.md for exceptions (issues in a different project than the code).
+Read `references/trackers.md` for per-tracker read commands, the workspace and delivery details, the rules, and the optional `## Tracker` section in CLAUDE.md for exceptions; `references/playbook.md` for each phase in depth.
+
+## Subagents
+
+Two roles, both read-only, dispatched with their brief from `references/agents/` plus the context that brief lists (subagents read no config on their own):
+
+- **explorer** — in Design, for unfamiliar code: returns a `file:line` map and a ranked list of essential files. You still read those files before designing.
+- **reviewer** — in Review, always in a fresh context: returns every finding scored by confidence and severity. You are the filter: keep findings at confidence ≥ 80, check lower-confidence high-severity ones in the code yourself, and drop the rest with a one-line reason.
+
+Dispatch them with your framework's subagent mechanism (Claude Code's Agent tool, Codex subagents). Where none is available, run the brief yourself on only the artifacts it lists, and say so. Do not stack further self-check passes on top of one independent review and one verify.
 
 ## Starting from an idea
 
@@ -83,9 +98,9 @@ Read `references/playbook.md` for the phase-by-phase procedure.
 | Phase | Reads | Produces | Gate |
 |---|---|---|---|
 | Plan | the tracker board | task on the board (no repo artifact) | on the board → Design |
-| Design | tracker task + org standards + knowledge base (if declared) | `docs/changes/<task>/spec.md` | spec approved → Build |
-| Build | tracker task + spec.md + style skill (if declared) | `docs/changes/<task>/plan.md` → code + tests (uncommitted) | plan approved before code |
-| Review | diff + spec.md + plan.md + REVIEW.md + style skill (if declared) | findings fixed; verify output; commits + MR/PR opened (project's commit/MR skills if declared) | one go-ahead to commit, push, and open; **end of the loop** — the team reviews and merges |
+| Design (full path) | tracker task + explorer map + knowledge base (if declared) + org standards | `docs/changes/<task>/spec.md` | spec approved → Build |
+| Build | tracker task + spec.md (if any) + style skill (if declared) | `docs/changes/<task>/plan.md` → code + tests (uncommitted) | plan approved before code |
+| Review | reviewer findings + acceptance criteria + verify output | fixes; plan.md `## Review`; commits + MR/PR opened | one go-ahead to commit, push, and open; **end of the loop** — the team reviews and merges |
 
 ## Templates
 
@@ -95,10 +110,11 @@ Read `references/playbook.md` for the phase-by-phase procedure.
 - `assets/CLAUDE.md` — repository-memory starter (commands, verification, conventions, and the optional Tracker, Knowledge base, and Commit and MR/PR sections)
 - `assets/REVIEW.md` — review standards (passes, evidence, severity, 5-nit cap)
 - `assets/PULL_REQUEST_TEMPLATE.md` — fallback MR/PR body when the repo has no template
+- `references/agents/explorer.md`, `references/agents/reviewer.md` — subagent briefs for Design and Review
 
 ## Scripts
 
-- `scripts/tracker_link.py` — resolve a Linear/GitLab/GitHub task link to system, native ref, task slug, and `change_dir`, and check it against the current repo's `origin` (no config, offline, deterministic; boards and epics exit 1)
+- `scripts/tracker_link.py` — resolve a Linear/GitLab/GitHub task link to system, native ref, slug, and `change_dir`; check it against the current repo (origin, branch, default branch, dirty tree); report the task's state for resuming (no config, offline, deterministic; boards and epics exit 1)
 - `scripts/check_plan_sync.py` — deterministic plan-sync: implementation changes need an approved `docs/changes/<task>/plan.md` whose manifest covers them (MR/PR CI with `--base/--head`, or pre-commit with `--hook`)
 - `scripts/init_workflow.py` — scaffold `CLAUDE.md`/`AGENTS.md`, `REVIEW.md`, `.gitignore`, and `check_plan_sync.py` into a repo (`--dry-run`, `--framework`, `--git`; existing files are skipped)
 - `scripts/quick_validate.py` — validate this skill/plugin bundle (self-check; CI runs it)
