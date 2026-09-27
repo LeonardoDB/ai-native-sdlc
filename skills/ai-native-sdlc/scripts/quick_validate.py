@@ -47,6 +47,7 @@ PROMISED = [
     "scripts/check_diff_hygiene.py",
     "scripts/check_mutations.py",
     "scripts/impact_map.py",
+    "scripts/metrics.py",
     "hooks/gate.py",
     "assets/intent.md",
     "assets/spec.md",
@@ -214,6 +215,7 @@ def main() -> int:
             "check_diff_hygiene.py",
             "check_mutations.py",
             "impact_map.py",
+            "metrics.py",
             "gate.py",
             "quick_validate.py",
         ):

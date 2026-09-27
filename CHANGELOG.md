@@ -8,6 +8,11 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- `scripts/metrics.py`: rework metrics from what each task already records
+  in `docs/changes/<task>/` and git — spec rework after the plan, plan edits,
+  review rounds (`### Round <n>`), deviations, test changes, accepted
+  surviving mutants, lead time — per task and in aggregate, across repos;
+  `--forge` adds MR/PR comments and days to merge via `gh` or `glab`.
 - `hooks/gate.py`: Claude Code PreToolUse hook enforcing the red lines —
   blocks `glab mr merge`/`gh pr merge`, pushes to the default branch,
   `--no-verify`/`--no-gpg-sign`, and force-pushes without a lease; lets a task

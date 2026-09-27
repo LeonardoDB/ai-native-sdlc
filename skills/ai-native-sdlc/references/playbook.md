@@ -198,6 +198,16 @@ When a review flags a mistake for the second time, the correction goes into CLAU
 
 Every measure above can be read without new infrastructure, joined by the task ref: the tracker (task history, reopened tasks, follow-up bugs), git (commits to `docs/changes/<task>/`, plan-vs-diff), and the forge (MR/PR review rounds, time to first review, pipeline results). Keeping the ref in the branch name, the spec header, and the MR/PR is what makes that join possible.
 
+`scripts/metrics.py` reads it for you, across as many repos as you pass (`--repos ~/work/<company>/*`):
+
+- **spec rework** — spec.md commits after the plan appeared: requirements that moved once building started;
+- **plan edits**, **deviations**, **test changes**, **accepted surviving mutants** — where the plan or the tests had to bend;
+- **review rounds** — the `### Round <n>` headings in plan.md's Review;
+- **lead time** — first to last commit on the task folder;
+- with `--forge`, the MR/PR's human comment count and days from opening to merge (`gh` or `glab`).
+
+Read the trend, not the single task: a rising spec-rework share points at refinement on the board; rising review rounds or comments at Build or Review; many accepted survivors at weak tests.
+
 ## Numbers to remember
 
 | Item | Value |

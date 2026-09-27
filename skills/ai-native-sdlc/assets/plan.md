@@ -94,6 +94,9 @@ expected one (the behavior is missing — not a typo or an import path). Then th
 
 ## Review
 
-<Filled during Review. Per round: reviewer lenses run; findings fixed (file:line → fix);
-findings rejected with a one-line reason, so a later round does not re-raise them;
-acceptance criteria with the evidence for each.>
+<Filled during Review, one "### Round <n>" heading per review round (metrics.py counts
+them). Per round: reviewer lenses run; findings fixed (file:line → fix); findings rejected
+with a one-line reason, so a later round does not re-raise them; acceptance criteria with
+the evidence for each.>
+
+### Round 1

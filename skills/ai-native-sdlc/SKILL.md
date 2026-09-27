@@ -124,6 +124,7 @@ Read `references/playbook.md` for the phase-by-phase procedure.
 - `scripts/check_diff_hygiene.py` — added type/lint suppressions and skipped or focused tests need a `reason:`; rewritten or deleted existing tests must be listed under plan.md's Test changes
 - `hooks/gate.py` — Claude Code PreToolUse hook: blocks merges, pushes to the default branch, `--no-verify`, and bare force-pushes; lets a task branch be pushed or its MR/PR opened only on a clean tree with the checks passing (`SDLC_GATE_MUTATIONS=1` adds the mutation check). No Stop hook — red is a normal state mid-slice
 - `scripts/init_workflow.py` — scaffold `CLAUDE.md`/`AGENTS.md`, `REVIEW.md`, `.gitignore`, and the check scripts into a repo (`--dry-run`, `--framework`, `--git`; existing files are skipped)
+- `scripts/metrics.py` — rework metrics per task across repos: spec rework, plan edits, review rounds, deviations, test changes, accepted survivors, lead time; `--forge` adds MR/PR comments and days to merge
 - `scripts/quick_validate.py` — validate this skill/plugin bundle (self-check; CI runs it)
 
 ## Self-test (after installing)

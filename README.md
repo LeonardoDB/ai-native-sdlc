@@ -133,6 +133,12 @@ From the repo the task belongs to:
 
 The agent resolves the link (`scripts/tracker_link.py` — no config; self-hosted GitLab is recognized by its `/-/` link shape), reads the task, and starts at Design. It stops at each approval gate, asks once to commit, push, and open the MR/PR, and stops there. The MR/PR closes the task when the team merges it.
 
+To see where work bends, across every repo of a company:
+
+```bash
+python3 ~/.claude/skills/ai-native-sdlc/scripts/metrics.py --repos ~/work/<company>/* --forge
+```
+
 No task yet? Describe the idea; the agent interviews you, drafts the task description, and creates it in the tracker once you confirm.
 
 ## Layout
@@ -173,6 +179,7 @@ No task yet? Describe the idea; the agent interviews you, drafts the task descri
             ├── check_mutations.py # mutants on the changed lines must fail a test
             ├── check_diff_hygiene.py  # suppressions, skipped and rewritten tests
             ├── impact_map.py      # dependents, callers, fix rate, risk per changed file
+            ├── metrics.py         # rework metrics per task, across repos
             ├── init_workflow.py   # scaffold CLAUDE.md, REVIEW.md, the checks
             └── quick_validate.py  # skill/plugin self-check
 ```
