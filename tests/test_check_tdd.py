@@ -126,6 +126,22 @@ class CheckTddTests(Repo):
         self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
         self.assertIn("manual evidence expected", res.stdout)
 
+    def test_regression_guard_is_green_only(self) -> None:
+        self.change(extra="- AC-2: sub keeps working",
+                    proof=f"- AC-1: add sums — `{PY} tests/test_add.py`\n"
+                          f"- AC-2: sub kept — regression: `{PY} tests/test_old.py`")
+        res = self.run_script(TDD)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertIn("AC-2 is a regression guard", res.stdout)
+
+    def test_unmarked_existing_behavior_fails_red(self) -> None:
+        self.change(extra="- AC-2: sub keeps working",
+                    proof=f"- AC-1: add sums — `{PY} tests/test_add.py`\n"
+                          f"- AC-2: sub kept — `{PY} tests/test_old.py`")
+        res = self.run_script(TDD)
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("AC-2 passes without the change", res.stdout)
+
     def test_no_criteria_fails(self) -> None:
         self.change()
         self.write("docs/changes/eng-1/spec.md", "# Add\n\n- Status: Approved\n")

@@ -8,6 +8,11 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Regression guards in Proof: an acceptance criterion that keeps behavior
+  the code already has is marked `regression:` and `check_tdd.py` checks it
+  green only — it cannot fail without the change, and flagging it made
+  nearly every real task fail. The reviewer checks the mark is not hiding a
+  new behavior.
 - Claude Code plugin: `.claude-plugin/plugin.json` and `marketplace.json`
   (the repo root is the plugin), with `hooks/hooks.json` wiring the gate on
   PreToolUse Bash. Install with `claude plugin marketplace add

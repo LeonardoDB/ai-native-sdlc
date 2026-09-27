@@ -44,9 +44,11 @@ Never all tests first and all code after. For a refactor, characterization tests
 ## Proof
 
 <Every acceptance criterion maps to the command that proves it, or to manual evidence.
-check_tdd.py runs each command: it must pass with the change and fail without it.>
+check_tdd.py runs each command: it must pass with the change and fail without it. A
+criterion that keeps behavior the code already has is marked `regression:` — green only.>
 
 - AC-1: <criterion> — `<command that runs just this test>`
+- AC-2: <existing behavior kept> — regression: `<command>`
 
 ## Test changes
 

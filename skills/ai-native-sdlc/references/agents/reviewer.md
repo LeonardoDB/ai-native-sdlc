@@ -47,7 +47,8 @@ this fail?* If none would, it tests nothing. Flag:
   interface (private methods, querying the database instead of the API);
 - mocks of the project's own modules — mock only at system boundaries (external
   APIs, time, randomness);
-- an acceptance criterion whose test does not actually exercise it;
+- an acceptance criterion whose test does not actually exercise it, or one marked
+  `regression:` in Proof that is really new behavior (it escapes the red run);
 - a high-risk caller from the impact map that no test exercises after the change;
 - the mutants `check_mutations.py` could not reach (it only flips operators and
   constants): return empty, drop a validation, skip a branch — which would the

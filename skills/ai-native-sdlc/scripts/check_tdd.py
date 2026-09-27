@@ -8,7 +8,12 @@ maps to the command that proves it:
     ## Proof
 
     - AC-1: CSV export has a header row — `pytest tests/test_export.py::test_header`
-    - AC-2: the button is disabled while exporting — manual: screenshot in the MR
+    - AC-2: existing exports keep their columns — regression: `pytest tests/test_export.py::test_columns`
+    - AC-3: the button is disabled while exporting — manual: screenshot in the MR
+
+A criterion that preserves behavior the code already has (AC-2) is marked
+`regression:` — it must pass with the change but cannot fail without it, so
+the red run skips it.
 
 Checks, in order:
   1. coverage — every AC-<n> in the acceptance criteria (spec.md's
@@ -99,6 +104,16 @@ def parse_proof(plan_text: str) -> list[tuple[str, str | None]]:
         else:
             entries.append((match.group(1), ""))
     return entries
+
+
+def regression_ids(plan_text: str) -> set[str]:
+    """ACs whose Proof entry is marked `regression:` (existing behavior kept)."""
+    ids = set()
+    for line in section(plan_text, "Proof"):
+        match = PROOF_RE.match(line)
+        if match and re.search(r"\bregression\s*:", match.group(2), re.I):
+            ids.add(match.group(1))
+    return ids
 
 
 def acceptance_ids(repo: Path, plan_path: str, plan_text: str) -> list[str]:
@@ -235,6 +250,7 @@ def main(argv: list[str] | None = None) -> int:
             failures += 1
 
     automated = [(ac, cmd) for ac, cmd in proof if cmd]
+    guards = regression_ids(plan_text)
     for ac, command in automated:
         code, output = run(repo, command, args.timeout)
         if code == 0:
@@ -252,6 +268,9 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 with RedRun(repo, impl, args.base):
                     for ac, command in automated:
+                        if ac in guards:
+                            print(f"ok   red:   {ac} is a regression guard (existing behavior) — green only")
+                            continue
                         code, output = run(repo, command, args.timeout)
                         if code != 0:
                             print(f"ok   red:   {ac} fails without the change — confirm the reason:\n{tail(output, 3)}")
