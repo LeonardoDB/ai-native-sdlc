@@ -54,8 +54,14 @@ the current checkout, and the forge comes from its `origin` remote.
      --artifact "<ref>" --approver tracker --evidence "<link>"
    ```
 
-5. **Design.** Produce `spec.md` from the task and the org's skills. Its
-   header cites the source: `Intent: <ref> <link> (read <YYYY-MM-DD>)`.
+5. **Design.** If the project's CLAUDE.md has a `## Knowledge base` section,
+   search it for what the task touches (prior decisions, domain terms, known
+   constraints) before writing — extend settled decisions instead of
+   re-deciding them. Produce `spec.md` from the task, the knowledge base, and
+   the org's skills. Its header cites the source
+   (`Intent: <ref> <link> (read <YYYY-MM-DD>)`) and the knowledge used; a
+   conflict between the task and the knowledge base is an open question, not
+   a silent choice. An unreachable store is reported, not skipped silently.
    Continue the loop as usual: spec approved → `plan.md` → code + tests →
    MR/PR.
 

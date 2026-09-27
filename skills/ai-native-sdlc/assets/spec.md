@@ -1,6 +1,7 @@
 # <Title> — Specification
 
 - Intent: <task ref> <task link> (read <YYYY-MM-DD>)
+- Knowledge used: <KB paths or notes consulted, or "none declared">
 - Author: <agent + human reviewer>
 - Status: Draft | Approved
 - Date: <YYYY-MM-DD>

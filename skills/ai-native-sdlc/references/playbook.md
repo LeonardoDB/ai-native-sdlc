@@ -53,6 +53,7 @@ Each play below covers: what changes, getting started (prerequisites and infrast
 **How to execute it.**
 
 1. The product owner opens a session with the organization's skills available and attaches the intent.md.
+   - If the project's CLAUDE.md declares a `## Knowledge base`, the agent searches it for what the intent touches — prior decisions, domain terms, known constraints — and lists what it used in the spec header. Settled decisions are extended, not re-decided; a conflict with the intent is an open question.
 2. Prompt: "Read the attached intent.md and produce a requirements and design spec for integrating it into our existing codebase. Apply the skills available to you so the plan conforms to our brand guidelines, security policies and UX standards. Document the spec fully as spec.md, ready to hand to the engineering team. Describe clearly any areas of concern, especially where you cannot satisfy contradicting policies."
 3. Run by hand first; codify as an organization-level slash command; then make acceptance of intent.md the trigger — a non-interactive job fires on the merge, runs the pass with the organization's skills loaded, and commits spec.md as a pull request. From then on, the product owner's first involvement is the review.
 4. The product owner reviews the spec against the intent: does it solve the stated problem? Are the open questions answered or carried forward? Work through flagged concerns with their policy owners before engineering sees the spec.

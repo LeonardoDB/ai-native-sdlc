@@ -8,6 +8,10 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Knowledge base in Design: the CLAUDE.md template gains an optional
+  `## Knowledge base` section (pointers — repo path or MCP store — never the
+  knowledge itself). Design searches it before writing `spec.md`, which now
+  lists the knowledge used; conflicts with the task become open questions.
 - Intent from the tracker: `scripts/tracker_link.py parse <link>` resolves a
   Linear, GitLab, or GitHub task link to its system and native ref and checks
   it against the current repo's `origin` — no config (GitLab, self-hosted

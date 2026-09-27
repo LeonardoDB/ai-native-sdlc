@@ -26,6 +26,7 @@ python3 -m py_compile "$tmp/proj/scripts/check_plan_sync.py" || { echo "FAIL: sc
 grep -q '# Smoke Test' "$tmp/proj/workflow-graph.yaml" || { echo "FAIL: --name not interpolated"; fail=1; }
 [[ -e "$tmp/proj/intent" ]] && { echo "FAIL: scaffold wrote intent/ (intent lives in the tracker)"; fail=1; }
 grep -q 'gate: tracker_board' "$tmp/proj/workflow-graph.yaml" || { echo "FAIL: intent node not gated by the tracker board"; fail=1; }
+grep -q '## Knowledge base' "$tmp/proj/AGENTS.md" || { echo "FAIL: repository memory missing Knowledge base section"; fail=1; }
 grep -q 'AGENTS.md' "$tmp/proj/AGENTS.md" || { echo "FAIL: codex variant header wrong"; fail=1; }
 [[ -f "$tmp/proj/CLAUDE.md" ]] && { echo "FAIL: codex scaffold also wrote CLAUDE.md"; fail=1; }
 [[ -x "$tmp/proj/hooks/production-gate.sh" ]] || { echo "FAIL: hook not executable"; fail=1; }

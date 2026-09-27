@@ -51,7 +51,7 @@ The intent lives in the tracker (Linear, GitLab, GitHub), not in the repo. A tas
 
 1. From the repo you are working in, resolve the link with `scripts/tracker_link.py parse <link>`: system, native ref (`ENG-123`, `group/project#42`), and whether the task belongs to this repo. Detection is by link shape (GitLab's `/-/`, `linear.app`, `github.com`), so self-hosted GitLab needs no config. A board, epic, or unrecognized link exits 1 — ask for the task link instead.
 2. Read the task (description, labels, comments) through the tracker's MCP connector or CLI. Never edit it: gaps become open questions in `spec.md` or questions to the user.
-3. Run **Design** in that repo; `spec.md` cites the task (`Intent: <ref> <link>`), and the MR/PR closes it (`Closes group/project#42`, `Fixes ENG-123`).
+3. Run **Design** in that repo. If its CLAUDE.md has a `## Knowledge base` section, search it first for what the task touches — prior decisions, domain terms, known constraints. `spec.md` cites the task (`Intent: <ref> <link>`) and the knowledge used; a conflict between the task and the knowledge base becomes an open question. The MR/PR closes the task (`Closes group/project#42`, `Fixes ENG-123`).
 
 Read `references/trackers.md` for per-tracker read commands, the rules, and the optional per-project `## Tracker` section in CLAUDE.md for exceptions (issues in a different project than the code).
 
@@ -74,7 +74,7 @@ At a glance:
 | Phase | Reads | Produces | Gate (human approval) |
 |---|---|---|---|
 | Plan | user's idea | task on the tracker board | on the board → Design |
-| Design | tracker task + org standards | spec.md | approved → Build |
+| Design | tracker task + org standards + knowledge base (if declared) | spec.md | approved → Build |
 | Build | tracker task + spec.md | plan.md → code + tests → PR | plan approved before code; PR merged → Deploy |
 | Test | repo + eval suite | eval results, regression evals | config changes that drop pass rate are reviewed |
 | Deploy | merged PR + review findings | authorized release | agentic review + explicit release authorization |

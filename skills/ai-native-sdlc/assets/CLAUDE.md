@@ -35,6 +35,13 @@ If a test fails, fix the code, not the test.
 "tasks live in Linear team ENG (Linear MCP); code on GitHub", or "issues live in
 group/backlog, not in this project".>
 
+## Knowledge base
+
+<Optional. Where the project's knowledge lives and how to search it — pointers only,
+never the knowledge itself. Read during Design, not every session. e.g.
+"docs/kb/ — decisions in docs/kb/decisions/, glossary in docs/kb/glossary.md", or
+"MCP <server-name> — search by service name or domain term".>
+
 ## Hooks
 
 <Deterministic hooks and what they enforce.>
