@@ -9,12 +9,14 @@ Keep this file under one page. Add a rule when the same mistake happens twice.
 - Build: `make build` (must finish with "Build succeeded")
 - Test: `make test` (all green; never skip or delete a failing test)
 - Lint: `make lint` (zero warnings)
+- Typecheck: `make typecheck` (zero errors, tests included)
 - Itest: `make itest` (integration, needs docker)
 
 ## Verifying your work
 
-Run build, test, and lint before reporting any task complete, and paste the output.
-If a test fails, fix the code, not the test.
+Run build, typecheck, test, and lint before reporting any task complete, and paste the output.
+If a test fails, fix the code, not the test. Never add `any`, casts, or suppressions to make
+the type checker pass without a `reason:` on the same line.
 
 ## Conventions
 
@@ -29,6 +31,12 @@ code") — Build and Review invoke it, and every subagent brief repeats the inst
 ## Things the agent gets wrong
 
 <Each mistake, its fix, and how to check for it.>
+
+## Code tooling
+
+<Optional. Tools for precise edits: the LSP to use for definitions and references
+instead of grep, and the library-docs tool or MCP to check a dependency's current
+API before using it from memory. e.g. "LSP: pyright", "docs: <docs-mcp-name>".>
 
 ## Tracker
 

@@ -8,8 +8,10 @@ this brief into the subagent's prompt, followed by the dispatch context below.
 
 - the lens(es) to review through (below)
 - the diff (`git diff <default-branch>...` plus uncommitted changes) or its path
-- `docs/changes/<task>/spec.md` and `plan.md` (the light path has only plan.md)
+- `docs/changes/<task>/spec.md` and `plan.md` (the light path has only plan.md),
+  including the plan's Proof, Types first, Test changes, and Build log
 - the task's acceptance criteria, from the task description
+- the output of `check_tdd.py` and `check_diff_hygiene.py`
 - `REVIEW.md` and the CLAUDE.md sections that set repo rules (conventions, the
   style skill if one is named)
 - **do-not-flag**: departures already recorded in plan.md, so settled calls
@@ -29,9 +31,34 @@ You were given one lens, or all three for a small change. Go deep on each:
 
 | Lens | Look for |
 |---|---|
-| **correctness** | Logic errors, null/undefined, off-by-one, races, error handling, edge cases, a broken happy path. |
-| **spec + conventions** | Drift from spec.md and plan.md; files changed that plan.md does not list; repo patterns, naming, structure, reuse of existing utilities; the rules CLAUDE.md and REVIEW.md declare; the style skill if one is named. |
+| **correctness** | Logic errors, null/undefined, off-by-one, races, error handling, edge cases, a broken happy path — and whether the tests would catch them (below). |
+| **spec + conventions** | Drift from spec.md and plan.md; files changed that plan.md does not list; changes the task does not need (drive-by refactors, renames); repo patterns, naming, structure, reuse of existing utilities; types (below); the rules CLAUDE.md and REVIEW.md declare; the style skill if one is named. |
 | **simplicity + security** | Needless complexity, duplication, the wrong abstraction; injection, authz gaps, secrets or PII in code and logs, data exposure, SSRF. |
+
+### Tests (correctness lens)
+
+For each test the change adds or edits, ask: *which production change would make
+this fail?* If none would, it tests nothing. Flag:
+
+- expected values computed the way the code computes them (tautological) instead
+  of an independent literal or worked example;
+- assertions that only check a mock or a call count, or that reach past the public
+  interface (private methods, querying the database instead of the API);
+- mocks of the project's own modules — mock only at system boundaries (external
+  APIs, time, randomness);
+- an acceptance criterion whose test does not actually exercise it;
+- the mutations that would survive: flip a condition, change a constant, return
+  empty, drop a validation — which of them would the tests miss?
+- red evidence in the Build log that failed for the wrong reason (a typo, an import
+  path) rather than the missing behavior.
+
+### Types (spec + conventions lens)
+
+- new `any`, casts, or suppressions — `check_diff_hygiene.py` fails those without a
+  `reason:`; judge whether the reason holds;
+- closed sets modeled as open strings, optional fields that are always required,
+  states the types allow but the domain forbids;
+- signatures frozen in plan.md's Types first that changed without a Deviation.
 
 **Stance: attack the change.** Ask "how would I break this?", not "is this
 correct?" — construct the input, sequence, or state that makes it fail.

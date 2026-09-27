@@ -16,9 +16,18 @@
 
 <Performance, security, accessibility, compliance, operability.>
 
+## Acceptance criteria
+
+<From the task, one per bullet, numbered — each observable and testable. Review walks
+them one by one, and plan.md's Proof maps each to the test that proves it.>
+
+- AC-1: <observable behavior>
+
 ## Design
 
-<Approach and rationale; architecture or data flow; interfaces (APIs, data, UI).>
+<Approach and rationale; architecture or data flow; interfaces (APIs, data, UI). Name the
+new or changed types and signatures, and make invalid states unrepresentable where the
+language allows (closed values as unions/enums, required fields required).>
 
 ## Standards applied
 

@@ -71,9 +71,47 @@ When in doubt, take the full path; a spec that turns out short costs little.
 
 The session starts in plan mode with the task and spec.md (on the light path, the task alone), and the agent proposes an implementation plan naming the files that change, the order of work, and the tests that prove it. Interrogate the plan: what could this break, which step is most risky, what options were rejected? Iterate until an engineer who has never seen the conversation could implement the change from the plan alone. The approved plan is `docs/changes/<task>/plan.md` (`Status: Approved`); Review checks the eventual diff against it. When implementation departs from the plan, update plan.md in the same change.
 
-plan.md contents: files that change; order of work; risks; proof (tests that cover the change; screenshot matching the approved mock where relevant); verification commands.
+plan.md contents: files that change; types first (when adding domain shapes); order of work as vertical slices; proof (each acceptance criterion → the command that proves it); test changes; deviations; risks; verification commands with the test-suite baseline; the build log.
 
-If the project's CLAUDE.md names a style skill in `## Conventions`, invoke it before writing code and repeat that instruction in every subagent brief.
+Before writing code, record the baseline: run the full suite, typecheck, and lint, and note the result in plan.md's Verification. A failure that exists before the change is named there, not discovered later and blamed on the change.
+
+If the project's CLAUDE.md names a style skill in `## Conventions`, invoke it before writing code and repeat that instruction in every subagent brief. If it names an LSP or a library-docs tool in `## Code tooling`, use them: definitions and references from the LSP instead of grep, and a dependency's current API from its docs instead of memory.
+
+### Types first
+
+When the change adds new domain shapes — types, schemas, interfaces, public signatures — the first step writes only those, with stub bodies (`throw new Error("unimplemented")`, `raise NotImplementedError`). The step is done when the type-check passes with the tests included and the declarations have been reviewed on their own: closed sets as unions or enums, required fields required, no states the types allow but the domain forbids, identifiers that cannot be swapped by accident, no unused types. After that the signatures are frozen; changing one means a Deviation in plan.md, not a silent reshape. This is per slice, never a big up-front design of every type.
+
+Throughout Build, the type checker is a gate like the tests: no `any`, casts, or suppressions to make it pass. When one is truly needed, the same line says why (`reason: …`) — `check_diff_hygiene.py` fails any that does not.
+
+### Test-driven, one slice at a time
+
+Each acceptance criterion is a vertical slice: **one failing test → the least code that passes it → green**, then the next. Never all tests first and all code after — tests written in bulk describe imagined behavior and go insensitive to real changes.
+
+- **Red first, for the right reason.** Run the new test before writing the code and confirm it fails because the behavior is missing — not because of a typo, an import path, or a broken fixture. Record the failing line and why it was the expected failure in plan.md's Build log.
+- **Name the production change that would make the test fail.** If none would, the test tests nothing. Expected values are independent literals or worked examples, never recomputed the way the code computes them.
+- **Test at the public interface.** Tests exercise what callers use; they survive refactors. Mock only at system boundaries — external APIs, time, randomness — never the project's own modules.
+- **Fix the code, not the test.** A test is edited only when the test itself is wrong, and the edit goes under Test changes with the reason. Code written before its test is deleted and redone test-first.
+- **Bugs start with a reproduction.** Write the test that reproduces the report, see it fail, then fix.
+- **Refactors start with characterization.** Before changing structure, pin today's behavior with tests at the interface (and for a regression fix: write, pass, revert the fix, see it fail, restore). The refactor is done when those tests and the baseline suite are unchanged.
+- **Refactoring is not part of the loop.** Clean up after green and after Review's findings, not in the middle of a slice.
+
+### Deterministic checks
+
+Four scripts turn the Build rules into checks that run the same way every time — on the working tree during Build and Review, and with `--base` in MR/PR CI:
+
+```bash
+python3 scripts/check_plan_sync.py --hook      # the approved plan covers every changed file
+python3 scripts/check_tdd.py                    # every AC has proof; each test passes with the change and fails without it
+python3 scripts/check_diff_hygiene.py           # no unexplained suppressions, skips, or rewritten tests
+python3 scripts/tracker_link.py parse <link>    # where the task stands (resume)
+
+# MR/PR CI, on a clean checkout
+python3 scripts/check_plan_sync.py --base origin/main --head HEAD
+python3 scripts/check_tdd.py --base origin/main
+python3 scripts/check_diff_hygiene.py --base origin/main
+```
+
+`check_tdd.py` is the one no prompt can replace: it runs each Proof command on the change (green), then removes the implementation files — keeping the tests — and runs them again (red). A test that passes without the change does not test it and fails the check. It prints each red run's last lines so the failure reason can be confirmed. Every acceptance criterion must appear in Proof, either as a command or as `manual:` evidence for the MR/PR.
 
 ### Deterministic plan-sync
 
@@ -120,13 +158,12 @@ Always give the agent a way to verify its own work before a person sees it: run 
 - Wrap multi-step checks in one command (`make test`) that exits non-zero on failure.
 - In CLAUDE.md's Commands section, list each command with an example of healthy output.
 - Make the target quantifiable: "All tests in test_status.py pass", "the endpoint returns 200 with the new field", "the screenshot matches the attached mock".
-- For bug fixes, write the failing test first: reproduce the bug as a test, confirm it fails for the expected reason, then make it pass without editing the test.
 - For UI work, close the loop with a screenshot or browser tool against the approved mock — two or three rounds is normal.
 - Make verification part of "done" in CLAUDE.md, and paste the output as evidence.
 
 Nothing is committed during Build; the change stays in the working tree, on the task's branch, until Review is done.
 
-**Measure.** Leading: first-pass CI success rate for agent-written changes. Lagging: rework cycles per change, and how often the merged diff still matches the approved plan.md.
+**Measure.** Leading: first-pass CI success rate for agent-written changes, and tests caught by `check_tdd.py` passing without the change. Lagging: rework cycles per change, how often the merged diff still matches the approved plan.md, and defects found after merge in code the change touched.
 
 ## Phase 4 — Review: to the opened MR/PR
 
@@ -134,14 +171,15 @@ Nothing is committed during Build; the change stays in the working tree, on the 
 
 **How to execute it.**
 
-1. **Dispatch the reviewer** (`references/agents/reviewer.md`) in a fresh context, with the diff, the spec and plan, the task's acceptance criteria, `REVIEW.md`, the repo rules from CLAUDE.md, and a do-not-flag list (departures already recorded in plan.md). Scale it: one reviewer carrying all three lenses for a small, contained diff; three in parallel — correctness, spec + conventions, simplicity + security — when each lens has real surface. For a trivial diff (a config line, a one-file fix copying an existing pattern), review it yourself and say so.
-2. **Filter as the coordinator.** Reviewers report everything, scored; the filter is a separate pass. Dedupe across lenses; keep findings at confidence ≥ 80; for lower-confidence findings with high severity, read the cited code and promote or drop them on evidence; drop the rest. Record every rejection with a one-line reason in plan.md's `## Review`, so a second round does not re-raise it. Order what is left by severity; every kept finding has a `file:line` and a fix.
-3. **Check the acceptance criteria**, the task's, not just the plan's. Finishing every step of the plan is not the same as meeting the task: walk each criterion and point at the evidence — a test, a walkthrough, a screenshot. One without evidence is unfinished work on this task, not a follow-up.
-4. **Fix and re-verify.** Fix the kept findings, re-run the verification commands from plan.md on the final state, and keep the output as evidence. Changes touching auth, secrets, or payments get a dedicated security review on top.
-5. **At most two rounds.** Not ready → fix → re-review is normal once. If blockers still stand after the second round, stop and bring the open list to the user: a review that cannot converge points at the design or the task, not the code. Do not stack further self-check passes on top of one independent review and one verify.
-6. **Ask once.** *Commit, push, and open the MR/PR?* One go-ahead covers all three; nothing leaves the machine or enters history without it.
-7. **Deliver.** Commit and open the MR/PR with the project's own skills when CLAUDE.md names them in `## Commit and MR/PR`; otherwise use the defaults in `references/trackers.md` — commits in the repo's style citing the task ref, the MR/PR body from the repo's template (else `assets/PULL_REQUEST_TEMPLATE.md`) filled from the spec, plan, review, and verify output, with the closing keyword (`Closes group/project#42`, `Fixes ENG-123`).
-8. **Stop.** The loop ends here. Branch protection requires the team's approval, so the agent that wrote the code cannot merge it.
+1. **Run the deterministic checks first** — `check_plan_sync.py --hook` (or its MR/PR form), `check_tdd.py`, `check_diff_hygiene.py`, plus the typecheck and the full suite against the baseline. Fix what they catch before any reviewer spends time on it.
+2. **Dispatch the reviewer** (`references/agents/reviewer.md`) in a fresh context, with the diff, the spec and plan, the task's acceptance criteria, the check outputs, `REVIEW.md`, the repo rules from CLAUDE.md, and a do-not-flag list (departures already recorded in plan.md). Scale it: one reviewer carrying all three lenses for a small, contained diff; three in parallel — correctness, spec + conventions, simplicity + security — when each lens has real surface. For a trivial diff (a config line, a one-file fix copying an existing pattern), review it yourself and say so.
+3. **Filter as the coordinator.** Reviewers report everything, scored; the filter is a separate pass. Dedupe across lenses; keep findings at confidence ≥ 80; for lower-confidence findings with high severity, read the cited code and promote or drop them on evidence; drop the rest. Record every rejection with a one-line reason in plan.md's `## Review`, so a second round does not re-raise it. Order what is left by severity; every kept finding has a `file:line` and a fix.
+4. **Check the acceptance criteria**, the task's, not just the plan's. Finishing every step of the plan is not the same as meeting the task: walk each criterion and point at the evidence — the `check_tdd.py` green/red line for its test, or the manual walkthrough or screenshot. One without evidence is unfinished work on this task, not a follow-up.
+5. **Fix and re-verify.** Fix the kept findings (a new behavior found missing gets its own red → green slice), re-run the checks and the verification commands from plan.md on the final state, and keep the output as evidence. Changes touching auth, secrets, or payments get a dedicated security review on top.
+6. **At most two rounds.** Not ready → fix → re-review is normal once. If blockers still stand after the second round, stop and bring the open list to the user: a review that cannot converge points at the design or the task, not the code. Do not stack further self-check passes on top of one independent review and one verify.
+7. **Ask once.** *Commit, push, and open the MR/PR?* One go-ahead covers all three; nothing leaves the machine or enters history without it.
+8. **Deliver.** Commit and open the MR/PR with the project's own skills when CLAUDE.md names them in `## Commit and MR/PR`; otherwise use the defaults in `references/trackers.md` — commits in the repo's style citing the task ref, the MR/PR body from the repo's template (else `assets/PULL_REQUEST_TEMPLATE.md`) filled from the spec, plan, review, and verify output, with the closing keyword (`Closes group/project#42`, `Fixes ENG-123`).
+9. **Stop.** The loop ends here. Branch protection requires the team's approval, so the agent that wrote the code cannot merge it.
 
 When a review flags a mistake for the second time, the correction goes into CLAUDE.md as part of that review. The tech lead tunes REVIEW.md by rating findings and capping nit volume.
 

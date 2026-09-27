@@ -21,7 +21,7 @@ When this skill or the templates say CLAUDE.md or `.claude/`, map to the equival
 1. Agree that a task on the board is an accepted intent, and write new tasks in the `assets/intent.md` shape (see `references/trackers.md`).
 2. Create a one-page CLAUDE.md and keep it under a page.
 3. Teach the feedback loop: one command each for build/test/lint that exits non-zero on failure.
-4. Add one deterministic hook — protected paths or secrets — and wire `check_plan_sync.py --hook` as a pre-commit hook or run it in MR/PR CI.
+4. Add the typecheck to CLAUDE.md's Commands, and wire the checks: `check_plan_sync.py --hook` as a pre-commit hook, and in MR/PR CI `check_plan_sync.py --base … --head HEAD`, `check_tdd.py --base …`, and `check_diff_hygiene.py --base …`. Add one hook for protected paths or secrets.
 5. Start agent sessions in plan mode so nothing is implemented without an accepted plan.
 
 ## Encoding org standards as skills

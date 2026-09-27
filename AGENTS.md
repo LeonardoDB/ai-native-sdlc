@@ -7,7 +7,7 @@ This repo is a reusable skill and plugin bundle implementing the AI-native SDLC 
 - The workflow lives in `skills/ai-native-sdlc/SKILL.md`. Read it first, then the references it routes to (`references/playbook.md`, `references/adoption.md`).
 - Templates in `skills/ai-native-sdlc/assets/` are copied into target projects — never edited to fit one project.
 - `skills/ai-native-sdlc/scripts/init_workflow.py` performs that copy; change the script when the scaffold layout changes.
-- `references/trackers.md` holds the task-link flow and its delivery defaults; `scripts/tracker_link.py` and `scripts/check_plan_sync.py` are its deterministic parts.
+- `references/trackers.md` holds the task-link flow and its delivery defaults; `scripts/tracker_link.py`, `check_plan_sync.py`, `check_tdd.py`, and `check_diff_hygiene.py` are its deterministic parts; keep them stdlib-only and covered by `tests/`.
 
 ## Validation
 

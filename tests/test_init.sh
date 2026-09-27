@@ -17,15 +17,20 @@ python3 "$SCRIPT" "$tmp/dry" --dry-run >/dev/null 2>&1 || { echo "FAIL: --dry-ru
 
 # codex scaffold
 python3 "$SCRIPT" "$tmp/proj" --framework codex >/dev/null 2>&1 || { echo "FAIL: scaffold exited non-zero"; fail=1; }
-for f in AGENTS.md REVIEW.md .gitignore scripts/check_plan_sync.py; do
+for f in AGENTS.md REVIEW.md .gitignore scripts/check_plan_sync.py scripts/check_tdd.py scripts/check_diff_hygiene.py; do
   [[ -e "$tmp/proj/$f" ]] || { echo "FAIL: missing $f"; fail=1; }
 done
-python3 -m py_compile "$tmp/proj/scripts/check_plan_sync.py" || { echo "FAIL: scaffolded check_plan_sync.py does not compile"; fail=1; }
+for s in check_plan_sync check_tdd check_diff_hygiene; do
+  python3 -m py_compile "$tmp/proj/scripts/$s.py" || { echo "FAIL: scaffolded $s.py does not compile"; fail=1; }
+done
+# the checks import each other: they must run from the scaffolded scripts/ dir
+(cd "$tmp/proj" && python3 scripts/check_tdd.py --help >/dev/null 2>&1) || { echo "FAIL: scaffolded check_tdd.py does not run"; fail=1; }
+(cd "$tmp/proj" && python3 scripts/check_diff_hygiene.py --help >/dev/null 2>&1) || { echo "FAIL: scaffolded check_diff_hygiene.py does not run"; fail=1; }
 # the intent lives in the tracker and the loop ends at the MR/PR: nothing else is scaffolded
 for f in intent hooks bands.yaml evals gates workflow-graph.yaml scripts/gate_ledger.py scripts/workflow_state.py; do
   [[ -e "$tmp/proj/$f" ]] && { echo "FAIL: scaffold wrote $f"; fail=1; }
 done
-for section in '## Tracker' '## Knowledge base' '## Commit and MR/PR'; do
+for section in '## Code tooling' '## Tracker' '## Knowledge base' '## Commit and MR/PR'; do
   grep -q "$section" "$tmp/proj/AGENTS.md" || { echo "FAIL: repository memory missing $section"; fail=1; }
 done
 grep -q 'AGENTS.md' "$tmp/proj/AGENTS.md" || { echo "FAIL: codex variant header wrong"; fail=1; }

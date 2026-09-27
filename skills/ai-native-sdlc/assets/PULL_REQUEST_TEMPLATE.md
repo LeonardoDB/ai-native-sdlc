@@ -22,8 +22,11 @@ updated in this same MR/PR.>
 ## Evidence (verified before requesting review)
 
 - [ ] Build: <paste output>
-- [ ] Tests: <paste output>
+- [ ] Typecheck: <paste output>
+- [ ] Tests: <paste output> (baseline before the change: <…>)
 - [ ] Lint: <paste output>
+- [ ] TDD proof (`check_tdd.py`): <each AC green with the change, red without>
+- [ ] Diff hygiene (`check_diff_hygiene.py`): <clean, or the reasons given>
 - [ ] Screenshot matches the approved mock (UI changes)
 
 ## Review (REVIEW.md, independent reviewer)

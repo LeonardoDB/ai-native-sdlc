@@ -8,6 +8,24 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Test-first, typed Build: `scripts/check_tdd.py` proves every acceptance
+  criterion maps to a Proof command (or manual evidence) and that each
+  command passes with the change and fails with the implementation removed
+  (git stash in the working tree, or `--base` in CI) — a test that passes
+  without the change fails the check. `scripts/check_diff_hygiene.py` fails
+  added type/lint suppressions (`any`, `@ts-ignore`, `# type: ignore`,
+  `eslint-disable`, …) and skipped or focused tests without a `reason:`, and
+  rewritten or deleted existing tests not listed under plan.md's Test changes.
+  Both are scaffolded and tested (`tests/test_check_tdd.py`).
+- plan.md: acceptance criteria (light path), Types first (declarations with
+  stub bodies, type-checked, reviewed, then frozen), vertical-slice order of
+  work, Proof (AC → command), Test changes, Deviations, test-suite baseline,
+  and a Build log with red evidence. spec.md gains numbered acceptance
+  criteria. CLAUDE.md gains a Typecheck command and an optional
+  `## Code tooling` section (LSP, library docs). The reviewer brief checks
+  test honesty (tautologies, mocks of own code, surviving mutations, red for
+  the wrong reason) and types (closed sets, invalid states, frozen
+  signatures).
 - Subagents: `references/agents/explorer.md` (Design — read-only, `file:line`
   map and ranked essential files, knowledge-base recall) and
   `references/agents/reviewer.md` (Review — fresh context, three lenses,

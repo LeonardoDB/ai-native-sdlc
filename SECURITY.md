@@ -20,11 +20,16 @@ not include real credentials or production data.
 ## What we consider security-relevant
 
 - Bypasses of `scripts/check_plan_sync.py` (implementation that passes without
-  an approved plan covering it).
+  an approved plan covering it), `scripts/check_tdd.py` (a test that passes
+  without the change reported as red), or `scripts/check_diff_hygiene.py`.
+- `check_tdd.py` runs the Proof commands written in the repo's own plan.md, in
+  the repo root, and temporarily removes implementation files (git stash, or a
+  checkout of `--base`) — anything that loses work or leaves the tree changed
+  after a run is a bug.
 - Skill instructions that lead the agent to merge, deploy, push without the
   user's go-ahead, or write to a tracker task without confirmation.
-- Command or path injection in `scripts/tracker_link.py`,
-  `scripts/check_plan_sync.py`, or `scripts/init_workflow.py`.
+- Command or path injection in the scripts beyond the Proof commands a
+  plan.md explicitly declares.
 
 ## Non-goals (out of scope)
 
