@@ -42,6 +42,7 @@ DEFAULT_GRAPH = "workflow-graph.yaml"
 DEFAULT_LEDGER = "gates/ledger.jsonl"
 WORKING_STATUSES = ("not_started", "in_progress", "in_review", "pending")
 DEFAULT_DONE_BY_GATE = {
+    "tracker_board": "accepted",
     "product_owner_accept": "accepted",
     "product_owner_approve": "approved",
     "engineer_approve": "approved",

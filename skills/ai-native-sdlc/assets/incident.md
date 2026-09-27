@@ -35,7 +35,7 @@ via which gate (release authorization, PR merge, runbook trigger).>
 
 - [ ] An eval covering this incident class was added (`evals/<name>.json`)
 - [ ] Larger than a small bounded fix -> the diagnosis was written back as
-      `intent/intent.md` and re-entered the pipeline at Plan
+      a new tracker task and re-entered the pipeline at Plan
 
 ## Severity definitions
 

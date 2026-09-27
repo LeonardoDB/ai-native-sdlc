@@ -6,7 +6,7 @@
 
 ## Implements
 
-- intent: <commit or link>
+- intent: <task ref + link> (Closes group/project#42 · Fixes ENG-123)
 - spec: <commit>
 - plan: <commit>
 

@@ -41,6 +41,7 @@ PROMISED = [
     "references/adoption.md",
     "references/graph.md",
     "references/org.md",
+    "references/trackers.md",
     "scripts/init_workflow.py",
     "scripts/init_org.py",
     "scripts/sync_issues.py",
@@ -51,6 +52,7 @@ PROMISED = [
     "scripts/check_plan_sync.py",
     "scripts/org_status.py",
     "scripts/intake.py",
+    "scripts/tracker_link.py",
     "assets/intent.md",
     "assets/spec.md",
     "assets/plan.md",
@@ -237,7 +239,7 @@ def main() -> int:
         smoke = Path(td) / "smoke"
         code, out = run(["python3", str(skill / "scripts" / "init_workflow.py"), str(smoke), "--name", "Smoke"])
         check(code == 0, "init_workflow.py scaffold smoke test")
-        check((smoke / "intent" / "intent.md").is_file(), "scaffold writes intent/intent.md")
+        check(not (smoke / "intent").exists(), "scaffold writes no intent/ (intent lives in the tracker)")
         check((smoke / "workflow-graph.yaml").is_file(), "scaffold writes workflow-graph.yaml")
         check((smoke / "hooks" / "production-gate.sh").is_file(), "scaffold writes hooks/production-gate.sh")
         check((smoke / "scripts" / "workflow_state.py").is_file(), "scaffold writes workflow_state.py")
@@ -270,6 +272,7 @@ def main() -> int:
             "check_plan_sync.py",
             "org_status.py",
             "intake.py",
+            "tracker_link.py",
             "quick_validate.py",
         ):
             code, _ = run(

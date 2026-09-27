@@ -11,7 +11,7 @@ Each runbook must:
 - name the exact commands and their healthy output, so execution is
   deterministic and verifiable;
 - record its execution and any release authorization it consumed;
-- convert anything larger than a small bounded fix into `intent.md`.
+- convert anything larger than a small bounded fix into a new tracker task.
 
 Ship `rollback-deploy.md` first — rollback is the most rehearsed path because
 Phase 6 calls it before any other.

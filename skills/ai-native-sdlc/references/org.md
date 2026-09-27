@@ -38,7 +38,7 @@ python3 scripts/org_status.py review escalate --id review-4
 
 ## Reporting
 
-1. Every agent commits its artifact (intent.md, spec.md, plan.md, code+tests,
+1. Every agent commits its artifact (spec.md, plan.md, code+tests,
    review findings) with evidence.
 2. Status changes ride in the same commit as the artifact they describe —
    the commit chain is the audit trail.
@@ -97,8 +97,9 @@ python3 scripts/intake.py list --source email --status new
 ```
 
 The product engineering agent consolidates records, files public feature
-tickets with `scripts/sync_issues.py push`, and drafts `intent.md` from the
-template. The PM reviews every intent before it enters Design.
+tickets with `scripts/sync_issues.py push`, and drafts tracker tasks in the
+`assets/intent.md` shape. The PM reviews every task before it goes on the board
+(a task on the board is an accepted intent).
 
 ## Escalation rules
 

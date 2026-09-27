@@ -28,7 +28,7 @@
     ],
     "defaultPrompt": [
       "Build my idea as an AI-native SDLC project",
-      "Turn this goal into intent.md, spec.md, and a plan",
+      "Run the AI-native SDLC workflow for this Linear or GitLab task link",
       "Run the full plan-build-test-deploy loop for this feature"
     ]
   }

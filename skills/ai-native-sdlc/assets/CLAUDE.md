@@ -28,6 +28,13 @@ If a test fails, fix the code, not the test.
 
 <Each mistake, its fix, and how to check for it.>
 
+## Tracker
+
+<Optional. Default: tasks come from the tracker link you pass; the forge comes from
+`git remote get-url origin` (gh + PRs, glab + MRs). Fill in only what differs, e.g.
+"tasks live in Linear team ENG (Linear MCP); code on GitHub", or "issues live in
+group/backlog, not in this project".>
+
 ## Hooks
 
 <Deterministic hooks and what they enforce.>

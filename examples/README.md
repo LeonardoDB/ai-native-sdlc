@@ -7,7 +7,8 @@ Worked examples that show what the artifacts look like when the workflow is actu
 The recurring example idea from the README, taken through the early phases —
 and now a real, working static app:
 
-- `intent.md` — what was asked (Plan)
+- `intent.md` — what was asked (Plan); shown as a file for readability — in
+  real projects the intent is the tracker task, not a repo file
 - `spec.md` — what was decided (Design)
 - `plan.md` — how it will be built, before any code (Build)
 - `CLAUDE.md` — repository memory for the project

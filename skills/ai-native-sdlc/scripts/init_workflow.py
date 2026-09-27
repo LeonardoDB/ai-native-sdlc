@@ -6,7 +6,6 @@ Usage:
         [--framework codex|claude] [--dry-run] [--force] [--git]
 
 Creates:
-    intent/intent.md            intent template (copy of assets/intent.md)
     CLAUDE.md / AGENTS.md       repository-memory starter (--framework claude|codex)
     REVIEW.md                   review standards
     hooks/production-gate.sh    release authorization hook (executable)
@@ -21,6 +20,9 @@ Creates:
     evals/README.md             how to add evals (JSON format)
     gates/README.md             gate ledger usage
     .gitignore                  basic ignore rules
+
+No intent.md: the intent lives in the tracker (Linear, GitLab, GitHub); a
+task on the board is an accepted intent (references/trackers.md).
 
 Existing files are skipped unless --force is passed. --dry-run prints the
 plan without writing anything (not even the project directory).
@@ -38,7 +40,6 @@ ASSET_DIR = SKILL_DIR / "assets"
 
 # dest -> skill-relative source (assets/ for templates, scripts/ for tooling)
 FILES = {
-    "intent/intent.md": "assets/intent.md",
     "CLAUDE.md": "assets/CLAUDE.md",
     "REVIEW.md": "assets/REVIEW.md",
     "hooks/production-gate.sh": "assets/production-gate.sh",
@@ -88,7 +89,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--name",
-        help="project/product name to fill into the intent title",
+        help="project/product name to fill into the workflow graph title",
     )
     parser.add_argument(
         "--framework",
@@ -160,7 +161,7 @@ def main() -> int:
                 "\n",
             )
         if args.name:
-            text = text.replace("<Title>", args.name)
+            text = text.replace("<Title>", args.name).replace("<Project>", args.name)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text, encoding="utf-8")
         if dest.name == "production-gate.sh":
@@ -182,8 +183,8 @@ def main() -> int:
 
     print()
     print("Next steps:")
-    print("  1. Open intent/intent.md and describe the goal in your own words.")
-    print("  2. Tell your agent: run the AI-native SDLC workflow from this intent.")
+    print("  1. Pick a task on your board (Linear, GitLab, GitHub).")
+    print("  2. Tell your agent: run the AI-native SDLC workflow for <task link>.")
     print("  3. Commit the skeleton: git add -A && git commit -m 'scaffold ai-native-sdlc workflow'")
     return 0
 

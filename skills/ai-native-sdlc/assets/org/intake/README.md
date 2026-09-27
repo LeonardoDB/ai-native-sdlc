@@ -2,7 +2,7 @@
 
 Every demand lands here as a markdown record, no matter the channel. The
 product engineering agent reads these, consolidates them into feature tickets,
-and drafts `intent.md` for PM review.
+and drafts tracker tasks for PM review.
 
 ## Channels
 

@@ -1,7 +1,7 @@
 ---
 name: ai-native-sdlc
 version: 0.1.0
-description: Run the AI-native SDLC loop — Plan, Design, Build, Test, Deploy, Maintain — with versioned artifacts and human approval gates at every handoff. Use when the user states a goal, idea, feature, or change request and expects the agent to scaffold and drive the project through the full lifecycle instead of jumping straight to code.
+description: Run the AI-native SDLC loop — Plan, Design, Build, Test, Deploy, Maintain — with versioned artifacts and human approval gates at every handoff. Use when the user passes a Linear, GitLab, or GitHub task link, or states a goal, idea, feature, or change request, and expects the agent to drive the work through the full lifecycle instead of jumping straight to code.
 ---
 
 # AI-Native SDLC
@@ -12,11 +12,11 @@ Every phase ends by committing a versioned artifact to git; the next phase start
 
 ## Frameworks
 
-The workflow is framework-agnostic. Claude Code calls the repository-memory file `CLAUDE.md` and keeps skills in `.claude/skills/`; Codex calls the repository-memory file `AGENTS.md` and installs skills into `~/.codex/skills/`. Wherever this skill says CLAUDE.md, use the repository-memory file your framework recognizes. The same skill folder installs in either environment, and the artifacts (`intent.md`, `spec.md`, `plan.md`, `REVIEW.md`, `bands.yaml`) are framework-neutral.
+The workflow is framework-agnostic. Claude Code calls the repository-memory file `CLAUDE.md` and keeps skills in `.claude/skills/`; Codex calls the repository-memory file `AGENTS.md` and installs skills into `~/.codex/skills/`. Wherever this skill says CLAUDE.md, use the repository-memory file your framework recognizes. The same skill folder installs in either environment, and the artifacts (`spec.md`, `plan.md`, `REVIEW.md`, `bands.yaml`) are framework-neutral. The intent is not a repo artifact: it lives in the tracker.
 
 ## Hard rules
 
-1. **Human gates are real gates.** Do not advance without approval: intent accepted → Design; spec approved → Build; plan approved → code; PR merged → Deploy; release authorized → production.
+1. **Human gates are real gates.** Do not advance without approval: task on the board (accepted intent) → Design; spec approved → Build; plan approved → code; PR merged → Deploy; release authorized → production.
 2. **Never cross the production gate.** Agent-generated changes stop at the merge/release boundary. High-risk actions (production config, migrations, releases) require explicit human authorization, enforced by a hook where possible.
 3. **Verify before asking for review.** Run build, tests, lint, and screenshots yourself first; fix what fails; only then hand work to a human.
 4. **Encode repeated lessons.** The same mistake twice → write the correction into the project's CLAUDE.md, a skill, or a hook.
@@ -45,13 +45,23 @@ deterministic layer (makes violation nearly impossible), or a review pass
 Anything in the deterministic column must always hold — enforce it with code,
 not prose.
 
+## Starting from a task link
+
+The intent lives in the tracker (Linear, GitLab, GitHub), not in the repo. A task on the board is an accepted intent — refined and prioritized there — so the board is the Plan gate and the agent starts at Design.
+
+1. From the repo you are working in, resolve the link with `scripts/tracker_link.py parse <link>`: system, native ref (`ENG-123`, `group/project#42`), and whether the task belongs to this repo. Detection is by link shape (GitLab's `/-/`, `linear.app`, `github.com`), so self-hosted GitLab needs no config. A board, epic, or unrecognized link exits 1 — ask for the task link instead.
+2. Read the task (description, labels, comments) through the tracker's MCP connector or CLI. Never edit it: gaps become open questions in `spec.md` or questions to the user.
+3. Run **Design** in that repo; `spec.md` cites the task (`Intent: <ref> <link>`), and the MR/PR closes it (`Closes group/project#42`, `Fixes ENG-123`).
+
+Read `references/trackers.md` for per-tracker read commands, the rules, and the optional per-project `## Tracker` section in CLAUDE.md for exceptions (issues in a different project than the code).
+
 ## Starting from an idea
 
-When the user gives a goal or idea and there is no workflow in place yet:
+When the user brings a goal or idea with no task yet:
 
-1. Scaffold the artifact skeleton with `scripts/init_workflow.py <project-dir> --name "<project name>" --framework codex|claude` (codex writes AGENTS.md, claude writes CLAUDE.md), or copy templates from `assets/` into an existing repo.
+1. Scaffold the artifact skeleton if the repo has none: `scripts/init_workflow.py <project-dir> --name "<project name>" --framework codex|claude` (codex writes AGENTS.md, claude writes CLAUDE.md), or copy templates from `assets/` into an existing repo.
 2. Run **Plan**: interview the user with analyst-style questions — what cannot be done today, who is affected, what success looks like, constraints, what is out of scope — until the idea is concrete.
-3. Write `intent/intent.md` from the template, commit it, and ask the product owner to accept or reject. Acceptance triggers Design.
+3. Draft the task description in the shape of `assets/intent.md` and create it in the tracker only after the user confirms. It enters the loop once it is on the board.
 
 If the user is already inside a later phase (for example, "review this PR" or "diagnose this incident"), start at that phase instead.
 
@@ -63,12 +73,12 @@ At a glance:
 
 | Phase | Reads | Produces | Gate (human approval) |
 |---|---|---|---|
-| Plan | user's idea | intent.md | accepted → Design |
-| Design | intent.md + org standards | spec.md | approved → Build |
-| Build | intent.md + spec.md | plan.md → code + tests → PR | plan approved before code; PR merged → Deploy |
+| Plan | user's idea | task on the tracker board | on the board → Design |
+| Design | tracker task + org standards | spec.md | approved → Build |
+| Build | tracker task + spec.md | plan.md → code + tests → PR | plan approved before code; PR merged → Deploy |
 | Test | repo + eval suite | eval results, regression evals | config changes that drop pass rate are reviewed |
 | Deploy | merged PR + review findings | authorized release | agentic review + explicit release authorization |
-| Maintain | production metrics | diagnosis → new intent.md | on-call triage: fix, schedule, or adjust thresholds |
+| Maintain | production metrics | diagnosis → new tracker task (user-confirmed) | on-call triage: fix, schedule, or adjust thresholds |
 
 ## Graph engineering
 
@@ -87,15 +97,15 @@ unresolved disagreement, PR merge, release). Scaffold it with
 
 ## Templates and assets
 
-The scaffold script copies the core skeleton into a new project (`intent.md`,
-`CLAUDE.md`/`AGENTS.md`, `REVIEW.md`, `bands.yaml`, `production-gate.sh`,
+The scaffold script copies the core skeleton into a new project (no `intent.md` —
+the intent lives in the tracker; `CLAUDE.md`/`AGENTS.md`, `REVIEW.md`, `bands.yaml`, `production-gate.sh`,
 `workflow-graph.yaml`, `.gitignore`, `evals/example.md`, `evals/README.md`,
 `gates/README.md`, and the tool scripts `gate_ledger.py`/`run_evals.py`/
 `detect_bands.py`/`workflow_state.py`/`check_plan_sync.py`); copy these manually when extending an existing repo. `spec.md` and `plan.md`
 are produced by the workflow itself during Design and Build — copy the blank
 forms only when you want them as starting points:
 
-- `assets/intent.md` — intent capture (problem, proposed outcome, affected users/systems, constraints, out of scope, open questions)
+- `assets/intent.md` — shape of a new tracker task description (problem, proposed outcome, affected users/systems, constraints, out of scope, open questions); not copied into projects
 - `assets/spec.md` — requirements + design specification with gotchas (produced during Design)
 - `assets/plan.md` — build plan (files, order, risks, proof, verification) (produced during Build)
 - `assets/CLAUDE.md` — repository-memory starter (commands, verification, conventions, common mistakes)
@@ -125,6 +135,7 @@ Organization-level examples to wire up during adoption:
 
 ## Scripts
 
+- `scripts/tracker_link.py` — resolve a Linear/GitLab/GitHub task link to system and native ref, and check it against the current repo's `origin` (no config, offline, deterministic; boards and epics exit 1)
 - `scripts/init_workflow.py` — scaffold the artifact skeleton into a new project (`--dry-run`, `--framework`, `--git`)
 - `scripts/init_org.py` — scaffold the autonomous agent org (roles, protocol, intake; `--dry-run`, `--force`)
 - `scripts/quick_validate.py` — validate the skill/plugin bundle (self-check; CI runs it)
@@ -140,8 +151,8 @@ Organization-level examples to wire up during adoption:
 ## Self-test (after installing)
 
 1. `python3 skills/ai-native-sdlc/scripts/init_workflow.py /tmp/wf-demo --name "Demo" --git`
-2. Tell your agent: *run the AI-native SDLC workflow from this intent.*
-3. Accept the intent, approve the spec, and confirm the agent stops at every
+2. Tell your agent: *run the AI-native SDLC workflow for <task link>.*
+3. Approve the spec and confirm the agent stops at every
    gate and never crosses the production gate.
 
 ## Customization

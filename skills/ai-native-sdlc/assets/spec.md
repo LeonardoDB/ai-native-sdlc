@@ -1,6 +1,6 @@
 # <Title> — Specification
 
-- Derived from: intent.md <commit or path>
+- Intent: <task ref> <task link> (read <YYYY-MM-DD>)
 - Author: <agent + human reviewer>
 - Status: Draft | Approved
 - Date: <YYYY-MM-DD>

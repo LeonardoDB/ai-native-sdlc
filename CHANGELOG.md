@@ -8,6 +8,13 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Intent from the tracker: `scripts/tracker_link.py parse <link>` resolves a
+  Linear, GitLab, or GitHub task link to its system and native ref and checks
+  it against the current repo's `origin` — no config (GitLab, self-hosted
+  included, is recognized by its `/-/` link shape), offline, deterministic;
+  board, epic, project, and MR links exit 1. Flow and rules in
+  `references/trackers.md`; optional `## Tracker` section in the CLAUDE.md
+  template for per-project exceptions; tests in `tests/test_tracker_link.py`.
 - Deterministic workflow state runtime (`scripts/workflow_state.py`): `status`
   reports pipeline state and drift warnings, `advance` closes a graph node only
   through a matching chain-verified ledger record, and `check` validates graph
@@ -62,6 +69,14 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Changed
 
+- The intent lives in the tracker, not the repo: a task on the board is an
+  accepted intent, and the agent starts at Design from the task link without
+  editing the task. `init_workflow.py` no longer scaffolds `intent/intent.md`
+  (`--name` now fills the workflow graph title); the graph's intent node is
+  gated by `tracker_board`; `spec.md` and the PR template cite the task ref;
+  Maintain drafts new tracker tasks (created on user confirmation) instead of
+  writing `intent.md`. `assets/intent.md` is now the shape of a new task
+  description.
 - `assets/plan.md` — "Files that change" is now a bullet list of exact paths or
   globs so `check_plan_sync.py` can treat the plan as a machine-readable
   manifest.

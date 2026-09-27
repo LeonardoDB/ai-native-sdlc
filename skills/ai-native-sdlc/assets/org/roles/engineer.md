@@ -9,7 +9,7 @@ Turns approved specs and plans into tested code.
 
 ## Responsibilities
 
-- Read intent.md + spec.md, propose a plan, get it reviewed.
+- Read the tracker task + spec.md, propose a plan, get it reviewed.
 - Implement per the approved plan; write tests alongside code.
 - Verify before asking for review (run tests/build/lint; fix failures first).
 - Request a peer review when done; address findings; never self-approve.

@@ -31,10 +31,11 @@ Plan → Design → Build → Test → Deploy → Maintain
 Each phase ends by committing a versioned artifact; the next phase starts by
 reading it. The full phase → artifact → gate contract lives in
 `skills/ai-native-sdlc/SKILL.md` (single source of truth). The short version:
-**Plan** commits `intent.md`, **Design** commits `spec.md`, **Build** commits
-`plan.md` then code + tests, **Test** reports eval results, **Deploy** ships an
-authorized release, **Maintain** writes its diagnosis back as a new
-`intent.md`.
+**Plan** is the tracker: a task on the Linear/GitLab/GitHub board is an
+accepted intent (no `intent.md` in the repo). **Design** commits `spec.md`,
+**Build** commits `plan.md` then code + tests, **Test** reports eval results,
+**Deploy** ships an authorized release, **Maintain** drafts its diagnosis as a
+new tracker task.
 
 The agent does the generation, verification, and mechanical work. Humans keep the judgment calls: the agent goes all the way to the production gate and never crosses it.
 
@@ -101,14 +102,16 @@ python3 skills/ai-native-sdlc/scripts/init_workflow.py my-project --name "My ide
 
 Then tell your agent:
 
-> $ai-native-sdlc: I want to build an expense tracker. Start with the intent.
+> $ai-native-sdlc: run the workflow for https://linear.app/acme/issue/ENG-123
 
-The agent interviews you until the idea is concrete, writes `intent/intent.md`, commits it, and asks you to accept. From there it moves through spec → plan → build → test → deploy, stopping at each approval gate, and finally wires up monitoring so the loop can close back into new intents.
+Run it from the repo the task belongs to. The agent resolves the link (`scripts/tracker_link.py`, no config — self-hosted GitLab is recognized by its `/-/` link shape), reads the task — it never edits it — and starts at Design. From there it moves through spec → plan → build → test → deploy, stopping at each approval gate, and the MR/PR closes the task on merge. Authentication stays with the tracker's own MCP connector or CLI (`glab`, `gh`); see `skills/ai-native-sdlc/references/trackers.md`.
+
+No task yet? Describe the idea; the agent interviews you, drafts the task description, and creates it in the tracker once you confirm.
 
 Already have a project? Copy the templates into it:
 
 ```bash
-cp skills/ai-native-sdlc/assets/{intent.md,spec.md,plan.md,CLAUDE.md,REVIEW.md,bands.yaml} .
+cp skills/ai-native-sdlc/assets/{spec.md,plan.md,CLAUDE.md,REVIEW.md,bands.yaml} .
 cp skills/ai-native-sdlc/assets/production-gate.sh hooks/
 ```
 
@@ -184,9 +187,10 @@ See `skills/ai-native-sdlc/references/adoption.md` for the staged rollout order.
         │   ├── playbook.md        # phase-by-phase procedures
         │   ├── adoption.md        # staged rollout + org customization
         │   ├── graph.md           # the loop as a directed graph
-        │   └── org.md             # autonomous agent org (roles, review, intake)
+        │   ├── org.md             # autonomous agent org (roles, review, intake)
+        │   └── trackers.md        # intent from Linear/GitLab/GitHub task links
         ├── assets/                # templates copied into target projects
-        │   ├── intent.md
+        │   ├── intent.md          # shape of a new tracker task (not copied)
         │   ├── spec.md
         │   ├── plan.md
         │   ├── CLAUDE.md

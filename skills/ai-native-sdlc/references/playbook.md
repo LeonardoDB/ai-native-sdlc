@@ -24,7 +24,9 @@ Each play below covers: what changes, getting started (prerequisites and infrast
 3. **Humans hold the judgment positions.** Agents generate, execute, and mechanically verify. High-risk actions and final approvals stay human. The agent goes all the way to the production gate — and no further.
 4. **Don't throw away existing tools.** Jira, Figma, GitHub, and Slack stay. For every artifact, name one system as the source of truth (repo markdown or the legacy system), and keep cross-references in both directions.
 
-## Phase 1 — Plan: capture intent as intent.md
+## Phase 1 — Plan: capture intent
+
+> **In this bundle the intent lives in the tracker** (Linear, GitLab, GitHub): a task on the board is an accepted intent, and work starts at Design from the task link (`references/trackers.md`). The practice below still applies to how tasks are written and refined. Throughout this playbook, read "intent.md" as "the tracker task", and "committed to the shared home" or "accepted" as "on the board".
 
 **What changes.** In the traditional flow, requirements were gathered by committee, distilled through workshops and sign-offs, and written up by hand — ownership transferred at each handoff, so what reached engineering was several steps removed from what the originator meant. In the AI-native flow, ideas stop waiting for someone to write them up: intent is captured once, in the originator's own words, as a version-controlled artifact the next stage can act on — human-readable for the product owner, machine-actionable for the agent.
 
@@ -186,7 +188,7 @@ Run the agent non-interactively in the pipeline for judgment steps — triage a 
 2. Write the detection script: mean and standard deviation over a rolling window with Western Electric rules, so the bands catch slow drift as well as spikes. The script is version controlled and unit tested; detection stays deterministic, with no model involved.
 3. Define response tiers in version-controlled config (`bands.yaml`): at 1σ log only; at 2σ invoke the agent read-only to diagnose; at 3σ the agent may act, but only by opening a PR into the review gate or triggering a pre-approved runbook.
 4. The agent runs stateless and non-interactive. Because nothing needs a person to start it, the loop can begin and end on its own.
-5. The agent writes its diagnosis as intent.md in the Plan format — the anomaly and its evidence, a proposed outcome, affected systems, open questions — and it flows through the pipeline like anything else.
+5. The agent drafts its diagnosis as a tracker task in the Plan format (`assets/intent.md`), created once a human confirms — the anomaly and its evidence, a proposed outcome, affected systems, open questions — and it flows through the pipeline like anything else.
 6. The service owner or on-call engineer triages the queue: fix now, schedule, or dismiss. Dismissals tune the bands and reduce noise.
 7. When a fix ships, add an eval for the incident so the class of issue is protected going forward.
 

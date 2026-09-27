@@ -5,13 +5,13 @@ The AI-native SDLC is a directed graph, not a linear pipeline. Treating it as a 
 ## Node types
 
 - **Plays** — the work units: capture intent, requirements and design, plan mode, build, continuous evals, PR review, hooks, CI/CD, closing the loop.
-- **Artifacts** — the committed evidence each play produces: intent.md, spec.md, plan.md, the diff and its tests, the PR with its review findings, the incident record.
+- **Artifacts** — the evidence each play produces: the tracker task (the intent — it lives in Linear/GitLab/GitHub, not the repo), spec.md, plan.md, the diff and its tests, the PR with its review findings, the incident record.
 - **Gates** — human judgment points where an artifact is accepted, approved, or rejected. Gates are the only nodes automation may never skip.
-- **Triggers** — directed edges that fire the next play when a gate passes: an accepted intent fires Design; an approved spec fires plan mode; a merged PR fires the pipeline; a breached control band writes the next intent.
+- **Triggers** — directed edges that fire the next play when a gate passes: a task on the board (an accepted intent) fires Design; an approved spec fires plan mode; a merged PR fires the pipeline; a breached control band drafts the next tracker task.
 
 ## The runtime loop
 
-intent.md → (accepted) → spec.md → (approved) → plan.md → (approved) → code + tests → (PR merged) → release → (authorized) → monitoring → (band breach) → new intent.md → back to the start.
+tracker task → (on the board) → spec.md → (approved) → plan.md → (approved) → code + tests → (PR merged) → release → (authorized) → monitoring → (band breach) → new tracker task → back to the start.
 
 The machine-readable form ships in `assets/workflow-graph.example.yaml`.
 
@@ -26,9 +26,9 @@ python3 scripts/workflow_state.py status
 
 # Close a gate only through a matching, chain-verified ledger record
 python3 scripts/gate_ledger.py record \
-  --gate product_owner_accept --artifact intent/intent.md \
-  --commit abc123 --approver "Ada" --evidence "intent review"
-python3 scripts/workflow_state.py advance --node intent --record product_owner_accept-001
+  --gate tracker_board --artifact "group/project#42" \
+  --approver tracker --evidence "https://gitlab.example.com/group/project/-/issues/42"
+python3 scripts/workflow_state.py advance --node intent --record tracker_board-001
 
 # Drift and schema validation (add --strict for uncommitted advance-ready records)
 python3 scripts/workflow_state.py check --strict

@@ -4,6 +4,9 @@
 # edges between nodes but never skip a gate. This file is the team's shared
 # view of the pipeline: what is in flight, what is blocked at which gate.
 #
+# The intent lives in the tracker, not in the repo: a task on the board is an
+# accepted intent (gate tracker_board). See the skill's references/trackers.md.
+#
 # status: not_started | in_progress | accepted | approved | in_review |
 #         merged | pending | done
 
@@ -12,8 +15,8 @@ version: 1
 nodes:
   intent:
     stage: plan
-    artifact: intent/intent.md
-    gate: product_owner_accept
+    artifact: tracker task (Linear / GitLab / GitHub)
+    gate: tracker_board
     status: not_started
     done_status: accepted
   spec:
@@ -42,7 +45,7 @@ nodes:
     done_status: done
   diagnosis:
     stage: maintain
-    artifact: new intent.md
+    artifact: new tracker task
     gate: on_call_triage
     status: not_started
     done_status: done

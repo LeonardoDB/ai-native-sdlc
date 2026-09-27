@@ -28,7 +28,7 @@ when a control band breaches inside a deploy window.
    `<checks: the band is back at baseline, traffic is served>`
 5. **Record the execution.** Release authorization reference + incident number
    (gate ledger / `gates/`, `INC-<n>`).
-6. **Write the diagnosis back** as `intent/intent.md` so the fix re-enters the
+6. **Write the diagnosis back** as a new tracker task so the fix re-enters the
    pipeline at Plan, and add an eval for the incident class.
 
 ## Who may run

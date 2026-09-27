@@ -6,7 +6,7 @@ and escalation so the loop runs with less human steering.
 
 ## Reporting
 
-1. Every agent commits its artifact (intent.md, spec.md, plan.md, code+tests,
+1. Every agent commits its artifact (spec.md, plan.md, code+tests,
    review findings) with evidence.
 2. When an agent accepts or finishes work, it updates `org/status.yaml`
    (busy/idle, assignment, last_report) in the same commit, using

@@ -24,13 +24,13 @@ The plays are written generically; each framework has its own names for the same
 | Skills | `.claude/skills/` | `~/.codex/skills/` |
 | Subagents | `.claude/agents/*.md` | Codex subagent configuration |
 | Hook wiring | `.claude/settings.json` + `.claude/hooks/` | Codex settings/hooks |
-| Artifacts | intent.md, spec.md, plan.md, REVIEW.md, bands.yaml | same files |
+| Artifacts | spec.md, plan.md, REVIEW.md, bands.yaml (intent: tracker task) | same files |
 
 When this skill or the templates say CLAUDE.md or `.claude/`, map to the equivalent in the target framework. The artifacts, the templates, and the scaffold script are framework-neutral.
 
 ## Minimal first run
 
-1. Ship the intent.md template and require it for new work (capture intent).
+1. Agree that a task on the board is an accepted intent, and write new tasks in the `assets/intent.md` shape (capture intent; see `references/trackers.md`).
 2. Create a one-page CLAUDE.md and keep it under a page (CLAUDE.md).
 3. Teach the feedback loop: one command each for build/test/lint that exits non-zero on failure (feedback loop).
 4. Add one deterministic hook — protected paths, secrets, or the release gate (hooks).
@@ -96,9 +96,11 @@ Existing systems (Jira, ServiceNow, Figma, change boards) are hard to displace. 
 - **Legacy system as truth:** the record lives in Jira/ServiceNow; the agent reads it at session start and writes outcomes back through an MCP connector.
 - **Linkage as the minimum bar:** artifacts carry the record ID and legacy records carry the commit SHA. A good place to start when transitioning.
 
+This bundle fixes the choice for the intent: the tracker (Linear, GitLab, GitHub) is its source of truth, and the repo holds spec, plan, code, and the ledger, each citing the task ref. See `references/trackers.md`.
+
 ## Closing the loop
 
-Add `bands.yaml` plus a deterministic, unit-tested detection script; define the 1σ/2σ/3σ responses; make diagnosis produce intent.md automatically. Trigger from a schedule, a monitoring webhook, or chat. Route chat alerts into the same pipeline and keep the channel as audit evidence.
+Add `bands.yaml` plus a deterministic, unit-tested detection script; define the 1σ/2σ/3σ responses; make diagnosis draft a tracker task (created once a human confirms). Trigger from a schedule, a monitoring webhook, or chat. Route chat alerts into the same pipeline and keep the channel as audit evidence.
 
 ## Existing tooling
 
