@@ -108,11 +108,51 @@ Run it from the repo the task belongs to. The agent resolves the link (`scripts/
 
 No task yet? Describe the idea; the agent interviews you, drafts the task description, and creates it in the tracker once you confirm.
 
-Already have a project? Copy the templates into it:
+### Set up an existing repo
+
+Nothing from this repo is copied into yours for the task-link flow: the skill
+and `tracker_link.py` run from the installed skill.
+
+1. **Install the skill** (see [Install](#install)).
+2. **Authenticate the tracker** with its own tool — the skill holds no
+   credentials:
+   - GitLab: `glab auth login --hostname <your-gitlab-host>` (or a GitLab MCP
+     connector)
+   - Linear: connect the Linear MCP connector
+   - GitHub: `gh auth login`
+3. **Add the optional sections** to the repo's `CLAUDE.md` (`AGENTS.md` in
+   Codex) — only the ones that apply. Keep them to pointers; never paste the
+   knowledge itself:
+
+   ```markdown
+   ## Tracker
+
+   - Issues live in `group/backlog`, not in this project; MRs reference them as
+     `group/backlog#N`.
+
+   ## Knowledge base
+
+   - `docs/kb/` — decisions in `docs/kb/decisions/`, glossary in `docs/kb/glossary.md`
+   - MCP `<server-name>` — search by service name or domain term
+   ```
+
+   | Section | Without it | Add it when |
+   |---|---|---|
+   | `## Tracker` | the repo is the current checkout; the forge comes from `git remote get-url origin` (`gh` + PRs, `glab` + MRs) | tasks live somewhere the link and remote don't reveal (another project, another tracker) |
+   | `## Knowledge base` | Design skips the knowledge search | the project has a knowledge base (repo folder or MCP store); Design reads it before writing `spec.md` |
+
+   Many repos sharing the same setup? Claude Code also reads `CLAUDE.md` from
+   parent directories, so one file in the folder that holds them (for example
+   `~/work/<company>/CLAUDE.md`) covers every repo below it. Codex needs the
+   sections in each repo's `AGENTS.md`.
+4. **Run it from the repo:** `/ai-native-sdlc <task link>` in Claude Code, or
+   `$ai-native-sdlc: run the workflow for <task link>` in Codex.
+
+Want the gate ledger, release hook, and evals too? Scaffold them — existing
+files, including your `CLAUDE.md`, are skipped unless you pass `--force`:
 
 ```bash
-cp skills/ai-native-sdlc/assets/{spec.md,plan.md,CLAUDE.md,REVIEW.md,bands.yaml} .
-cp skills/ai-native-sdlc/assets/production-gate.sh hooks/
+python3 skills/ai-native-sdlc/scripts/init_workflow.py path/to/your-repo
 ```
 
 ## Autonomous agent org
