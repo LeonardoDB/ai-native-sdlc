@@ -24,7 +24,7 @@ The workflow is framework-agnostic. Claude Code calls the repository-memory file
 
 1. **Human gates are real gates.** Do not advance without approval: task on the board (accepted intent) → Design; spec approved → Build; plan approved → code.
 2. **Stop at the MR/PR.** Open it and stop. Never merge, deploy, release, or change production config; those are the team's decisions, outside this workflow.
-3. **Verify before asking for review.** Run build, tests, lint, and screenshots yourself first; fix what fails; only then open the MR/PR.
+3. **Verify before asking for review.** Run build, tests, lint, and screenshots yourself first; fix what fails; only then ask to commit and open the MR/PR.
 4. **Encode repeated lessons.** The same mistake twice → write the correction into the project's CLAUDE.md, a skill, or a hook.
 5. **Evidence in reviews.** Every finding cites file/line and concrete evidence, ordered by severity, with at most 5 nit comments per review.
 6. **Plan mode first.** Nothing is implemented without an accepted plan; when implementation departs from the plan, update plan.md in the same commit.
@@ -58,7 +58,8 @@ The intent lives in the tracker (Linear, GitLab, GitHub), not in the repo. A tas
 1. From the repo you are working in, resolve the link with `scripts/tracker_link.py parse <link>`: system, native ref (`ENG-123`, `group/project#42`), and whether the task belongs to this repo. Detection is by link shape (GitLab's `/-/`, `linear.app`, `github.com`), so self-hosted GitLab needs no config. A board, epic, or unrecognized link exits 1 — ask for the task link instead.
 2. Read the task (description, labels, comments) through the tracker's MCP connector or CLI. Never edit it: gaps become open questions in `spec.md` or questions to the user.
 3. Run **Design** in that repo. If its CLAUDE.md has a `## Knowledge base` section, search it first for what the task touches — prior decisions, domain terms, known constraints. `spec.md` cites the task (`Intent: <ref> <link>`) and the knowledge used; a conflict between the task and the knowledge base becomes an open question.
-4. Run **Build** and **Review**. Commit and open the MR/PR with the project's own skills when its CLAUDE.md names them in `## Commit and MR/PR`; otherwise follow the defaults in `references/trackers.md` (repo conventions, the repo's MR/PR template, the closing keyword `Closes group/project#42` / `Fixes ENG-123`). Open it on the user's go-ahead — and stop.
+4. Run **Build** and **Review**, invoking the project's style skill if `## Conventions` names one (and repeating that instruction in every subagent brief). Do not commit along the way.
+5. When Review is done, ask once: *commit, push, and open the MR/PR?* On the go-ahead, commit and open it with the project's own skills when its CLAUDE.md names them in `## Commit and MR/PR`; otherwise follow the defaults in `references/trackers.md` (repo commit style, the repo's MR/PR template, the closing keyword `Closes group/project#42` / `Fixes ENG-123`). Then stop.
 
 Read `references/trackers.md` for per-tracker read commands, the rules, and the optional per-project `## Tracker` section in CLAUDE.md for exceptions (issues in a different project than the code).
 
@@ -82,8 +83,8 @@ At a glance:
 |---|---|---|---|
 | Plan | the tracker board | task on the board (no repo artifact) | on the board → Design |
 | Design | tracker task + org standards + knowledge base (if declared) | spec.md | spec approved → Build |
-| Build | tracker task + spec.md | plan.md → code + tests | plan approved before code |
-| Review | diff + spec.md + plan.md + REVIEW.md | findings fixed; verify output; MR/PR opened (project's commit/MR skills if declared) | user's go-ahead to open; **end of the loop** — the team reviews and merges |
+| Build | tracker task + spec.md + style skill (if declared) | plan.md → code + tests (uncommitted) | plan approved before code |
+| Review | diff + spec.md + plan.md + REVIEW.md + style skill (if declared) | findings fixed; verify output; commits + MR/PR opened (project's commit/MR skills if declared) | one go-ahead to commit, push, and open; **end of the loop** — the team reviews and merges |
 
 ## Graph engineering
 

@@ -105,7 +105,7 @@ Then tell your agent:
 
 > $ai-native-sdlc: run the workflow for https://linear.app/acme/issue/ENG-123
 
-Run it from the repo the task belongs to. The agent resolves the link (`scripts/tracker_link.py`, no config — self-hosted GitLab is recognized by its `/-/` link shape), reads the task — it never edits it — and starts at Design. From there it moves through spec → plan → build → review, stopping at each approval gate, and opens the MR/PR — where it stops. The MR/PR closes the task when the team merges it. Authentication stays with the tracker's own MCP connector or CLI (`glab`, `gh`); see `skills/ai-native-sdlc/references/trackers.md`.
+Run it from the repo the task belongs to. The agent resolves the link (`scripts/tracker_link.py`, no config — self-hosted GitLab is recognized by its `/-/` link shape), reads the task — it never edits it — and starts at Design. From there it moves through spec → plan → build → review, stopping at each approval gate, then asks once to commit, push, and open the MR/PR — where it stops. The MR/PR closes the task when the team merges it. Authentication stays with the tracker's own MCP connector or CLI (`glab`, `gh`); see `skills/ai-native-sdlc/references/trackers.md`.
 
 No task yet? Describe the idea; the agent interviews you, drafts the task description, and creates it in the tracker once you confirm.
 
@@ -141,6 +141,10 @@ and `tracker_link.py` run from the installed skill.
    - Commit with the `/commit` skill; open MRs with the `/create-mr` skill.
    - MR template: `.gitlab/merge_request_templates/default.md`
    ```
+
+   A project style skill goes in the existing `## Conventions` section
+   ("invoke the `/code-style` skill before writing or reviewing code"); Build
+   and Review invoke it.
 
    | Section | Without it | Add it when |
    |---|---|---|

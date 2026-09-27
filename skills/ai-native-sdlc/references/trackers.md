@@ -65,9 +65,12 @@ the current checkout, and the forge comes from its `origin` remote.
    Continue the loop as usual: spec approved → `plan.md` → code + tests →
    MR/PR.
 
-6. **Commit and open the MR/PR — the end of the loop.** If the project's
-   CLAUDE.md has a `## Commit and MR/PR` section, use the skills and rules it
-   names; they win over everything below. Otherwise:
+6. **Commit and open the MR/PR — the end of the loop.** Nothing is committed
+   during Build. When Review is done, ask once: *commit, push, and open the
+   MR/PR?* — one go-ahead covers all three, and nothing leaves the machine or
+   enters history without it. Then, if the project's CLAUDE.md has a
+   `## Commit and MR/PR` section, use the skills and rules it names; they win
+   over everything below. Otherwise:
 
    - **Branch** after the ref (`feat/eng-123-csv-export`, `fix/42-date-off-by-one`)
      unless the repo has its own rule.
@@ -80,9 +83,8 @@ the current checkout, and the forge comes from its `origin` remote.
      verify output — never an invented body. Put the closing keyword in it
      (`Closes group/project#42`, `Fixes ENG-123`) so the tracker moves the
      task on merge.
-   - **Open it on the user's go-ahead** with the forge from `current_repo`
-     (`glab mr create`, `gh pr create`), then stop. Merge and deploy are the
-     team's.
+   - **Open it** with the forge from `current_repo` (`glab mr create`,
+     `gh pr create`), then stop. Merge and deploy are the team's.
 
 ## Rules
 

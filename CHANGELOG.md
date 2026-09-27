@@ -83,7 +83,9 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
   `## Commit and MR/PR` section pointing at the project's own commit and
   MR/PR skills or rules, which win over the defaults in
   `references/trackers.md` (repo commit style, the repo's MR/PR template,
-  closing keyword, open on the user's go-ahead).
+  closing keyword). Nothing is committed during Build: one go-ahead at the
+  end of Review covers commit, push, and opening the MR/PR. A project style
+  skill named in `## Conventions` is invoked in Build and Review.
 - The intent lives in the tracker, not the repo: a task on the board is an
   accepted intent, and the agent starts at Design from the task link without
   editing the task. `init_workflow.py` no longer scaffolds `intent/intent.md`

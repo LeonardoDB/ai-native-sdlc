@@ -18,7 +18,9 @@ If a test fails, fix the code, not the test.
 
 ## Conventions
 
-<Language/framework conventions, formatting, naming.>
+<Language/framework conventions, formatting, naming. If the project has a style
+skill, name it here (e.g. "invoke the /code-style skill before writing or reviewing
+code") — Build and Review invoke it, and every subagent brief repeats the instruction.>
 
 ## Architecture
 
@@ -46,7 +48,8 @@ never the knowledge itself. Read during Design, not every session. e.g.
 
 <Optional. The project's own skills or rules for committing and opening MRs/PRs —
 they win over the workflow's defaults. e.g. "commit with the /commit skill",
-"open MRs with the /create-mr skill", "MR template: .gitlab/merge_request_templates/default.md",
+"open MRs with the /create-mr skill", "MR template: .gitlab/merge_request_templates/default.md"
+(or the command that fetches it when it lives in another repo),
 "Conventional Commits; title `<type>(<scope>): <summary> (#<issue>)`".>
 
 ## Hooks
