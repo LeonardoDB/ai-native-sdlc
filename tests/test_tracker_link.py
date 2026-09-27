@@ -60,11 +60,18 @@ class ParseTests(unittest.TestCase):
         self.assertFalse(result["repo_matches"])
         self.assertEqual(result["slug"], "web-3")
 
-    def test_gitlab_board_epic_and_mr_are_rejected(self) -> None:
+    def test_merge_request_links_start_feedback(self) -> None:
+        mr, error = tl.parse("https://gitlab.acme.com.br/squad/api/-/merge_requests/9")
+        self.assertIsNone(error)
+        self.assertEqual((mr["kind"], mr["ref"], mr["id"]), ("merge_request", "squad/api!9", "9"))
+        pr, error = tl.parse("https://github.com/acme/app/pull/12")
+        self.assertIsNone(error)
+        self.assertEqual((pr["kind"], pr["ref"]), ("merge_request", "acme/app#12"))
+
+    def test_gitlab_board_and_epic_are_rejected(self) -> None:
         for url, kind in (
             ("https://gitlab.acme.com.br/groups/squad/-/boards/3", "board"),
             ("https://gitlab.acme.com.br/groups/squad/-/epics/5", "epic"),
-            ("https://gitlab.acme.com.br/squad/api/-/merge_requests/9", "merge_request"),
         ):
             result, error = tl.parse(url)
             self.assertEqual(result["kind"], kind)

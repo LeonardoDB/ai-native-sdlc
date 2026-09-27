@@ -24,7 +24,8 @@ Usage:
 
 Output: one JSON object on stdout:
     system        linear | gitlab | github
-    kind          issue | board | epic | project | merge_request | unknown
+    kind          issue | merge_request | board | epic | project | unknown
+                  (a merge_request link starts the MR/PR feedback flow)
     host          link host (lowercase)
     ref           native reference for commits and MRs/PRs
                   (ENG-123, group/project#42, owner/repo#42), null if not a task
@@ -44,7 +45,7 @@ Output: one JSON object on stdout:
                   of design, approve-spec, plan, approve-plan, implement — so a
                   second run with the same link resumes instead of restarting
 
-Exit codes: 0 = task link resolved, 1 = not a task link or unrecognized link
+Exit codes: 0 = task or MR/PR link resolved, 1 = another kind of link or unrecognized
 (JSON still printed when the system is known), 2 = usage error.
 """
 
@@ -83,6 +84,9 @@ def _parse_gitlab(host: str, segments: list[str], url: str) -> dict:
     kind = kinds.get(section, "unknown")
     if kind == "issue" and (number is None or project is None):
         kind = "unknown"
+    if kind == "merge_request" and number and project:
+        return _result("gitlab", kind, host, url, ref=f"{project}!{number}", id=number,
+                       project=project)
     if kind != "issue":
         return _result("gitlab", kind, host, url, project=project)
     return _result("gitlab", "issue", host, url, ref=f"{project}#{number}", id=number,
@@ -99,7 +103,8 @@ def _parse_github(host: str, segments: list[str], url: str) -> dict:
     if section == "projects":
         return _result("github", "board", host, url, project=project)
     if section == "pull" and number.isdigit():
-        return _result("github", "merge_request", host, url, project=project)
+        return _result("github", "merge_request", host, url, ref=f"{project}#{number}",
+                       id=number, project=project)
     if section != "issues" or not number.isdigit():
         return _result("github", "unknown", host, url, project=project)
     return _result("github", "issue", host, url, ref=f"{project}#{number}", id=number,
@@ -229,8 +234,8 @@ def parse(url: str, repo: dict | None = None) -> tuple[dict | None, str | None]:
         result["on_task_branch"] = leaf == result["slug"] or leaf.startswith(result["slug"] + "-")
         if repo.get("root"):
             result["state"] = task_state(repo["root"], result["change_dir"])
-    if result["kind"] != "issue":
-        return result, (f"{result['system']} {result['kind']} link, not a task; "
+    if result["kind"] not in ("issue", "merge_request"):
+        return result, (f"{result['system']} {result['kind']} link, not a task or an MR/PR; "
                         "open the task itself and pass its link")
     return result, None
 

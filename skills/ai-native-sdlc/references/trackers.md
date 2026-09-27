@@ -32,8 +32,9 @@ the current checkout, and the forge comes from its `origin` remote.
 
    Detection is by link shape — `linear.app`, GitLab's `/-/` separator on any
    host (self-hosted included), `github.com` — so no host list is kept.
-   Exit 1 means the link is not a task (board, epic, project, MR) or is
-   unrecognized: say so and ask for the task link. Never guess the system from
+   An MR/PR link (`kind: merge_request`) starts the feedback flow in
+   `references/feedback.md` instead. Exit 1 means the link is a board, epic,
+   or project, or is unrecognized: say so and ask for the task link. Never guess the system from
    the page content.
 
 2. **Read the task** — title, description, labels, comments, and its
@@ -129,7 +130,7 @@ names; they win over everything below. Otherwise:
 - **Any write to the tracker needs the user's confirmation**: a comment, a new
   task, a status change. The only automatic write is the closing keyword in
   the MR/PR, which the tracker applies on merge.
-- **One task per run.** Board, epic, and project links are rejected; the user
+- **One task per run.** Board, epic, and project links are rejected (an MR/PR link runs one feedback round); the user
   picks the task. Work that spans several repos is one task per repo.
 
 ## New work without a task

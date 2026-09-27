@@ -39,7 +39,7 @@ Humans stay accountable for every decision that requires judgment. Human attenti
 
 The flow is a default, not a toll booth. Before Design, pick the path and say which one and why, so the user can pull you back:
 
-- **Light** — a localized bug, a config change, a small edit inside one module: no spec. Build writes `docs/changes/<task>/plan.md` (files that change, proof, verification) and it is the one approval. Bugs start from a failing test.
+- **Light** — a localized bug, a config change, a small edit inside one module: no spec. Build writes `docs/changes/<task>/plan.md` (files that change, proof, verification) and it is the one approval. Bugs follow `references/debugging.md`: reproduce as a failing test, gather evidence (blame, bisect), test one hypothesis at a time, and put the root cause in the plan before the fix.
 - **Full** — a feature, a behavior change users will notice, or anything crossing modules or touching data: spec, then plan, each approved.
 
 When in doubt, take the full path; a spec that turns out short costs little.
@@ -188,7 +188,7 @@ Nothing is committed during Build; the change stays in the working tree, on the 
 6. **At most two rounds.** Not ready → fix → re-review is normal once. If blockers still stand after the second round, stop and bring the open list to the user: a review that cannot converge points at the design or the task, not the code. Do not stack further self-check passes on top of one independent review and one verify.
 7. **Ask once.** *Commit, push, and open the MR/PR?* One go-ahead covers all three; nothing leaves the machine or enters history without it.
 8. **Deliver.** Commit and open the MR/PR with the project's own skills when CLAUDE.md names them in `## Commit and MR/PR`; otherwise use the defaults in `references/trackers.md` — commits in the repo's style citing the task ref, the MR/PR body from the repo's template (else `assets/PULL_REQUEST_TEMPLATE.md`) filled from the spec, plan, review, and verify output, with the closing keyword (`Closes group/project#42`, `Fixes ENG-123`).
-9. **Stop.** The loop ends here. Branch protection requires the team's approval, so the agent that wrote the code cannot merge it.
+9. **Stop.** The loop ends here. When the team's review comes back, the MR/PR link starts one feedback round (`references/feedback.md`). Branch protection requires the team's approval, so the agent that wrote the code cannot merge it.
 
 When a review flags a mistake for the second time, the correction goes into CLAUDE.md as part of that review. The tech lead tunes REVIEW.md by rating findings and capping nit volume.
 

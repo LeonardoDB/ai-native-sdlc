@@ -139,6 +139,8 @@ To see where work bends, across every repo of a company:
 python3 ~/.claude/skills/ai-native-sdlc/scripts/metrics.py --repos ~/work/<company>/* --forge
 ```
 
+Review came back? Pass the MR/PR link (`/ai-native-sdlc <MR link>`): the agent triages every thread, fixes what is in scope test-first, re-runs the checks, and asks once before pushing and replying. A bug task starts from a reproduction and a root cause, not a guess.
+
 No task yet? Describe the idea; the agent interviews you, drafts the task description, and creates it in the tracker once you confirm.
 
 ## Layout
@@ -161,6 +163,8 @@ No task yet? Describe the idea; the agent interviews you, drafts the task descri
         │   ├── playbook.md        # phase-by-phase procedures
         │   ├── trackers.md        # task links, workspace, resuming, delivery
         │   ├── adoption.md        # tailoring the workflow to a team
+        │   ├── debugging.md       # bug tasks: reproduce, bisect, hypotheses, root cause
+        │   ├── feedback.md        # one MR/PR feedback round
         │   └── agents/            # explorer.md, reviewer.md — subagent briefs
         ├── hooks/
         │   └── gate.py            # PreToolUse gate: no merge, checks before publishing

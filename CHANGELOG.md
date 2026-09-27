@@ -8,6 +8,15 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- MR/PR feedback: `tracker_link.py` accepts MR/PR links (`kind:
+  merge_request`, ref `group/project!12` or `owner/repo#12`), and
+  `references/feedback.md` runs one round — read every thread, check out the
+  source branch, triage (question, change in scope, out of scope,
+  disagreement), fix test-first, re-run the checks, and push and reply on one
+  go-ahead. Never merges.
+- Bug tasks: `references/debugging.md` — reproduce as a failing test,
+  evidence and `git bisect run`, one hypothesis at a time, the root cause in
+  the plan before the fix, siblings as follow-ups.
 - `scripts/metrics.py`: rework metrics from what each task already records
   in `docs/changes/<task>/` and git — spec rework after the plan, plan edits,
   review rounds (`### Round <n>`), deviations, test changes, accepted
