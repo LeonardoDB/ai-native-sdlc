@@ -8,6 +8,7 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Eval `09-kb-recall`: an ADR the code does not reveal (money is Decimal, after an incident) must be read, cited in the spec, and followed.
 - `check_diff_hygiene.py` fails while a `- [ ]` entry is left untriaged under
   plan.md's `## Learnings`; `metrics.py` reports learnings promoted and
   dropped per task.

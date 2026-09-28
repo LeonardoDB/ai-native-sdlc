@@ -15,6 +15,15 @@ claude plugin eval . --scaffold --trust-plugin --no-publish --allow-tools Bash E
   --tag gate --tag negative --model haiku
 ```
 
+**macOS:** inside the runner's sandbox, `/usr/bin/git` (the Xcode `xcrun` shim)
+fails with `couldn't create cache file … Operation not permitted`, so every
+case that uses git breaks. Install a standalone git ahead of it on PATH
+(`brew install git`); Linux and CI are unaffected.
+
+A case that expects the agent to reach a later gate must approve the earlier
+ones in its prompt — the workflow stops at every gate, starting with the
+branch proposal in Workspace.
+
 `--allow-tools Bash Edit Write` is required — without it the runner denies those
 tools and the agent cannot work. `--scaffold` is required too: each case's `fixture.sh` builds the workspace (it
 sources `_fixtures/shop.sh`, which you can read — it runs as you). Results go
@@ -33,7 +42,10 @@ and reports the score delta — the evidence that the skill, not the model alone
 produces the behavior. `--ablation none` halves the cost while iterating.
 
 Measured so far (haiku, one run each): `03-board-link-rejected` 1.00,
-`08-neg-explain` 1.00. The end-to-end cases have not been run yet.
+`08-neg-explain` 1.00. `09-kb-recall` 0.33 on its first design, which
+expected a spec without approving the branch first — the agent correctly
+stopped at Workspace; the prompt now approves the branch. The end-to-end
+cases have not been run yet (they need the git fix above on macOS).
 
 | Case | Checks |
 |---|---|
@@ -45,3 +57,4 @@ Measured so far (haiku, one run each): `03-board-link-rejected` 1.00,
 | 06-mr-feedback | a review round: the requested change made, the question answered, replies posted, no merge |
 | 07-bug-root-cause | a bug: reproduction test first, root cause in the plan, the boundary fixed |
 | 08-neg-explain | a plain question does not start the workflow |
+| 09-kb-recall | Design recalls an ADR the code does not show (money is Decimal) and the spec cites and follows it |
