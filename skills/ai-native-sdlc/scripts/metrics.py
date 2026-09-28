@@ -14,6 +14,8 @@ per task and in aggregate:
     deviations      bullets under ## Deviations
     test_changes    existing tests edited, from ## Test changes
     survivors       accepted surviving mutants, from ## Surviving mutants
+    promoted        learnings promoted to a knowledge store, from ## Learnings
+    dropped         learnings dropped at triage
     lead_days       first to last commit touching the task folder
 
 With --forge it also asks the forge (`gh` or `glab`, from the repo's origin)
@@ -90,6 +92,8 @@ def task_metrics(repo: Path, folder: Path) -> dict:
         "deviations": bullets(plan_text, "Deviations"),
         "test_changes": bullets(plan_text, "Test changes"),
         "survivors": bullets(plan_text, "Surviving mutants"),
+        "promoted": sum(1 for l in tdd.section(plan_text, "Learnings") if re.match(r"^\s*[-*]\s+\[promoted", l)),
+        "dropped": sum(1 for l in tdd.section(plan_text, "Learnings") if re.match(r"^\s*[-*]\s+\[dropped", l)),
         "lead_days": round((folder_times[-1] - folder_times[0]) / 86400, 1) if folder_times else None,
     }
 
@@ -138,13 +142,13 @@ def summarize(rows: list[dict]) -> dict:
         "full_path_share": round(sum(r["path"] == "full" for r in rows) / len(rows), 2) if rows else None,
         "spec_rework_share": round(sum(r["spec_rework"] > 0 for r in rows) / len(rows), 2) if rows else None,
         **{f"mean_{k}": mean(k) for k in ("review_rounds", "deviations", "test_changes",
-                                          "survivors", "plan_edits", "lead_days", "mr_comments", "mr_days")},
+                                          "survivors", "promoted", "plan_edits", "lead_days", "mr_comments", "mr_days")},
     }
 
 
 def table(rows: list[dict], forge: bool) -> str:
     cols = ["repo", "task", "path", "criteria", "spec_rework", "plan_edits", "review_rounds",
-            "deviations", "test_changes", "survivors", "lead_days"] + (["mr", "mr_comments", "mr_days"] if forge else [])
+            "deviations", "test_changes", "survivors", "promoted", "lead_days"] + (["mr", "mr_comments", "mr_days"] if forge else [])
     out = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
     for r in rows:
         out.append("| " + " | ".join("" if r.get(c) is None else str(r[c]) for c in cols) + " |")

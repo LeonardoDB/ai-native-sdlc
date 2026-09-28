@@ -32,6 +32,11 @@ PLAN = """\
 
 ## Surviving mutants
 
+## Learnings
+
+- [promoted → decisions: docs/adr/0003.md] decision: threshold is inclusive
+- [dropped: obvious from the code] convention: fee is an int
+
 ## Deviations
 
 - renamed helper
@@ -83,6 +88,7 @@ class MetricsTests(Repo):
         self.assertEqual(full["deviations"], 2)
         self.assertEqual(full["test_changes"], 1)
         self.assertEqual(full["survivors"], 0)
+        self.assertEqual((full["promoted"], full["dropped"]), (1, 1))
         self.assertEqual(full["lead_days"], 3.0)
         light = next(t for t in data["tasks"] if t["task"] == "9")
         self.assertEqual(light["path"], "light")

@@ -8,6 +8,9 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- `check_diff_hygiene.py` fails while a `- [ ]` entry is left untriaged under
+  plan.md's `## Learnings`; `metrics.py` reports learnings promoted and
+  dropped per task.
 - Knowledge stores (`references/knowledge.md`): CLAUDE.md's
   `## Knowledge base` now declares stores by name, purpose, transport (repo
   path, MCP server, CLI/API), and who may write, plus conventions and store

@@ -221,6 +221,16 @@ class DiffHygieneTests(Repo):
         self.assertEqual(res.returncode, 1)
         self.assertIn("tests/test_old.py", res.stdout)
 
+    def test_untriaged_learning_fails(self) -> None:
+        self.change(test_changes="\n## Learnings\n\n- [ ] gotcha: cache must be cleared in tests")
+        res = self.run_script(HYGIENE)
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("learning not triaged", res.stdout)
+        self.change(test_changes="\n## Learnings\n\n- [promoted → decisions: docs/adr/0001.md] gotcha: cache\n"
+                                 "- [dropped: already documented] convention: naming")
+        res = self.run_script(HYGIENE)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+
     def test_committed_mode_against_base(self) -> None:
         self.change()
         self.write("src/view.ts", "const x: any = 1;\n")

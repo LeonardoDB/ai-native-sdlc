@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deterministic diff hygiene: no silent escape hatches, no silently weakened tests.
 
-Two checks on the lines a change adds or removes:
+Three checks — two on the lines a change adds or removes, one on the plan:
 
   1. escape hatches — an added line that suppresses the type checker or the
      linter (`any`, `as any`, `@ts-ignore`, `# type: ignore`, `eslint-disable`,
@@ -13,6 +13,9 @@ Two checks on the lines a change adds or removes:
      rewritten (not just added to) must be listed under the plan's
      "## Test changes" with the reason. Fix the code, not the test; when the
      test itself is wrong, say so there.
+  3. learnings triaged — every `- [ ]` entry under the plan's "## Learnings"
+     is promoted to a knowledge store or dropped before delivery
+     (references/knowledge.md).
 
 Working-tree mode (default): the change is the working tree (untracked files
 included) against HEAD. Committed mode (--base <rev>): base...HEAD.
@@ -51,6 +54,7 @@ ESCAPE_HATCHES = [
         r"|\bt\.Skip\(|#\[ignore\]")),
 ]
 REASON_RE = re.compile(r"\breason\s*:", re.I)
+UNTRIAGED_RE = re.compile(r"^\s*[-*]\s+\[ \]\s+\S")
 HUNK_FILE_RE = re.compile(r"^\+\+\+ b/(.+)$")
 
 
@@ -123,14 +127,21 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"FAIL {label} without `reason:` in {path}: {line.strip()[:120]}")
                     failures += 1
 
+    changed = sorted(set(added) | set(removed))
+    plan_path, _ = cps._resolve_plan(repo, changed, args.plan, use_branch=True)
+    plan_file = repo / plan_path if plan_path else None
+    plan_text = plan_file.read_text(encoding="utf-8") if plan_file and plan_file.is_file() else ""
+
+    for line in tdd.section(plan_text, "Learnings"):
+        if UNTRIAGED_RE.match(line):
+            print(f"FAIL learning not triaged in {plan_path}: {line.strip()[:100]} "
+                  "(promote it to a store or drop it)")
+            failures += 1
+
     weakened = sorted(p for p, count in removed.items()
                       if count and scanned(p) and tdd.is_test_path(p, args.tests))
     if weakened:
-        changed = sorted(set(added) | set(removed))
-        plan_path, error = cps._resolve_plan(repo, changed, args.plan, use_branch=True)
-        plan_file = repo / plan_path if plan_path else None
-        listed = listed_test_changes(plan_file.read_text(encoding="utf-8")) \
-            if plan_file and plan_file.is_file() else ""
+        listed = listed_test_changes(plan_text)
         for path in weakened:
             if path not in listed:
                 print(f"FAIL existing test changed, not listed under ## Test changes: {path} "
