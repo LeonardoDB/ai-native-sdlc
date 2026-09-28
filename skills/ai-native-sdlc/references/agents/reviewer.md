@@ -13,6 +13,8 @@ this brief into the subagent's prompt, followed by the dispatch context below.
 - the task's acceptance criteria, from the task description
 - the output of `check_tdd.py`, `check_mutations.py`, `check_diff_hygiene.py`, and
   `impact_map.py` (dependents and callers of each changed file, with risk)
+- the decisions recalled from the knowledge stores for this area (spec.md's
+  `Knowledge used`), which the change must honor
 - `REVIEW.md` and the CLAUDE.md sections that set repo rules (conventions, the
   style skill if one is named)
 - **do-not-flag**: departures already recorded in plan.md, so settled calls
@@ -33,7 +35,7 @@ You were given one lens, or all three for a small change. Go deep on each:
 | Lens | Look for |
 |---|---|
 | **correctness** | Logic errors, null/undefined, off-by-one, races, error handling, edge cases, a broken happy path — and whether the tests would catch them (below). |
-| **spec + conventions** | Drift from spec.md and plan.md; files changed that plan.md does not list; changes the task does not need (drive-by refactors, renames); repo patterns, naming, structure, reuse of existing utilities; types (below); the rules CLAUDE.md and REVIEW.md declare; the style skill if one is named. |
+| **spec + conventions** | Drift from spec.md, plan.md, and the recalled decisions; files changed that plan.md does not list; changes the task does not need (drive-by refactors, renames); repo patterns, naming, structure, reuse of existing utilities; types (below); the rules CLAUDE.md and REVIEW.md declare; the style skill if one is named. |
 | **simplicity + security** | Needless complexity, duplication, the wrong abstraction; injection, authz gaps, secrets or PII in code and logs, data exposure, SSRF. |
 
 ### Tests (correctness lens)

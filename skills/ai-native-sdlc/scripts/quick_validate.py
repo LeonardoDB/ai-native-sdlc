@@ -40,6 +40,7 @@ PROMISED = [
     "references/trackers.md",
     "references/agents/explorer.md",
     "references/agents/reviewer.md",
+    "references/knowledge.md",
     "references/debugging.md",
     "references/feedback.md",
     "scripts/init_workflow.py",

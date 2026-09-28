@@ -114,6 +114,9 @@ names; they win over everything below. Otherwise:
   keyword in it (`Closes group/project#42`, `Fixes ENG-123`) so the tracker
   moves the task on merge. Reference a task from another project in its
   qualified form (`group/backlog#42`); a bare `#42` points at this repo.
+- **Knowledge notes** — repo-store notes promoted from plan.md's Learnings are
+  already in the change; drafted notes for external stores are written now,
+  as part of this same go-ahead, with the store's skill when one is named.
 - **Open it** with the forge from `current_repo` (`git push -u origin
   <branch>`, then `glab mr create` or `gh pr create`), then stop. Merge and
   deploy are the team's.

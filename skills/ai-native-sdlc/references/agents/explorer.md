@@ -10,7 +10,8 @@ brief into the subagent's prompt, followed by the dispatch context below.
 - the lens to explore through, e.g. "a similar existing feature", "the
   current implementation of <area>", "the data flow from <entry> to <store>"
 - the task: title, description, acceptance criteria
-- the `## Knowledge base` pointers from CLAUDE.md, if any (paths or MCP store)
+- the knowledge stores from CLAUDE.md's `## Knowledge base` (name, purpose,
+  transport), or "the repo's docs" when none are declared
 - the repo's routing/architecture notes from CLAUDE.md, if any
 - `impact_map.py --files <paths>` output for the area, when you already know
   which files it centers on
@@ -34,9 +35,10 @@ files is your most valuable output.
 
 ## Steps
 
-1. **Recall.** If the context names a knowledge base, search it first for the
-   domain context of this area — business rules, entities, prior decisions.
-   Cite hits as `[kb] …`. No knowledge base named: skip this step.
+1. **Recall.** Search the stores the context names — each for what its
+   purpose covers — for this area's business rules, entities, and prior
+   decisions. Cite hits as a path or `[kb:<store>] <page>`. Report a store you
+   could not reach instead of skipping it silently.
 2. **Entry points.** Where the area is entered — routes, handlers, UI
    components, consumers, jobs — each with `file:line`.
 3. **Trace the path.** Entry → logic → data layer → response, noting the

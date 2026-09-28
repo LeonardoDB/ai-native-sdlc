@@ -21,6 +21,9 @@ behavior users rely on takes the full path.
 
 - Read the actual failure: the full stack trace, the logs around it, the
   input that triggers it.
+- Recall first: known root causes, past incidents, and runbooks for the area
+  from the knowledge stores (`references/knowledge.md`) — the same bug may
+  have been diagnosed before.
 - Find what changed: `git log -p --follow -- <file>`, `git log -S '<snippet>'`,
   `git blame -L <range> <file>` on the suspect lines, and `impact_map.py
   --files <file>` for how risky and how often fixed the area is.
@@ -40,7 +43,8 @@ behavior users rely on takes the full path.
 ## 4. Root cause, then the plan
 
 - State the root cause in plan.md with `file:line`, and why the existing
-  tests did not catch it.
+  tests did not catch it. Add it to `## Learnings` — a root cause is the
+  knowledge most worth keeping.
 - The plan names the minimal fix and the regression test (the reproduction
   from step 1). A fix waits for the plan's approval like any other change —
   a bug report that says "just fix it" still gets a plan.

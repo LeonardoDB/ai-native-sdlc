@@ -30,7 +30,8 @@ feedback round runs: read every thread, fix what is in scope, re-verify, and
 Classify each thread before changing anything, and list the result in the new
 round:
 
-- **Question or clarification** — draft a reply; no code.
+- **Question or clarification** — draft a reply; no code. For a "why?",
+  recall the decision from the knowledge stores and cite it.
 - **Change in scope** — fix it. A behavior change gets its own red → green
   slice; a mechanical one (naming, a comment, a type) is edited directly.
   Record it `thread → file:line → fix`.

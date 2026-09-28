@@ -107,8 +107,9 @@ Nothing from this repo has to be copied into yours: the skill and its scripts ru
 
    ## Knowledge base
 
-   - `docs/kb/` — decisions in `docs/kb/decisions/`, glossary in `docs/kb/glossary.md`
-   - MCP `<server-name>` — search by service name or domain term
+   - decisions — why the system is the way it is — repo `docs/adr/` — anyone, via the MR
+   - domain — business rules, glossary — MCP `<server-name>` — agent, with confirmation
+   - Conventions: ADRs are `NNNN-title.md` from `docs/adr/0000-template.md`
 
    ## Commit and MR/PR
 
@@ -121,7 +122,7 @@ Nothing from this repo has to be copied into yours: the skill and its scripts ru
    | Section | Without it | Add it when |
    |---|---|---|
    | `## Tracker` | the repo is the current checkout; the forge comes from `git remote get-url origin` (`gh` + PRs, `glab` + MRs) | tasks live somewhere the link and remote don't reveal (another project, another tracker) |
-   | `## Knowledge base` | Design skips the knowledge search | the project has a knowledge base (repo folder or MCP store); Design reads it before writing the spec |
+   | `## Knowledge base` | recall reads the repo's docs; learnings are promoted to the repo | the project has knowledge stores (repo folders, an MCP wiki, a GitLab wiki): recall in Design, Build, debugging, and Review, and capture back through plan.md's Learnings (`references/knowledge.md`). Connect an MCP store once with `claude mcp add --scope user …` |
    | `## Commit and MR/PR` | commits follow the repo's `git log` style and cite the task; the MR/PR body comes from the repo's template (else the skill's) with the closing keyword | the project has its own commit or MR/PR skills, a template elsewhere, or title/body rules |
 
    Many repos sharing the same setup? Claude Code also reads `CLAUDE.md` from parent directories, so one file in the folder that holds them (for example `~/work/<company>/CLAUDE.md`) covers every repo below it. Codex needs the sections in each repo's `AGENTS.md`.
@@ -190,6 +191,7 @@ claude plugin eval . --scaffold --trust-plugin --no-publish --allow-tools Bash E
         │   ├── playbook.md        # phase-by-phase procedures
         │   ├── trackers.md        # task links, workspace, resuming, delivery
         │   ├── adoption.md        # tailoring the workflow to a team
+        │   ├── knowledge.md       # knowledge stores: recall per phase, capture with a quality gate
         │   ├── debugging.md       # bug tasks: reproduce, bisect, hypotheses, root cause
         │   ├── feedback.md        # one MR/PR feedback round
         │   └── agents/            # explorer.md, reviewer.md — subagent briefs

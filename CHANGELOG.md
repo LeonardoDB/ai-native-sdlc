@@ -8,6 +8,15 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Knowledge stores (`references/knowledge.md`): CLAUDE.md's
+  `## Knowledge base` now declares stores by name, purpose, transport (repo
+  path, MCP server, CLI/API), and who may write, plus conventions and store
+  skills. Recall runs in Design, Build, debugging, Review, and MR feedback,
+  with every hit cited. Capture goes through a per-task `## Learnings`
+  section in plan.md (no shared ledger to conflict across branches), triaged
+  at the end of Review under a six-point quality gate: repo stores are
+  written into the change and reviewed in the MR; external stores are
+  written only inside the delivery go-ahead.
 - Evals for `claude plugin eval` (`evals/`): eight cases — the full loop to
   an MR, stopping for plan approval, rejecting a board link, stopping on a
   dirty tree, listing an existing test change, one MR feedback round, a bug

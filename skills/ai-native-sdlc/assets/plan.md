@@ -89,6 +89,13 @@ baseline; after it, zero new failures, and any pre-existing failure named.>
 
 - Each session/subagent has a functional name, a defined scope, and a visible report; no silent or unbounded background work.
 
+## Learnings
+
+<Append the moment something worth keeping appears: `- [ ] <kind>: <one line>` (gotcha,
+decision, convention, root cause). Triage every entry at the end of Review:
+`- [promoted → <store>: <path or page>] …` or `- [dropped: <why>] …`.
+check_diff_hygiene.py fails while a `- [ ]` entry is left.>
+
 ## Build log
 
 <Red evidence, per slice: the test, the failing output line, and why that failure was the

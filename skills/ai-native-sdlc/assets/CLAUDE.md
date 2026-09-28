@@ -47,10 +47,14 @@ group/backlog, not in this project".>
 
 ## Knowledge base
 
-<Optional. Where the project's knowledge lives and how to search it — pointers only,
-never the knowledge itself. Read during Design, not every session. e.g.
-"docs/kb/ — decisions in docs/kb/decisions/, glossary in docs/kb/glossary.md", or
-"MCP <server-name> — search by service name or domain term".>
+<Optional. The stores the workflow recalls from and captures to — pointers only, never
+the knowledge itself. One line per store: name — purpose — transport — who may write.
+Without this section, recall reads the repo's docs and capture goes to the repo. e.g.
+- decisions — why the system is the way it is — repo `docs/adr/` — anyone, via the MR
+- domain — business rules, glossary — MCP `<server-name>` — agent, with confirmation
+- runbooks — operating each service — GitLab wiki of `group/ops` — read only
+- Conventions: <file names, templates, frontmatter, link style>
+- Store skills: <a skill to use for writing to a store, if any>>
 
 ## Commit and MR/PR
 
