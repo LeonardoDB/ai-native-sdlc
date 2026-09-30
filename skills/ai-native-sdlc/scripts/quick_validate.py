@@ -34,7 +34,6 @@ FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 # Files the skill promises, beyond what markdown links already cover.
 PROMISED = [
     "SKILL.md",
-    "agents/openai.yaml",
     "references/playbook.md",
     "references/adoption.md",
     "references/trackers.md",
@@ -162,21 +161,7 @@ def main() -> int:
         target = (skill / link).resolve()
         check(target.exists(), f"linked file exists: {link}")
 
-    # 3. plugin.json consistency
-    plugin = repo_root / ".codex-plugin" / "plugin.json"
-    if plugin.is_file():
-        try:
-            data = json.loads(plugin.read_text(encoding="utf-8"))
-            check(data.get("name") == fm.get("name"), "plugin.json name matches SKILL.md")
-            check(data.get("version") == fm.get("version"), "plugin.json version matches SKILL.md")
-            skills_dir = repo_root / (data.get("skills") or "skills")
-            check(skills_dir.is_dir(), f"plugin.json skills dir exists ({skills_dir})")
-        except json.JSONDecodeError as exc:
-            bad(f"plugin.json is not valid JSON: {exc}")
-    else:
-        bad("plugin.json not found")
-
-    # 3b. Claude Code plugin + marketplace consistency.
+    # 3. Claude Code plugin + marketplace consistency.
     claude = repo_root / ".claude-plugin" / "plugin.json"
     market = repo_root / ".claude-plugin" / "marketplace.json"
     if claude.is_file():
@@ -190,6 +175,8 @@ def main() -> int:
                   "plugin.json does not re-list the default hooks/hooks.json (it would load twice)")
         except json.JSONDecodeError as exc:
             bad(f"Claude plugin.json is not valid JSON: {exc}")
+    else:
+        bad("Claude plugin.json not found")
     if market.is_file():
         try:
             entries = json.loads(market.read_text(encoding="utf-8")).get("plugins") or []
@@ -200,7 +187,7 @@ def main() -> int:
         except json.JSONDecodeError as exc:
             bad(f"marketplace.json is not valid JSON: {exc}")
 
-    # 3c. Eval cases are complete (claude plugin eval format).
+    # 3b. Eval cases are complete (claude plugin eval format).
     evals = repo_root / "evals"
     for case in sorted(p for p in evals.iterdir() if p.is_dir() and p.name[:1].isdigit()) if evals.is_dir() else []:
         check((case / "case.yaml").is_file() and (case / "prompt.md").is_file()

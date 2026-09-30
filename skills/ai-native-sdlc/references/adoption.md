@@ -2,20 +2,6 @@
 
 The loop runs from a task on the board to an opened MR/PR. Adopting it in a repo takes little: install the skill, let the tracker's own CLI or connector authenticate, and fill in the repo's CLAUDE.md. Everything below is how to make it fit a team's standards.
 
-## Framework mapping
-
-The workflow is written generically; each framework has its own names for the same roles:
-
-| Role | Claude Code | Codex |
-|---|---|---|
-| Repository memory | CLAUDE.md | AGENTS.md |
-| Skills | `.claude/skills/` | `~/.codex/skills/` |
-| Subagents | `.claude/agents/*.md` | Codex subagent configuration |
-| Hook wiring | `.claude/settings.json` + `.claude/hooks/` | Codex settings/hooks |
-| Artifacts | `docs/changes/<task>/spec.md` + `plan.md`, REVIEW.md (intent: the tracker task) | same files |
-
-When this skill or the templates say CLAUDE.md or `.claude/`, map to the equivalent in the target framework.
-
 ## Minimal first run
 
 1. Agree that a task on the board is an accepted intent, and write new tasks in the `assets/intent.md` shape (see `references/trackers.md`).

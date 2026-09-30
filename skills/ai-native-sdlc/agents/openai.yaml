@@ -1,3 +1,0 @@
-interface:
-  display_name: "AI-Native SDLC"
-  short_description: "Take a tracker task to a reviewed MR/PR with approval gates"

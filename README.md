@@ -4,12 +4,10 @@ Give your coding agent a task link from Linear, GitLab, or GitHub, and it drives
 
 > **The loop ends when the MR/PR is opened.** The agent never merges, deploys, or releases — the team reviews and merges, and deployment is the team's own pipeline.
 
-This repo is three things at once:
+This repo is two things at once:
 
-- A **Codex skill** at `skills/ai-native-sdlc/`, installable into `~/.codex/skills`.
-- A **Claude Code skill** — the same folder, installable into `~/.claude/skills`.
+- A **Claude Code skill** at `skills/ai-native-sdlc/`, installable into `~/.claude/skills`.
 - A **Claude Code plugin** and marketplace (`.claude-plugin/`) bundling the skill and the gate hook.
-- A **Codex plugin** (`.codex-plugin/plugin.json` at the repo root) that bundles the skill.
 
 **Learn more:** [Phase-by-phase playbook](skills/ai-native-sdlc/references/playbook.md) · [Task links and delivery](skills/ai-native-sdlc/references/trackers.md) · [Tailoring to a team](skills/ai-native-sdlc/references/adoption.md)
 
@@ -52,42 +50,6 @@ mkdir -p ~/.claude/skills
 ln -s "$PWD/skills/ai-native-sdlc" ~/.claude/skills/ai-native-sdlc
 ```
 
-### As a Codex skill
-
-```bash
-mkdir -p ~/.codex/skills
-cp -R skills/ai-native-sdlc ~/.codex/skills/
-```
-
-### As a Codex plugin
-
-Clone or copy this repo to `~/plugins/ai-native-sdlc`, then add it to your personal marketplace at `~/.agents/plugins/marketplace.json`:
-
-```json
-{
-  "name": "personal",
-  "interface": {
-    "displayName": "Personal"
-  },
-  "plugins": [
-    {
-      "name": "ai-native-sdlc",
-      "source": {
-        "source": "local",
-        "path": "./plugins/ai-native-sdlc"
-      },
-      "policy": {
-        "installation": "AVAILABLE",
-        "authentication": "ON_INSTALL"
-      },
-      "category": "Productivity"
-    }
-  ]
-}
-```
-
-Installing the plugin also makes the bundled skill available, so you don't need to also copy it into `~/.codex/skills` — choose one path.
-
 ## Set up a repo
 
 Nothing from this repo has to be copied into yours: the skill and its scripts run from the installed skill.
@@ -97,7 +59,7 @@ Nothing from this repo has to be copied into yours: the skill and its scripts ru
    - GitLab: `glab auth login --hostname <your-gitlab-host>` (or a GitLab MCP connector)
    - Linear: connect the Linear MCP connector
    - GitHub: `gh auth login`
-3. **Add the optional sections** to the repo's `CLAUDE.md` (`AGENTS.md` in Codex) — only the ones that apply. Keep them to pointers; never paste the knowledge itself:
+3. **Add the optional sections** to the repo's `CLAUDE.md` — only the ones that apply. Keep them to pointers; never paste the knowledge itself:
 
    ```markdown
    ## Tracker
@@ -125,7 +87,7 @@ Nothing from this repo has to be copied into yours: the skill and its scripts ru
    | `## Knowledge base` | recall reads the repo's docs; learnings are promoted to the repo | the project has knowledge stores (repo folders, an MCP wiki, a GitLab wiki): recall in Design, Build, debugging, and Review, and capture back through plan.md's Learnings (`references/knowledge.md`). Connect an MCP store once with `claude mcp add --scope user …` |
    | `## Commit and MR/PR` | commits follow the repo's `git log` style and cite the task; the MR/PR body comes from the repo's template (else the skill's) with the closing keyword | the project has its own commit or MR/PR skills, a template elsewhere, or title/body rules |
 
-   Many repos sharing the same setup? Claude Code also reads `CLAUDE.md` from parent directories, so one file in the folder that holds them (for example `~/work/<company>/CLAUDE.md`) covers every repo below it. Codex needs the sections in each repo's `AGENTS.md`.
+   Many repos sharing the same setup? Claude Code also reads `CLAUDE.md` from parent directories, so one file in the folder that holds them (for example `~/work/<company>/CLAUDE.md`) covers every repo below it.
 4. **Add the typecheck command** to `## Commands` in CLAUDE.md, and optionally a `## Code tooling` section naming the LSP and the library-docs tool.
 5. **Wire the gate hook** so the red lines hold outside the prompt — merges, pushes to the default branch, `--no-verify`, and bare force-pushes are blocked, and a task branch is published only with the checks passing. The plugin install does this for you; with the skill-only install, add it to your user `settings.json`:
 
@@ -144,7 +106,6 @@ Nothing from this repo has to be copied into yours: the skill and its scripts ru
 From the repo the task belongs to:
 
 - Claude Code: `/ai-native-sdlc https://gitlab.example.com/group/api/-/issues/42`
-- Codex: `$ai-native-sdlc: run the workflow for https://linear.app/acme/issue/ENG-123`
 
 The agent resolves the link (`scripts/tracker_link.py` — no config; self-hosted GitLab is recognized by its `/-/` link shape), reads the task, and starts at Design. It stops at each approval gate, asks once to commit, push, and open the MR/PR, and stops there. The MR/PR closes the task when the team merges it.
 
@@ -173,7 +134,6 @@ claude plugin eval . --scaffold --trust-plugin --no-publish --allow-tools Bash E
 ```text
 .
 ├── .claude-plugin/                # Claude Code plugin + marketplace manifests (repo root is the plugin)
-├── .codex-plugin/plugin.json      # Codex plugin manifest
 ├── hooks/hooks.json               # the plugin's hook wiring (gate.py on PreToolUse Bash)
 ├── .github/workflows/self-check.yml  # CI for this repo itself (validate + tests)
 ├── AGENTS.md                      # guidance for agents working in this repo
@@ -186,7 +146,6 @@ claude plugin eval . --scaffold --trust-plugin --no-publish --allow-tools Bash E
 └── skills/
     └── ai-native-sdlc/
         ├── SKILL.md               # skill entrypoint (versioned; rule→enforcement matrix)
-        ├── agents/openai.yaml     # UI metadata
         ├── references/
         │   ├── playbook.md        # phase-by-phase procedures
         │   ├── trackers.md        # task links, workspace, resuming, delivery

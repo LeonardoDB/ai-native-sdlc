@@ -15,9 +15,9 @@ fail=0
 python3 "$SCRIPT" "$tmp/dry" --dry-run >/dev/null 2>&1 || { echo "FAIL: --dry-run exited non-zero"; fail=1; }
 [[ -e "$tmp/dry" ]] && { echo "FAIL: --dry-run created the project dir"; fail=1; }
 
-# codex scaffold
-python3 "$SCRIPT" "$tmp/proj" --framework codex >/dev/null 2>&1 || { echo "FAIL: scaffold exited non-zero"; fail=1; }
-for f in AGENTS.md REVIEW.md .gitignore scripts/check_plan_sync.py scripts/check_tdd.py scripts/check_diff_hygiene.py scripts/check_mutations.py scripts/impact_map.py; do
+# scaffold
+python3 "$SCRIPT" "$tmp/proj" >/dev/null 2>&1 || { echo "FAIL: scaffold exited non-zero"; fail=1; }
+for f in CLAUDE.md REVIEW.md .gitignore scripts/check_plan_sync.py scripts/check_tdd.py scripts/check_diff_hygiene.py scripts/check_mutations.py scripts/impact_map.py; do
   [[ -e "$tmp/proj/$f" ]] || { echo "FAIL: missing $f"; fail=1; }
 done
 for s in check_plan_sync check_tdd check_diff_hygiene check_mutations impact_map; do
@@ -33,15 +33,12 @@ for f in intent hooks bands.yaml evals gates workflow-graph.yaml scripts/gate_le
   [[ -e "$tmp/proj/$f" ]] && { echo "FAIL: scaffold wrote $f"; fail=1; }
 done
 for section in '## Code tooling' '## Tracker' '## Knowledge base' '## Commit and MR/PR'; do
-  grep -q "$section" "$tmp/proj/AGENTS.md" || { echo "FAIL: repository memory missing $section"; fail=1; }
+  grep -q "$section" "$tmp/proj/CLAUDE.md" || { echo "FAIL: repository memory missing $section"; fail=1; }
 done
-grep -q 'AGENTS.md' "$tmp/proj/AGENTS.md" || { echo "FAIL: codex variant header wrong"; fail=1; }
-[[ -f "$tmp/proj/CLAUDE.md" ]] && { echo "FAIL: codex scaffold also wrote CLAUDE.md"; fail=1; }
+grep -q 'Codex' "$tmp/proj/CLAUDE.md" && { echo "FAIL: repository memory still mentions Codex"; fail=1; }
+[[ -f "$tmp/proj/AGENTS.md" ]] && { echo "FAIL: scaffold wrote AGENTS.md"; fail=1; }
 
-# claude scaffold (default framework)
-python3 "$SCRIPT" "$tmp/proj2" >/dev/null 2>&1 || { echo "FAIL: claude scaffold exited non-zero"; fail=1; }
-[[ -f "$tmp/proj2/CLAUDE.md" ]] || { echo "FAIL: claude scaffold missing CLAUDE.md"; fail=1; }
-[[ -f "$tmp/proj2/AGENTS.md" ]] && { echo "FAIL: claude scaffold also wrote AGENTS.md"; fail=1; }
+python3 "$SCRIPT" "$tmp/proj2" >/dev/null 2>&1 || { echo "FAIL: second scaffold exited non-zero"; fail=1; }
 
 # idempotent re-run: an existing CLAUDE.md is never overwritten without --force
 echo "# my own memory" > "$tmp/proj2/CLAUDE.md"

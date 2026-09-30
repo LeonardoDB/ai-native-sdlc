@@ -6,6 +6,12 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ## [Unreleased]
 
+### Removed
+
+- Codex support: the `.codex-plugin/` manifest, `agents/openai.yaml`,
+  `init_workflow.py --framework` (it always writes CLAUDE.md), and the Codex
+  install and framework-mapping docs. The bundle targets Claude Code only.
+
 ### Added
 
 - Eval `09-kb-recall`: an ADR the code does not reveal (money is Decimal, after an incident) must be read, cited in the spec, and followed.

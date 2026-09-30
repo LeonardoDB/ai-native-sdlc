@@ -20,10 +20,6 @@ Every phase ends with a versioned artifact the next phase reads. The agent does 
 - **`docs/changes/<task>/spec.md`** (full path only) and **`docs/changes/<task>/plan.md`** — one folder per task, so parallel branches in one repo never touch the same files. `<task>` is the `slug` from `tracker_link.py` (`eng-123`, `42`, `backlog-42`).
 - **Commits and the MR/PR** — citing the task ref, closing the task on merge.
 
-## Frameworks
-
-The workflow is framework-agnostic. Claude Code calls the repository-memory file `CLAUDE.md` and keeps skills in `.claude/skills/`; Codex calls the repository-memory file `AGENTS.md` and installs skills into `~/.codex/skills/`. Wherever this skill says CLAUDE.md, use the repository-memory file your framework recognizes. The same skill folder installs in either environment.
-
 ## Hard rules
 
 1. **Human gates are real gates.** Do not advance without approval: task on the board (accepted intent) → Design; spec approved → Build (full path); plan approved → code.
@@ -86,7 +82,7 @@ Two roles, both read-only, dispatched with their brief from `references/agents/`
 - **explorer** — in Design, for unfamiliar code: returns a `file:line` map and a ranked list of essential files. You still read those files before designing.
 - **reviewer** — in Review, always in a fresh context: returns every finding scored by confidence and severity. You are the filter: keep findings at confidence ≥ 80, check lower-confidence high-severity ones in the code yourself, and drop the rest with a one-line reason.
 
-Dispatch them with your framework's subagent mechanism (Claude Code's Agent tool, Codex subagents). Where none is available, run the brief yourself on only the artifacts it lists, and say so. Do not stack further self-check passes on top of one independent review and one verify.
+Dispatch them with Claude Code's Agent tool. Where it is unavailable, run the brief yourself on only the artifacts it lists, and say so. Do not stack further self-check passes on top of one independent review and one verify.
 
 ## Starting from an idea
 
@@ -130,7 +126,7 @@ Read `references/playbook.md` for the phase-by-phase procedure.
 - `scripts/impact_map.py` — dependents (imports), callers of the changed symbols, git-history fix rate, and a high/mid/low risk per file; `--from-plan` before the change, `--check` in Review (every high-risk file named under plan.md's Impact)
 - `scripts/check_diff_hygiene.py` — added type/lint suppressions and skipped or focused tests need a `reason:`; rewritten or deleted existing tests must be listed under plan.md's Test changes
 - `hooks/gate.py` — Claude Code PreToolUse hook: blocks merges, pushes to the default branch, `--no-verify`, and bare force-pushes; lets a task branch be pushed or its MR/PR opened only on a clean tree with the checks passing (`SDLC_GATE_MUTATIONS=1` adds the mutation check). No Stop hook — red is a normal state mid-slice
-- `scripts/init_workflow.py` — scaffold `CLAUDE.md`/`AGENTS.md`, `REVIEW.md`, `.gitignore`, and the check scripts into a repo (`--dry-run`, `--framework`, `--git`; existing files are skipped)
+- `scripts/init_workflow.py` — scaffold `CLAUDE.md`, `REVIEW.md`, `.gitignore`, and the check scripts into a repo (`--dry-run`, `--git`; existing files are skipped)
 - `scripts/metrics.py` — rework metrics per task across repos: spec rework, plan edits, review rounds, deviations, test changes, accepted survivors, lead time; `--forge` adds MR/PR comments and days to merge
 - `scripts/quick_validate.py` — validate this skill/plugin bundle (self-check; CI runs it)
 

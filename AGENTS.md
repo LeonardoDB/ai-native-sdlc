@@ -25,10 +25,9 @@ the evals that cover it — `claude plugin eval . --scaffold --trust-plugin
 scores in the change; see `evals/README.md`.
 
 All must pass before finishing; CI runs the same checks
-(`.github/workflows/self-check.yml`). Keep `plugin.json` and `SKILL.md`
-consistent in name, description, and version, and the same for
-`.claude-plugin/plugin.json` and `marketplace.json` — `quick_validate.py`
-enforces this; `claude plugin validate .` checks the Claude manifests.
+(`.github/workflows/self-check.yml`). Keep `.claude-plugin/plugin.json`,
+`marketplace.json`, and `SKILL.md` consistent in name, description, and
+version — `quick_validate.py` enforces this; `claude plugin validate .` checks the Claude manifests.
 
 ## Conventions
 

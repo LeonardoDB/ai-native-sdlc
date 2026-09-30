@@ -2,11 +2,10 @@
 """Scaffold the AI-native SDLC skeleton in a project directory.
 
 Usage:
-    python3 init_workflow.py <project-dir> [--framework codex|claude]
-        [--dry-run] [--force] [--git]
+    python3 init_workflow.py <project-dir> [--dry-run] [--force] [--git]
 
 Creates:
-    CLAUDE.md / AGENTS.md       repository-memory starter (--framework claude|codex)
+    CLAUDE.md                   repository-memory starter
     REVIEW.md                   review standards
     scripts/check_plan_sync.py  deterministic plan-sync check (pre-commit / MR/PR CI)
     scripts/check_tdd.py        deterministic TDD proof (AC coverage, green/red)
@@ -73,12 +72,6 @@ def main() -> int:
         help="target project directory (default: current directory)",
     )
     parser.add_argument(
-        "--framework",
-        choices=["claude", "codex"],
-        default="claude",
-        help="agent framework to target: claude writes CLAUDE.md, codex writes AGENTS.md (default: claude)",
-    )
-    parser.add_argument(
         "--force",
         action="store_true",
         help="overwrite existing files",
@@ -108,8 +101,6 @@ def main() -> int:
             print(f"error: missing source {src}", file=sys.stderr)
             return 1
         dest = root / rel_dest
-        if rel_dest == "CLAUDE.md" and args.framework == "codex":
-            dest = root / "AGENTS.md"
         mode = "write" if args.force or not dest.exists() else "skip"
         plan.append((dest, rel_src, mode))
 
@@ -127,14 +118,6 @@ def main() -> int:
             skipped.append(str(dest.relative_to(root)))
             continue
         text = (SKILL_DIR / rel_src).read_text(encoding="utf-8")
-        if dest.name == "AGENTS.md":
-            text = text.replace(
-                "# CLAUDE.md — repository memory", "# AGENTS.md — repository memory"
-            )
-            text = text.replace(
-                "\n\n> In Codex projects, the same content lives in AGENTS.md; the role is identical.\n",
-                "\n",
-            )
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text, encoding="utf-8")
         written.append(str(dest.relative_to(root)))
