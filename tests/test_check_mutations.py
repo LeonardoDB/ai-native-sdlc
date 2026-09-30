@@ -70,6 +70,13 @@ class CheckMutationsTests(Repo):
         self.assertNotIn("FAIL", res.stdout)
         self.assertIn(FEE, (self.root / "src/calc.py").read_text())
 
+    def test_unsupported_language_is_reported(self) -> None:
+        self.setup_change("assert fee(100) == 0\nassert fee(99) == 5\n")
+        self.write("src/Fee.hs", "fee total = if total >= 100 then 0 else 5\n")
+        res = self.run_script(MUTATIONS)
+        self.assertIn("note: src/Fee.hs not mutated (language not supported)", res.stdout)
+        self.assertNotIn("tests/test_fee.py not mutated", res.stdout)
+
     def test_weak_tests_leave_survivors(self) -> None:
         self.setup_change("assert fee(150) == 0\n")
         res = self.run_script(MUTATIONS)

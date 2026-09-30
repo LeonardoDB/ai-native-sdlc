@@ -12,9 +12,9 @@ Reads the hook event (JSON) on stdin. For Bash commands:
 
   gated on the checks, for a workflow task (the branch has docs/changes/<task>/plan.md)
     - `git push`, `glab mr create`, `gh pr create` pass only when the tree is
-      committed and check_plan_sync, check_tdd, check_diff_hygiene, and
-      impact_map --check pass against the default branch (set
-      SDLC_GATE_MUTATIONS=1 to add check_mutations). Repos and branches with no
+      committed and check_plan_sync, check_tdd, and check_diff_hygiene pass
+      against the default branch (set SDLC_GATE_MUTATIONS=1 to add
+      check_mutations). Repos and branches with no
       task plan are left alone.
 
 There is deliberately no Stop hook: a red test is a normal state in the middle
@@ -102,7 +102,6 @@ def run_checks(cwd: Path, plan: Path, base: str) -> list[str]:
         ["check_plan_sync.py", "--base", base, "--head", "HEAD", "--plan", rel_plan],
         ["check_tdd.py", "--base", base, "--plan", rel_plan],
         ["check_diff_hygiene.py", "--base", base, "--plan", rel_plan],
-        ["impact_map.py", "--base", base, "--plan", rel_plan, "--check"],
     ]
     if os.environ.get("SDLC_GATE_MUTATIONS") == "1":
         checks.append(["check_mutations.py", "--base", base, "--plan", rel_plan])

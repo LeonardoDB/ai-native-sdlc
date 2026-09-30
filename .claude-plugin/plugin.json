@@ -1,6 +1,6 @@
 {
   "name": "ai-native-sdlc",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Take a Linear, GitLab, or GitHub task to a reviewed, opened MR/PR: plan from the board, design, build test-first and typed, review with an independent subagent, and stop at the MR/PR. Deterministic checks prove each test fails without the change, mutants on the changed lines die, risky callers are covered, and nothing is suppressed silently; a gate hook blocks merges and publishing with failing checks.",
   "author": {
     "name": "Leonardo Dalbosco"

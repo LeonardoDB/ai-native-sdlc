@@ -6,8 +6,32 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-29
+
+### Changed
+
+- Simpler to read and follow. SKILL.md is the whole contract on one page —
+  the loop as nine steps, nine hard rules, the four subagents with their
+  models, and where to read more; the rule → enforcement matrix moved to
+  `references/adoption.md`, which now says plainly that `Status: Approved`
+  is written by the agent and proves a recorded approval, not who approved.
+  The playbook keeps only the procedure; advice for humans moved to
+  adoption.md. plan.md has a short core (criteria, files, shape, order of
+  work, proof, verification, build log, review) and optional sections added
+  only when they apply.
+- Shape converges in at most two architect rounds (was three).
+- `impact_map.py` is an optional input to the plan, no longer a gate: the
+  gate hook and Review stop running `--check` (the flag stays for teams that
+  want it in CI).
+- `check_mutations.py` and `impact_map.py` say when a file's language is not
+  supported instead of skipping it silently.
+
 ### Removed
 
+- `scripts/metrics.py` and its `shape_rounds`/`review_rounds` report: it
+  paid off only with many tasks recorded, and nothing in the loop read it.
+- plan.md's Risks and Parallelization sections; the playbook's comparison
+  table, per-phase measures, and headline numbers.
 - Codex support: the `.codex-plugin/` manifest, `agents/openai.yaml`,
   `init_workflow.py --framework` (it always writes CLAUDE.md), and the Codex
   install and framework-mapping docs. The bundle targets Claude Code only.

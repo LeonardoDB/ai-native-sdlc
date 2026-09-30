@@ -119,6 +119,12 @@ def mutants_for(line: str) -> list[tuple[str, str]]:
     return out
 
 
+def scanned_elsewhere(path: str, tests: list[str]) -> bool:
+    """True for files no mutation check applies to: tests, docs, and process files."""
+    return (path.endswith((".md", ".markdown", ".txt", ".json", ".yaml", ".yml", ".toml", ".lock"))
+            or tdd.is_test_path(path, tests) or cps._is_process_path(path, []))
+
+
 def plan_mutants(repo: Path, changed: dict[str, list[int]], tests: list[str]) -> list[tuple[str, int, str, str]]:
     """[(path, line number, operator, mutated line)] in file/line order."""
     result = []
@@ -171,6 +177,9 @@ def main(argv: list[str] | None = None) -> int:
     plan_text = (repo / plan_path).read_text(encoding="utf-8")
     commands = [cmd for _, cmd in tdd.parse_proof(plan_text) if cmd]
 
+    for path in sorted(changed):
+        if not path.endswith(CODE_SUFFIXES) and not scanned_elsewhere(path, args.tests):
+            print(f"note: {path} not mutated (language not supported)")
     mutants = plan_mutants(repo, changed, args.tests)
     skipped = max(0, len(mutants) - args.max)
     mutants = mutants[:args.max]

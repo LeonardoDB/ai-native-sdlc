@@ -1,43 +1,34 @@
-# <Title> — Build Plan
+# <Title> — Plan
 
 - Task: <task ref> <task link>
 - Path: Light | Full (full: spec in docs/changes/<task>/spec.md)
 - Status: Draft | Approved
 - Date: <YYYY-MM-DD>
 
+<The sections down to Build log are the core — every plan has them. The ones after
+"Add only when it applies" are left out until they do.>
+
 ## Acceptance criteria
 
-<Light path only — the full path keeps them in spec.md. One per bullet, numbered, from the task:>
+<Light path only — the full path keeps them in spec.md. One per bullet, from the task:>
 
 - AC-1: <observable behavior>
 
 ## Files that change
 
-<One path or glob per bullet — no prose. Examples:>
+<One path or glob per bullet, no prose. check_plan_sync.py fails for a changed file not listed.>
 
 - src/main.py
 - tests/test_main.py
 
-## Impact
-
-<From `python3 scripts/impact_map.py --from-plan`: every high-risk file (many dependents or a
-high fix rate) with the callers that could break and the test that covers them. Review runs
-`impact_map.py --check`, which fails for a high-risk file not named here.>
-
-- <path> — <dependents/callers at risk> — covered by <test id, or AC-n>
-
 ## Shape
 
-<Before any test or implementation: the types, schemas, interfaces, and function signatures
-the change adds or changes, written in the real files with stub bodies, type-check passing.
-The architect (references/agents/architect.md) judges them in a fresh context, one
-"### Round <n>" per dispatch. Every finding is resolved as `- [fixed] …` or
-`- [rejected: <why>] …`; the step ends with the architect's `Verdict: approved (round <n>)`.
-The signatures are then frozen — a later change to one goes under Deviations.
-check_diff_hygiene.py fails while a `- [ ]` is left or the verdict is missing.
-When no type or signature changes: `none — <why>`.>
+<The types and signatures the change adds or changes, stubbed before any test, with why each
+has its shape; then each criterion as a call sequence through them. The architect's rounds go
+below, one finding per `- [ ]`, resolved as `- [fixed] …` or `- [rejected: <why>] …`, ending
+with `Verdict: approved (round <n>)`. When nothing changes shape: `none — <why>`.>
 
-- <type or signature> — <why this shape: closed values as unions/enums, no invalid states>
+- <type or signature> — <why this shape>
 
 Walkthrough:
 
@@ -49,76 +40,60 @@ Walkthrough:
 
 ## Order of work
 
-<Vertical slices, one acceptance criterion at a time: failing test → minimal code → green.
-Never all tests first and all code after. For a refactor, characterization tests come first.>
+<One slice per criterion: failing test → least code → green. For a refactor, characterization tests first.>
 
-1. AC-1: write `<test id>` → run it, expect it to fail with "<expected failure>" → implement → green
+1. AC-1: write `<test id>` → expect it to fail with "<expected failure>" → implement → green
 
 ## Proof
 
-<Every acceptance criterion maps to the command that proves it, or to manual evidence.
-check_tdd.py runs each command: it must pass with the change and fail without it. A
-criterion that keeps behavior the code already has is marked `regression:` — green only.>
+<Each criterion → the command that proves it. check_tdd.py runs it: green with the change,
+red without. Kept behavior is `regression:` (green only); `manual:` for evidence in the MR/PR.>
 
 - AC-1: <criterion> — `<command that runs just this test>`
-- AC-2: <existing behavior kept> — regression: `<command>`
-
-## Test changes
-
-<Existing tests edited or deleted, each with the reason (the test contradicted the spec,
-the behavior was intentionally removed). Empty when only new tests were added. Fix the
-code, not the test: a test is changed only when the test itself is wrong.>
-
-## Surviving mutants
-
-<Mutants check_mutations.py reports that no test can or should kill, as `path:line — reason`
-(equivalent: the mutation changes nothing observable). Empty by default.>
-
-## Deviations
-
-<Departures from this plan or from frozen signatures, each with its reason. Empty by default.>
-
-## Risks
-
-<What could go wrong and how we de-risk it; e.g., "the claims-core API rate-limits at 50 rps; the panel must cache.">
 
 ## Verification
 
-<Commands and healthy output. Record the full suite's result before the change as the
-baseline; after it, zero new failures, and any pre-existing failure named.>
+<Commands and healthy output; the suite's result before the change is the baseline.>
 
-- Build: `<command>` — <healthy output>
 - Typecheck: `<command>` — zero errors (tests included)
 - Lint: `<command>` — zero warnings
 - Tests: `<command>` — baseline <n passed, m failed> → after <…>
-- TDD proof: `python3 scripts/check_tdd.py` — every AC green with the change, red without
-- Mutations: `python3 scripts/check_mutations.py` — every mutant on the changed lines killed or listed
-- Diff hygiene: `python3 scripts/check_diff_hygiene.py` — no unexplained suppressions or test changes
-- Impact: `python3 scripts/impact_map.py --check` — every high-risk file named under Impact
-
-## Parallelization
-
-<Which sessions/subagents can work in isolation, and how changes stay separated.>
-
-- Each session/subagent has a functional name, a defined scope, and a visible report; no silent or unbounded background work.
-
-## Learnings
-
-<Append the moment something worth keeping appears: `- [ ] <kind>: <one line>` (gotcha,
-decision, convention, root cause). Triage every entry at the end of Review:
-`- [promoted → <store>: <path or page>] …` or `- [dropped: <why>] …`.
-check_diff_hygiene.py fails while a `- [ ]` entry is left.>
 
 ## Build log
 
-<Red evidence, per slice: the test, the failing output line, and why that failure was the
-expected one (the behavior is missing — not a typo or an import path). Then the green run.>
+<Per slice: the test, the failing line, why that failure was the expected one; then the green run.>
 
 ## Review
 
-<Filled during Review, one "### Round <n>" heading per review round (metrics.py counts
-them). Per round: reviewer lenses run; findings fixed (file:line → fix); findings rejected
-with a one-line reason, so a later round does not re-raise them; acceptance criteria with
-the evidence for each.>
+<One "### Round <n>" per review round: findings fixed (file:line → fix), findings rejected with
+a reason, and each acceptance criterion with its evidence.>
 
-### Round 1
+---
+
+Add only when it applies:
+
+## Impact
+
+<When the change touches widely used code: from `python3 scripts/impact_map.py --from-plan`,
+the callers at risk and the test that covers them.>
+
+- <path> — <callers at risk> — covered by <test or AC-n>
+
+## Test changes
+
+<When an existing test is edited or deleted: the path and why the test itself was wrong.
+check_diff_hygiene.py fails for a rewritten test not listed here.>
+
+## Surviving mutants
+
+<When check_mutations.py reports a mutant no test can kill: `path:line — reason`.>
+
+## Deviations
+
+<When the work departs from this plan or a frozen signature: what and why.>
+
+## Learnings
+
+<As they come up: `- [ ] <kind>: <one line>`. Triaged in Review as
+`- [promoted → <store>: <path>] …` or `- [dropped: <why>] …`; check_diff_hygiene.py fails
+while a `- [ ]` is left.>

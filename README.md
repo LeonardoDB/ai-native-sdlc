@@ -4,29 +4,25 @@ Give your coding agent a task link from Linear, GitLab, or GitHub, and it drives
 
 > **The loop ends when the MR/PR is opened.** The agent never merges, deploys, or releases — the team reviews and merges, and deployment is the team's own pipeline.
 
-This repo is two things at once:
-
-- A **Claude Code skill** at `skills/ai-native-sdlc/`, installable into `~/.claude/skills`.
-- A **Claude Code plugin** and marketplace (`.claude-plugin/`) bundling the skill and the gate hook.
-
-**Learn more:** [Phase-by-phase playbook](skills/ai-native-sdlc/references/playbook.md) · [Task links and delivery](skills/ai-native-sdlc/references/trackers.md) · [Tailoring to a team](skills/ai-native-sdlc/references/adoption.md)
+This repo is a **Claude Code plugin** (the skill plus its gate hook), and the skill alone lives at `skills/ai-native-sdlc/`.
 
 ## The workflow
 
 ```
-Plan (tracker board) → Design → Build → Review → MR/PR opened ■ end
-                                                   │
-                        team review, merge, deploy: outside this workflow
+task link → Design → Plan → Shape → Build → Review → MR/PR opened ■ end
 ```
 
-- **Plan** is the tracker: a task on the board is an accepted intent. The agent reads it, never edits it, and gets onto the task's branch before touching code.
-- **Design** writes `docs/changes/<task>/spec.md`, after an **explorer** subagent maps unfamiliar code, with the org's skills and the project's knowledge base. Small, localized changes take the **light path** and skip the spec.
-- **Build** writes `docs/changes/<task>/plan.md` in plan mode — with an **impact map** of who depends on the files it will change — then settles the **shape**: the types and function signatures written as stubs and judged by a fresh-context **architect** subagent — nitpicks welcome — until it approves, before any test or code. Then it works **test-first**, one acceptance criterion at a time — each slice handed to a **builder** subagent on a cheaper model (configurable in CLAUDE.md's `## Models`), since the design is already settled — red → green — nothing committed yet.
-- **Review** runs the deterministic checks — every acceptance criterion has a test that **fails without the change and passes with it** (`check_tdd.py`), small mistakes on the changed lines fail a test (`check_mutations.py`), no unexplained `any`/suppressions/skipped or rewritten tests (`check_diff_hygiene.py`), the plan covers the diff (`check_plan_sync.py`) — then hands the change to a fresh-context **reviewer** subagent, filters its scored findings, checks the task's acceptance criteria with evidence, re-verifies, then asks once to commit, push, and open the MR/PR — the last thing the agent does.
+| Step | What happens | Gate |
+|---|---|---|
+| Design | the agent explores the code and writes `docs/changes/<task>/spec.md` (skipped for small changes) | you approve the spec |
+| Plan | `plan.md`: files that change, one slice per acceptance criterion, the command that proves each | you approve the plan |
+| Shape | the types and signatures are written as stubs; an **architect** subagent critiques them until it approves | the architect's verdict |
+| Build | one criterion at a time, test first — each slice by a **builder** subagent on a cheaper model | — |
+| Review | deterministic checks, then a fresh **reviewer** subagent; fixes; the criteria walked with evidence | you say *commit, push, open the MR/PR* |
 
-Running the skill again with the same link resumes where the task stopped, read from its `docs/changes/<task>/` folder.
+The agent never merges or deploys; a hook blocks it. Running it again with the same link resumes where the task stopped. The whole contract is one page: [`SKILL.md`](skills/ai-native-sdlc/SKILL.md).
 
-One folder per task keeps parallel branches in a repo from touching the same files. The agent does the generation, verification, and mechanical work; humans approve the spec and the plan, give the go-ahead to open the MR/PR, and review and merge it. The full phase → artifact → gate contract lives in `skills/ai-native-sdlc/SKILL.md`.
+**Learn more:** [each step in detail](skills/ai-native-sdlc/references/playbook.md) · [task links and delivery](skills/ai-native-sdlc/references/trackers.md) · [tailoring to a team, and how each rule is enforced](skills/ai-native-sdlc/references/adoption.md)
 
 ## Install
 
@@ -52,55 +48,21 @@ ln -s "$PWD/skills/ai-native-sdlc" ~/.claude/skills/ai-native-sdlc
 
 ## Set up a repo
 
-Nothing from this repo has to be copied into yours: the skill and its scripts run from the installed skill.
+Nothing has to be copied into your repo; the scripts run from the installed skill.
 
-1. **Install the skill** (see [Install](#install)).
-2. **Authenticate the tracker** with its own tool — the skill holds no credentials:
-   - GitLab: `glab auth login --hostname <your-gitlab-host>` (or a GitLab MCP connector)
-   - Linear: connect the Linear MCP connector
-   - GitHub: `gh auth login`
-3. **Add the optional sections** to the repo's `CLAUDE.md` — only the ones that apply. Keep them to pointers; never paste the knowledge itself:
+1. **Authenticate the tracker** with its own tool — the skill holds no credentials: `glab auth login`, `gh auth login`, or the Linear MCP connector.
+2. **Fill in the repo's `CLAUDE.md`** — commands (build, test, lint, typecheck), conventions, and only the optional sections that apply. `python3 skills/ai-native-sdlc/scripts/init_workflow.py path/to/repo` scaffolds a starter with all of them, plus `REVIEW.md` and the check scripts (existing files are skipped).
 
-   ```markdown
-   ## Tracker
+   | Optional section | Add it when |
+   |---|---|
+   | `## Models` | you want other models per subagent role than the defaults (explorer and builder `sonnet`, architect and reviewer the session's) |
+   | `## Tracker` | tasks live somewhere the link and the git remote don't reveal |
+   | `## Knowledge base` | the project has knowledge stores to recall from and write to ([knowledge.md](skills/ai-native-sdlc/references/knowledge.md)) |
+   | `## Commit and MR/PR` | the project has its own commit or MR/PR skills or templates |
+   | `## Code tooling` | there is an LSP or a library-docs tool the agent should use |
+3. **Run the checks in CI** — `check_plan_sync.py --base origin/main --head HEAD`, `check_tdd.py --base origin/main`, `check_diff_hygiene.py --base origin/main` ([playbook](skills/ai-native-sdlc/references/playbook.md#mrpr-ci)).
 
-   - Issues live in `group/backlog`, not in this project; MRs reference them as
-     `group/backlog#N`.
-
-   ## Knowledge base
-
-   - decisions — why the system is the way it is — repo `docs/adr/` — anyone, via the MR
-   - domain — business rules, glossary — MCP `<server-name>` — agent, with confirmation
-   - Conventions: ADRs are `NNNN-title.md` from `docs/adr/0000-template.md`
-
-   ## Commit and MR/PR
-
-   - Commit with the `/commit` skill; open MRs with the `/create-mr` skill.
-   - MR template: `.gitlab/merge_request_templates/default.md`
-   ```
-
-   A project style skill goes in the existing `## Conventions` section ("invoke the `/code-style` skill before writing or reviewing code"); Build and Review invoke it.
-
-   | Section | Without it | Add it when |
-   |---|---|---|
-   | `## Tracker` | the repo is the current checkout; the forge comes from `git remote get-url origin` (`gh` + PRs, `glab` + MRs) | tasks live somewhere the link and remote don't reveal (another project, another tracker) |
-   | `## Models` | the session (use the strongest model) plans and judges; architect and reviewer inherit its model; explorer and builder run on `sonnet` | you want other models per role, or `builder: inherit` to implement in the session |
-   | `## Knowledge base` | recall reads the repo's docs; learnings are promoted to the repo | the project has knowledge stores (repo folders, an MCP wiki, a GitLab wiki): recall in Design, Build, debugging, and Review, and capture back through plan.md's Learnings (`references/knowledge.md`). Connect an MCP store once with `claude mcp add --scope user …` |
-   | `## Commit and MR/PR` | commits follow the repo's `git log` style and cite the task; the MR/PR body comes from the repo's template (else the skill's) with the closing keyword | the project has its own commit or MR/PR skills, a template elsewhere, or title/body rules |
-
-   Many repos sharing the same setup? Claude Code also reads `CLAUDE.md` from parent directories, so one file in the folder that holds them (for example `~/work/<company>/CLAUDE.md`) covers every repo below it.
-4. **Add the typecheck command** to `## Commands` in CLAUDE.md, and optionally a `## Code tooling` section naming the LSP and the library-docs tool.
-5. **Wire the gate hook** so the red lines hold outside the prompt — merges, pushes to the default branch, `--no-verify`, and bare force-pushes are blocked, and a task branch is published only with the checks passing. The plugin install does this for you; with the skill-only install, add it to your user `settings.json`:
-
-   ```json
-   {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [
-     {"type": "command", "command": "python3 ~/.claude/skills/ai-native-sdlc/hooks/gate.py"}]}]}}
-   ```
-6. **Enforce the checks in CI** (see the [playbook](skills/ai-native-sdlc/references/playbook.md#deterministic-checks)): `check_plan_sync.py --base origin/main --head HEAD`, `check_tdd.py --base origin/main`, `check_mutations.py --base origin/main`, `check_diff_hygiene.py --base origin/main`. To scaffold the four scripts together with a starter `CLAUDE.md` and `REVIEW.md` — existing files are skipped unless you pass `--force`:
-
-   ```bash
-   python3 skills/ai-native-sdlc/scripts/init_workflow.py path/to/your-repo
-   ```
+With the skill-only install, also wire the gate hook ([adoption.md](skills/ai-native-sdlc/references/adoption.md#hooks)).
 
 ## Use it
 
@@ -108,13 +70,7 @@ From the repo the task belongs to:
 
 - Claude Code: `/ai-native-sdlc https://gitlab.example.com/group/api/-/issues/42`
 
-The agent resolves the link (`scripts/tracker_link.py` — no config; self-hosted GitLab is recognized by its `/-/` link shape), reads the task, and starts at Design. It stops at each approval gate, asks once to commit, push, and open the MR/PR, and stops there. The MR/PR closes the task when the team merges it.
-
-To see where work bends, across every repo of a company:
-
-```bash
-python3 ~/.claude/skills/ai-native-sdlc/scripts/metrics.py --repos ~/work/<company>/* --forge
-```
+It works with Linear, GitLab (self-hosted too), and GitHub links, with no config. The MR/PR closes the task when the team merges it.
 
 Review came back? Pass the MR/PR link (`/ai-native-sdlc <MR link>`): the agent triages every thread, fixes what is in scope test-first, re-runs the checks, and asks once before pushing and replying. A bug task starts from a reproduction and a root cause, not a guess.
 
@@ -146,15 +102,15 @@ claude plugin eval . --scaffold --trust-plugin --no-publish --allow-tools Bash E
 ├── tests/                         # tests for every script and the scaffold
 └── skills/
     └── ai-native-sdlc/
-        ├── SKILL.md               # skill entrypoint (versioned; rule→enforcement matrix)
+        ├── SKILL.md               # the whole contract on one page
         ├── references/
         │   ├── playbook.md        # phase-by-phase procedures
         │   ├── trackers.md        # task links, workspace, resuming, delivery
-        │   ├── adoption.md        # tailoring the workflow to a team
+        │   ├── adoption.md        # tailoring to a team; how each rule is enforced
         │   ├── knowledge.md       # knowledge stores: recall per phase, capture with a quality gate
         │   ├── debugging.md       # bug tasks: reproduce, bisect, hypotheses, root cause
         │   ├── feedback.md        # one MR/PR feedback round
-        │   └── agents/            # explorer.md, reviewer.md — subagent briefs
+        │   └── agents/            # explorer, architect, builder, reviewer — subagent briefs
         ├── hooks/
         │   └── gate.py            # PreToolUse gate: no merge, checks before publishing
         ├── assets/
@@ -169,10 +125,9 @@ claude plugin eval . --scaffold --trust-plugin --no-publish --allow-tools Bash E
             ├── tracker_link.py    # resolve a task link (ref, slug, branch, resume state)
             ├── check_plan_sync.py # deterministic plan-vs-diff check
             ├── check_tdd.py       # AC coverage; each test green with the change, red without
-            ├── check_mutations.py # mutants on the changed lines must fail a test
+            ├── check_mutations.py # optional: mutants on the changed lines must fail a test
             ├── check_diff_hygiene.py  # suppressions, skipped and rewritten tests
-            ├── impact_map.py      # dependents, callers, fix rate, risk per changed file
-            ├── metrics.py         # rework metrics per task, across repos
+            ├── impact_map.py      # optional: who depends on the files a change touches
             ├── init_workflow.py   # scaffold CLAUDE.md, REVIEW.md, the checks
             └── quick_validate.py  # skill/plugin self-check
 ```

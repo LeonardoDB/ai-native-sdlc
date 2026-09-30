@@ -44,8 +44,8 @@ round:
 ## 4. Verify
 
 Run the same checks as Review — `check_plan_sync`, `check_tdd`,
-`check_mutations`, `check_diff_hygiene`, `impact_map --check`, typecheck, and
-the suite — and dispatch the reviewer on the round's diff when the fixes are
+`check_diff_hygiene`, typecheck, and the suite (and `check_mutations` if the
+team runs it) — and dispatch the reviewer on the round's diff when the fixes are
 more than mechanical.
 
 ## 5. One go-ahead, then stop

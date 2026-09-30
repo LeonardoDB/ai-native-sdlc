@@ -148,6 +148,7 @@ def analyze(repo: Path, targets: dict[str, list[int] | None], months: int, tests
             "dependents": sorted(p for p in dependents if not tdd.is_test_path(p, tests)),
             "callers": callers,
             "tests_touching": test_users,
+            "imports_resolved": pattern is not None,
             "commits": commits,
             "fix_rate": round(fixes / commits, 2) if commits else 0.0,
         })
@@ -188,6 +189,10 @@ def report(rows: list[dict]) -> str:
             for name, files in sorted(r["callers"].items()):
                 shown = ", ".join(files[:5]) + (" …" if len(files) > 5 else "")
                 out.append(f"  {name}() used in {shown}")
+    for r in rows:
+        if not r["imports_resolved"]:
+            out.append(f"\nnote: imports of {r['path']} not resolved (Python and JS/TS only); "
+                       "its fan-in counts callers by name alone")
     return "\n".join(out)
 
 

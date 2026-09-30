@@ -73,6 +73,15 @@ class ImpactMapTests(Repo):
         self.assertEqual(row["dependents"], ["web/cart.ts"])
         self.assertIn("total", row["callers"])
 
+    def test_unresolved_imports_are_reported(self) -> None:
+        self.build(users=0)
+        self.write("src/pricing.go", "package pricing\n\nfunc Price(x int) int { return x }\n")
+        git(self.root, "add", "-A")
+        res = self.run_script(IMPACT, "--files", "src/pricing.go")
+        self.assertIn("note: imports of src/pricing.go not resolved", res.stdout)
+        res = self.run_script(IMPACT, "--files", "src/pricing.py")
+        self.assertNotIn("not resolved", res.stdout)
+
     def test_from_plan_before_any_change(self) -> None:
         self.build(users=2)
         self.write("docs/changes/eng-1/plan.md", PLAN.format(impact=""))

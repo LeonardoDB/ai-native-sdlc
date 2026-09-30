@@ -91,5 +91,4 @@ Where the promotions land:
 - **Operating rules the agent must follow in this repo** go to CLAUDE.md, not a
   knowledge store; CLAUDE.md is not a place for history or gotchas.
 
-`check_diff_hygiene.py` fails while any `- [ ]` entry is left untriaged, and
-`metrics.py` counts what each task promoted.
+`check_diff_hygiene.py` fails while any `- [ ]` entry is left untriaged.

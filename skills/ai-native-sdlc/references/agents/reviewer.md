@@ -11,8 +11,8 @@ this brief into the subagent's prompt, followed by the dispatch context below.
 - `docs/changes/<task>/spec.md` and `plan.md` (the light path has only plan.md),
   including the plan's Proof, Shape, Test changes, and Build log
 - the task's acceptance criteria, from the task description
-- the output of `check_tdd.py`, `check_mutations.py`, `check_diff_hygiene.py`, and
-  `impact_map.py` (dependents and callers of each changed file, with risk)
+- the output of `check_tdd.py` and `check_diff_hygiene.py`, and of
+  `check_mutations.py` and `impact_map.py` when they ran
 - the decisions recalled from the knowledge stores for this area (spec.md's
   `Knowledge used`), which the change must honor
 - `REVIEW.md` and the CLAUDE.md sections that set repo rules (conventions, the
