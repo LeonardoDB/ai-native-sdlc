@@ -38,6 +38,8 @@ PROMISED = [
     "references/adoption.md",
     "references/trackers.md",
     "references/agents/explorer.md",
+    "references/agents/architect.md",
+    "references/agents/builder.md",
     "references/agents/reviewer.md",
     "references/knowledge.md",
     "references/debugging.md",

@@ -49,7 +49,7 @@ cases have not been run yet (they need the git fix above on macOS).
 
 | Case | Checks |
 |---|---|
-| 01-task-to-mr | the whole loop: plan maps every AC, red proven, checks green, MR opened with the closing keyword, task never edited, never merged |
+| 01-task-to-mr | the whole loop: plan maps every AC, slices dispatched to the builder, red proven, checks green, MR opened with the closing keyword, task never edited, never merged |
 | 02-waits-for-plan-approval | without pre-approval it stops at the plan: no code, no push, no MR |
 | 03-board-link-rejected | a board link gets a request for the task link, not work |
 | 04-dirty-tree-stops | someone else's uncommitted change stops the run and survives it |
@@ -58,3 +58,4 @@ cases have not been run yet (they need the git fix above on macOS).
 | 07-bug-root-cause | a bug: reproduction test first, root cause in the plan, the boundary fixed |
 | 08-neg-explain | a plain question does not start the workflow |
 | 09-kb-recall | Design recalls an ADR the code does not show (money is Decimal) and the spec cites and follows it |
+| 10-shape-architect | Build's Shape step: stubbed types and signatures, the architect dispatched, its verdict recorded in plan.md, and no test written before it |

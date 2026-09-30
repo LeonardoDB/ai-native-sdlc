@@ -21,7 +21,7 @@ Plan (tracker board) → Design → Build → Review → MR/PR opened ■ end
 
 - **Plan** is the tracker: a task on the board is an accepted intent. The agent reads it, never edits it, and gets onto the task's branch before touching code.
 - **Design** writes `docs/changes/<task>/spec.md`, after an **explorer** subagent maps unfamiliar code, with the org's skills and the project's knowledge base. Small, localized changes take the **light path** and skip the spec.
-- **Build** writes `docs/changes/<task>/plan.md` in plan mode — with an **impact map** of who depends on the files it will change — then works **test-first**: types first when the change adds domain shapes, then one acceptance criterion at a time, red → green — nothing committed yet.
+- **Build** writes `docs/changes/<task>/plan.md` in plan mode — with an **impact map** of who depends on the files it will change — then settles the **shape**: the types and function signatures written as stubs and judged by a fresh-context **architect** subagent — nitpicks welcome — until it approves, before any test or code. Then it works **test-first**, one acceptance criterion at a time — each slice handed to a **builder** subagent on a cheaper model (configurable in CLAUDE.md's `## Models`), since the design is already settled — red → green — nothing committed yet.
 - **Review** runs the deterministic checks — every acceptance criterion has a test that **fails without the change and passes with it** (`check_tdd.py`), small mistakes on the changed lines fail a test (`check_mutations.py`), no unexplained `any`/suppressions/skipped or rewritten tests (`check_diff_hygiene.py`), the plan covers the diff (`check_plan_sync.py`) — then hands the change to a fresh-context **reviewer** subagent, filters its scored findings, checks the task's acceptance criteria with evidence, re-verifies, then asks once to commit, push, and open the MR/PR — the last thing the agent does.
 
 Running the skill again with the same link resumes where the task stopped, read from its `docs/changes/<task>/` folder.
@@ -84,6 +84,7 @@ Nothing from this repo has to be copied into yours: the skill and its scripts ru
    | Section | Without it | Add it when |
    |---|---|---|
    | `## Tracker` | the repo is the current checkout; the forge comes from `git remote get-url origin` (`gh` + PRs, `glab` + MRs) | tasks live somewhere the link and remote don't reveal (another project, another tracker) |
+   | `## Models` | the session (use the strongest model) plans and judges; architect and reviewer inherit its model; explorer and builder run on `sonnet` | you want other models per role, or `builder: inherit` to implement in the session |
    | `## Knowledge base` | recall reads the repo's docs; learnings are promoted to the repo | the project has knowledge stores (repo folders, an MCP wiki, a GitLab wiki): recall in Design, Build, debugging, and Review, and capture back through plan.md's Learnings (`references/knowledge.md`). Connect an MCP store once with `claude mcp add --scope user …` |
    | `## Commit and MR/PR` | commits follow the repo's `git log` style and cite the task; the MR/PR body comes from the repo's template (else the skill's) with the closing keyword | the project has its own commit or MR/PR skills, a template elsewhere, or title/body rules |
 

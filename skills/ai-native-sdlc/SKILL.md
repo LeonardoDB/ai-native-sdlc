@@ -30,7 +30,8 @@ Every phase ends with a versioned artifact the next phase reads. The agent does 
 6. **Plan mode first.** Nothing is implemented without an accepted plan; when implementation departs from the plan, update plan.md in the same change.
 7. **Reviews feed back.** When a review flags a mistake for the second time, the correction goes into CLAUDE.md as part of that review.
 8. **Subagents are named, visible, and accountable.** Dispatch subagents only with a functional name, an explained dispatch, and a bounded report with evidence — never a silent background worker that can idle or act on stale context.
-9. **Test first, typed.** Every acceptance criterion has a test that fails without the change and passes with it, written before the code. Fix the code, not the test. The type checker is a gate: no `any`, casts, or suppressions without a `reason:` on the same line.
+9. **Shape before code.** When a change adds or changes types or signatures, they are written first as stubs and judged by the architect in a fresh context; no test or implementation starts until its verdict is approved.
+10. **Test first, typed.** Every acceptance criterion has a test that fails without the change and passes with it, written before the code. Fix the code, not the test. The type checker is a gate: no `any`, casts, or suppressions without a `reason:` on the same line.
 
 ## Rule → enforcement matrix
 
@@ -48,7 +49,8 @@ deterministic layer (makes violation nearly impossible), or a review pass
 | 6. Plan mode first | plan.md template | `check_plan_sync.py` (pre-commit hook / MR/PR CI); `impact_map.py --check` (risky paths named in the plan) | plan-vs-diff check in review |
 | 7. Reviews feed back | CLAUDE.md | — | review comments → CLAUDE.md |
 | 8. Subagents named/visible | this hard rule; briefs in `references/agents/` | — | subagent reports in session |
-| 9. Test first, typed | plan.md Proof, Types first, Build log | `check_tdd.py` (AC coverage; green with the change, red without); `check_mutations.py` (mutants on the changed lines must die); `check_diff_hygiene.py` (suppressions, skips, rewritten tests); the project's typecheck | Review, before the reviewer; `hooks/gate.py` before any push or MR/PR; MR/PR CI with `--base` |
+| 9. Shape before code | plan.md Shape; `references/agents/architect.md` | `check_diff_hygiene.py` (no open architect finding; `Verdict: approved` or `none`); `tracker_link.py` reports `next: shape` | Shape step, before the first slice |
+| 10. Test first, typed | plan.md Proof, Build log | `check_tdd.py` (AC coverage; green with the change, red without); `check_mutations.py` (mutants on the changed lines must die); `check_diff_hygiene.py` (suppressions, skips, rewritten tests); the project's typecheck | Review, before the reviewer; `hooks/gate.py` before any push or MR/PR; MR/PR CI with `--base` |
 
 Anything in the deterministic column must always hold — enforce it with code,
 not prose.
@@ -60,12 +62,12 @@ The intent lives in the tracker (Linear, GitLab, GitHub), not in the repo. A tas
 1. **Resolve** the link from the repo you are in: `scripts/tracker_link.py parse <link>` gives the system, native ref (`ENG-123`, `group/project#42`), `slug`, `change_dir` (`docs/changes/<slug>`), whether the task belongs to this repo, the git state (branch, default branch, dirty tree), and the task's `state`. Detection is by link shape (GitLab's `/-/`, `linear.app`, `github.com`), so self-hosted GitLab needs no config. A board, epic, or unrecognized link exits 1 — ask for the task link instead.
 2. **Read** the task (description, labels, comments, acceptance criteria) through the tracker's MCP connector or CLI. Never edit it: gaps become open questions in the spec or questions to the user.
 3. **Workspace** — before reading any code. Already `on_task_branch`: continue. Otherwise, with a clean tree, propose `<type>/<slug>-<summary>` off the fetched `default_branch` and create it once the user confirms; a dirty tree stops here for the user to decide. Offer a worktree only when the user wants the current checkout left alone.
-4. **Resume** from `state.next` instead of restarting: `design`, `approve-spec`, `plan`, `approve-plan`, or `implement` (then Review).
+4. **Resume** from `state.next` instead of restarting: `design`, `approve-spec`, `plan`, `approve-plan`, `shape`, or `implement` (then Review).
 5. **Size the change** and say which path you take, so the user can pull you back:
    - **Light** — a localized bug, a config change, a small scoped edit: skip the spec; `plan.md` alone (files, proof, verification), one approval. A bug starts from `references/debugging.md`: reproduce as a failing test, evidence and bisect, one hypothesis at a time, the root cause in the plan before the fix.
    - **Full** — a feature, a behavior change, or anything crossing modules: spec, then plan, each approved.
 6. **Design** (full path). If the area is unfamiliar, dispatch the **explorer** first (`references/agents/explorer.md`) — one lens for a contained area, two or three distinct lenses for a cross-cutting one — then read the essential files it flags yourself. Recall from the knowledge stores CLAUDE.md declares in `## Knowledge base` (the repo's docs when it declares none) — prior decisions, domain rules, glossary — per `references/knowledge.md`. Write `<change_dir>/spec.md`, citing the task (`Intent: <ref> <link>`) and the knowledge used; a conflict between the task and the knowledge base becomes an open question.
-7. **Build**: plan mode → `<change_dir>/plan.md`, with `## Impact` filled from `impact_map.py --from-plan` (every high-risk file and how its regression is covered) → approval → record the baseline (suite, typecheck, lint) → types first when the change adds domain shapes → one acceptance criterion at a time, red → green, with the red evidence in plan.md's Build log. Invoke the project's style skill if `## Conventions` names one (and repeat it in every subagent brief), and the LSP and docs tools from `## Code tooling`. Nothing is committed yet.
+7. **Build**: plan mode → `<change_dir>/plan.md`, with `## Impact` filled from `impact_map.py --from-plan` (every high-risk file and how its regression is covered) → approval → record the baseline (suite, typecheck, lint) → **Shape**: when the change adds or changes types or signatures, write them as stubs, walk each acceptance criterion through them, and loop with the **architect** (`references/agents/architect.md`) until it approves (at most three rounds, then the user decides) → one acceptance criterion at a time, red → green — each slice dispatched to the **builder** (`references/agents/builder.md`) on the model `## Models` names, then verified by you — with the red evidence in plan.md's Build log. Invoke the project's style skill if `## Conventions` names one (and repeat it in every subagent brief), and the LSP and docs tools from `## Code tooling`. Nothing is committed yet.
 8. **Review**: first the deterministic checks — `check_plan_sync.py --hook`, `check_tdd.py`, `check_mutations.py`, `check_diff_hygiene.py`, `impact_map.py --check`, typecheck, and the suite against the baseline — then the **reviewer** (`references/agents/reviewer.md`) in a fresh context — one reviewer with all lenses for a small diff, three in parallel (correctness, spec + conventions, simplicity + security) when each has real surface; for a trivial diff, review it yourself and say so. Then filter as the coordinator, walk the task's acceptance criteria with evidence, fix, and re-verify — at most two review rounds before surfacing what is still open to the user. Record fixed and rejected findings in plan.md's `## Review`. Then triage plan.md's `## Learnings` (appended as they came up during the task): promote each to the store whose purpose fits — repo stores written into the change, external stores drafted for the go-ahead — or drop it with a reason.
 9. **Deliver**: ask once — *commit, push, and open the MR/PR* (and write the drafted notes to the external stores, if any)*?* On the go-ahead, use the project's own skills when CLAUDE.md names them in `## Commit and MR/PR`, otherwise the defaults in `references/trackers.md`; put the closing keyword in the MR/PR (`Closes group/project#42`, `Fixes ENG-123`). Then stop.
 
@@ -77,10 +79,25 @@ When the team's review comes back, the user passes the MR/PR link. `tracker_link
 
 ## Subagents
 
-Two roles, both read-only, dispatched with their brief from `references/agents/` plus the context that brief lists (subagents read no config on their own):
+Four roles, dispatched with their brief from `references/agents/` plus the context that brief lists (subagents read no config on their own). The first three are read-only; the builder writes code:
 
 - **explorer** — in Design, for unfamiliar code: returns a `file:line` map and a ranked list of essential files. You still read those files before designing.
+- **architect** — in Build's Shape step, before any test or code: judges the types and signatures (domain model, names, errors, boundaries, fit, AC coverage), nitpicks welcome, and returns a verdict. You resolve every finding — fixed, or rejected with a reason — and dispatch a fresh one until it approves.
+- **builder** — in Build, after the shape is approved, one slice per dispatch: writes the test, sees it red, writes the least code to green, and reports the red and green evidence. It never changes a frozen signature, a file outside the plan, or an earlier test — it stops and reports instead. You re-run the slice's test, read its diff, and write the Build log entry; a builder stuck twice on one slice hands it back to you.
 - **reviewer** — in Review, always in a fresh context: returns every finding scored by confidence and severity. You are the filter: keep findings at confidence ≥ 80, check lower-confidence high-severity ones in the code yourself, and drop the rest with a one-line reason.
+
+### Models
+
+Judgment runs on the strongest model; mechanical work does not have to. Run the session itself — the coordinator, which writes the spec and plan, resolves the shape, and filters the review — on the strongest model you have. Pass each subagent's model with the Agent tool's `model` parameter, from CLAUDE.md's `## Models` when it declares one (`<role>: <model>`, `inherit` for the session's model), otherwise:
+
+| Role | Default | Why |
+|---|---|---|
+| explorer | `sonnet` | locating code, not judging it |
+| architect | `inherit` | design judgment |
+| builder | `sonnet` | implements an approved shape; the checks and the review catch its mistakes |
+| reviewer | `inherit` | finds what the builder missed |
+
+`builder: inherit` means you build the slices yourself instead of dispatching them. Say which model each dispatch runs on.
 
 Dispatch them with Claude Code's Agent tool. Where it is unavailable, run the brief yourself on only the artifacts it lists, and say so. Do not stack further self-check passes on top of one independent review and one verify.
 
@@ -101,18 +118,18 @@ Read `references/playbook.md` for the phase-by-phase procedure.
 |---|---|---|---|
 | Plan | the tracker board | task on the board (no repo artifact) | on the board → Design |
 | Design (full path) | tracker task + explorer map + knowledge base (if declared) + org standards | `docs/changes/<task>/spec.md` | spec approved → Build |
-| Build | tracker task + spec.md (if any) + style skill (if declared) | `docs/changes/<task>/plan.md` → code + tests (uncommitted) | plan approved before code |
+| Build | tracker task + spec.md (if any) + style skill (if declared) | `docs/changes/<task>/plan.md` → shape (stubbed types and signatures) → code + tests (uncommitted) | plan approved before the shape; architect's verdict before code |
 | Review | reviewer findings + acceptance criteria + verify output | fixes; plan.md `## Review`; commits + MR/PR opened | one go-ahead to commit, push, and open; **end of the loop** — the team reviews and merges |
 
 ## Templates
 
 - `assets/intent.md` — shape of a new tracker task description (problem, proposed outcome, affected users/systems, constraints, out of scope, open questions); used only when drafting a task
 - `assets/spec.md` — requirements + design specification with gotchas (written during Design)
-- `assets/plan.md` — build plan: "Files that change" manifest, types first, vertical slices, Proof (AC → command), Test changes, baseline, Build log, Review (written during Build)
-- `assets/CLAUDE.md` — repository-memory starter (commands including typecheck, verification, conventions, and the optional Code tooling, Tracker, Knowledge base, and Commit and MR/PR sections)
+- `assets/plan.md` — build plan: "Files that change" manifest, Shape with the architect's rounds, vertical slices, Proof (AC → command), Test changes, baseline, Build log, Review (written during Build)
+- `assets/CLAUDE.md` — repository-memory starter (commands including typecheck, verification, conventions, and the optional Code tooling, Models, Tracker, Knowledge base, and Commit and MR/PR sections)
 - `assets/REVIEW.md` — review standards (passes, evidence, severity, 5-nit cap)
 - `assets/PULL_REQUEST_TEMPLATE.md` — fallback MR/PR body when the repo has no template
-- `references/agents/explorer.md`, `references/agents/reviewer.md` — subagent briefs for Design and Review
+- `references/agents/explorer.md`, `references/agents/architect.md`, `references/agents/builder.md`, `references/agents/reviewer.md` — subagent briefs for Design, Build's Shape step, Build's slices, and Review
 - `references/knowledge.md` — knowledge stores: declaring them (purpose, transport, who writes), recall per phase with citations, capture through plan.md's Learnings with a quality gate
 - `references/debugging.md` — bug tasks: reproduce, evidence and bisect, hypotheses, root cause before the fix
 - `references/feedback.md` — one MR/PR feedback round: triage every thread, fix, re-verify, reply
@@ -124,7 +141,7 @@ Read `references/playbook.md` for the phase-by-phase procedure.
 - `scripts/check_tdd.py` — deterministic TDD proof: every acceptance criterion maps to a Proof command (or manual evidence); each command passes with the change and fails with the implementation removed (working tree, or `--base` in CI)
 - `scripts/check_mutations.py` — mutation check on the changed lines only: flipped comparisons, swapped and/or, off-by-one constants, inverted booleans; a mutant the Proof commands still pass fails unless plan.md lists it under Surviving mutants with a reason
 - `scripts/impact_map.py` — dependents (imports), callers of the changed symbols, git-history fix rate, and a high/mid/low risk per file; `--from-plan` before the change, `--check` in Review (every high-risk file named under plan.md's Impact)
-- `scripts/check_diff_hygiene.py` — added type/lint suppressions and skipped or focused tests need a `reason:`; rewritten or deleted existing tests must be listed under plan.md's Test changes
+- `scripts/check_diff_hygiene.py` — added type/lint suppressions and skipped or focused tests need a `reason:`; rewritten or deleted existing tests must be listed under plan.md's Test changes; no architect finding left open under Shape, and its verdict recorded
 - `hooks/gate.py` — Claude Code PreToolUse hook: blocks merges, pushes to the default branch, `--no-verify`, and bare force-pushes; lets a task branch be pushed or its MR/PR opened only on a clean tree with the checks passing (`SDLC_GATE_MUTATIONS=1` adds the mutation check). No Stop hook — red is a normal state mid-slice
 - `scripts/init_workflow.py` — scaffold `CLAUDE.md`, `REVIEW.md`, `.gitignore`, and the check scripts into a repo (`--dry-run`, `--git`; existing files are skipped)
 - `scripts/metrics.py` — rework metrics per task across repos: spec rework, plan edits, review rounds, deviations, test changes, accepted survivors, lead time; `--forge` adds MR/PR comments and days to merge

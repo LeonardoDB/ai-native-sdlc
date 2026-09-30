@@ -71,7 +71,7 @@ When in doubt, take the full path; a spec that turns out short costs little.
 
 The session starts in plan mode with the task and spec.md (on the light path, the task alone), and the agent proposes an implementation plan naming the files that change, the order of work, and the tests that prove it. Interrogate the plan: what could this break, which step is most risky, what options were rejected? Iterate until an engineer who has never seen the conversation could implement the change from the plan alone. The approved plan is `docs/changes/<task>/plan.md` (`Status: Approved`); Review checks the eventual diff against it. When implementation departs from the plan, update plan.md in the same change.
 
-plan.md contents: files that change; types first (when adding domain shapes); order of work as vertical slices; proof (each acceptance criterion → the command that proves it); test changes; deviations; risks; verification commands with the test-suite baseline; the build log.
+plan.md contents: files that change; shape (the types and signatures, with the architect's rounds); order of work as vertical slices; proof (each acceptance criterion → the command that proves it); test changes; deviations; risks; verification commands with the test-suite baseline; the build log.
 
 ### Impact first
 
@@ -83,15 +83,26 @@ Before writing code, record the baseline: run the full suite, typecheck, and lin
 
 If the project's CLAUDE.md names a style skill in `## Conventions`, invoke it before writing code and repeat that instruction in every subagent brief. If it names an LSP or a library-docs tool in `## Code tooling`, use them: definitions and references from the LSP instead of grep, and a dependency's current API from its docs instead of memory.
 
-### Types first
+### Shape — types and signatures before code
 
-When the change adds new domain shapes — types, schemas, interfaces, public signatures — the first step writes only those, with stub bodies (`throw new Error("unimplemented")`, `raise NotImplementedError`). The step is done when the type-check passes with the tests included and the declarations have been reviewed on their own: closed sets as unions or enums, required fields required, no states the types allow but the domain forbids, identifiers that cannot be swapped by accident, no unused types. After that the signatures are frozen; changing one means a Deviation in plan.md, not a silent reshape. This is per slice, never a big up-front design of every type.
+After the plan is approved and the baseline recorded, and before any test: when the change adds or changes types, schemas, interfaces, or function signatures, the first step writes only those, in the real files, with stub bodies (`raise NotImplementedError`, `throw new Error("unimplemented")`, `todo!()`) and doc comments that state what each one promises — inputs, output, the errors it can return. The type-check passes on the skeleton. Under plan.md's `## Shape`, list the declarations with why each has its shape, and walk every acceptance criterion as a call sequence through them. This is design by types: TDD's loop, one level up — the signatures are the first thing that can be wrong, and the cheapest to fix.
+
+Then dispatch the **architect** (`references/agents/architect.md`) in a fresh context. It judges the shape — domain model, names, signatures, errors, boundaries, fit with the codebase and the recalled decisions, and whether every criterion can be expressed — and returns findings (BLOCKER, CHANGE, NIT) with the shape it would write, plus a verdict. Nits are welcome here, unlike in Review: a name changed now costs nothing.
+
+1. Record the round in `## Shape` as `### Round <n>`, one `- [ ]` per finding.
+2. Resolve every finding: change the skeleton and mark it `- [fixed]`, or `- [rejected: <why>]` when it is wrong for this codebase. Re-run the type-check.
+3. Dispatch a fresh architect with the previous rounds, until it returns `APPROVED` — no BLOCKER or CHANGE left, nits fixed or rejected. Record `Verdict: approved (round <n>)`.
+4. At most three rounds. Still not approved after the third, stop and bring the open findings to the user: a shape that will not converge points at the plan or the task.
+
+Show the user the approved shape and the round summary before the first slice; they can pull you back. The signatures are then frozen: changing one later means a Deviation in plan.md, not a silent reshape. `tracker_link.py` reports `next: shape` while the verdict is missing, and `check_diff_hygiene.py` fails on an open finding or a missing verdict. A change with no new or changed signatures — a config value, a bug inside one function body — writes `none — <why>` and goes straight to the slices.
+
+The idea has a lineage: type-driven development (Brady's *type, define, refine*), Ousterhout's "write the comments first" for interfaces, McConnell's Pseudocode Programming Process, and Fagan's design inspection before code inspection.
 
 Throughout Build, the type checker is a gate like the tests: no `any`, casts, or suppressions to make it pass. When one is truly needed, the same line says why (`reason: …`) — `check_diff_hygiene.py` fails any that does not.
 
 ### Test-driven, one slice at a time
 
-Each acceptance criterion is a vertical slice: **one failing test → the least code that passes it → green**, then the next. Never all tests first and all code after — tests written in bulk describe imagined behavior and go insensitive to real changes.
+Each acceptance criterion is a vertical slice: **one failing test → the least code that passes it → green**, then the next. Dispatch each slice to the **builder** (`references/agents/builder.md`) on the model CLAUDE.md's `## Models` names (default `sonnet`): the design is settled and frozen, so implementation does not need the strongest model — the checks and the reviewer are there to catch what it gets wrong. One slice per dispatch, one at a time. When it returns, re-run the slice's test yourself, read the diff, and write its red evidence into the Build log; when it stops on a frozen signature, an unplanned file, or a broken test, you decide — a Deviation, back to the architect, or the slice yourself. With `builder: inherit`, build the slices in the session. Never all tests first and all code after — tests written in bulk describe imagined behavior and go insensitive to real changes.
 
 - **Red first, for the right reason.** Run the new test before writing the code and confirm it fails because the behavior is missing — not because of a typo, an import path, or a broken fixture. Record the failing line and why it was the expected failure in plan.md's Build log.
 - **Name the production change that would make the test fail.** If none would, the test tests nothing. Expected values are independent literals or worked examples, never recomputed the way the code computes them.
@@ -158,7 +169,7 @@ Build-phase hooks run on file edits and shell commands: block edits to protected
 
 ### Parallel sessions and subagents
 
-Split work into tasks that touch different files; each parallel task gets its own git worktree, and its own `docs/changes/<task>/` folder, so sessions don't collide. Two or three sessions is a sensible start; the ceiling is how many streams one person can review properly. The workflow ships two subagent briefs — the explorer (Design) and the reviewer (Review) in `references/agents/`. Turn other repeated jobs into subagents defined in `.claude/agents/*.md` (name, description, tools): a verifier that runs the app and checks behavior, a code simplifier.
+Split work into tasks that touch different files; each parallel task gets its own git worktree, and its own `docs/changes/<task>/` folder, so sessions don't collide. Two or three sessions is a sensible start; the ceiling is how many streams one person can review properly. The workflow ships four subagent briefs in `references/agents/` — the explorer (Design), the architect (Build's Shape step), the builder (Build's slices), and the reviewer (Review) — each on the model CLAUDE.md's `## Models` sets for its role (SKILL.md, Models): judgment on the strongest, mechanical work on a cheaper one. Turn other repeated jobs into subagents defined in `.claude/agents/*.md` (name, description, tools): a verifier that runs the app and checks behavior, a code simplifier.
 
 Every subagent is named for its function — never agent-1 or helper — and stays visible and accountable: the orchestrating agent states why it dispatched one and summarizes what it returned, and each subagent reports what it ran, what it saw, and what it did not check. Require evidence over assertions: the subagent re-reads the current repo state before acting and cites what it verified. Bound the task with a concrete deliverable, so a subagent cannot idle or drift.
 

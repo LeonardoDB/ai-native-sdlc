@@ -36,6 +36,17 @@ code") — Build and Review invoke it, and every subagent brief repeats the inst
 instead of grep, and the library-docs tool or MCP to check a dependency's current
 API before using it from memory. e.g. "LSP: pyright", "docs: <docs-mcp-name>".>
 
+## Models
+
+<Optional. The model each subagent role runs on, passed as the Agent tool's `model`
+(`sonnet`, `opus`, `haiku`, `fable`, or `inherit` for the session's). Run the session
+itself on the strongest model: it writes the spec and plan and judges the results.
+Defaults when this section is absent:
+- explorer: sonnet
+- architect: inherit
+- builder: sonnet (`inherit` builds the slices in the session instead)
+- reviewer: inherit>
+
 ## Tracker
 
 <Optional. Default: tasks come from the tracker link you pass; the forge comes from

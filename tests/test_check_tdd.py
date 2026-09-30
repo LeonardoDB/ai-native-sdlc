@@ -221,6 +221,24 @@ class DiffHygieneTests(Repo):
         self.assertEqual(res.returncode, 1)
         self.assertIn("tests/test_old.py", res.stdout)
 
+    def test_shape_needs_the_architect_verdict(self) -> None:
+        shape = "\n## Shape\n\n- `add(a: int, b: int) -> int`\n\n### Round 1\n\n"
+        self.change(test_changes=shape + "- [ ] CHANGE src/calc.py:5 — name the operands")
+        res = self.run_script(HYGIENE)
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("architect finding not resolved", res.stdout)
+        self.change(test_changes=shape + "- [fixed] CHANGE src/calc.py:5 — name the operands")
+        res = self.run_script(HYGIENE)
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("shape not approved", res.stdout)
+        self.change(test_changes=shape + "- [rejected: matches math.fsum's naming] NIT operands\n\n"
+                                         "Verdict: approved (round 1)")
+        res = self.run_script(HYGIENE)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.change(test_changes="\n## Shape\n\nnone — no new types or signatures")
+        res = self.run_script(HYGIENE)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+
     def test_untriaged_learning_fails(self) -> None:
         self.change(test_changes="\n## Learnings\n\n- [ ] gotcha: cache must be cleared in tests")
         res = self.run_script(HYGIENE)

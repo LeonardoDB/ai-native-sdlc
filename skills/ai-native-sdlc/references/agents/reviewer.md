@@ -9,7 +9,7 @@ this brief into the subagent's prompt, followed by the dispatch context below.
 - the lens(es) to review through (below)
 - the diff (`git diff <default-branch>...` plus uncommitted changes) or its path
 - `docs/changes/<task>/spec.md` and `plan.md` (the light path has only plan.md),
-  including the plan's Proof, Types first, Test changes, and Build log
+  including the plan's Proof, Shape, Test changes, and Build log
 - the task's acceptance criteria, from the task description
 - the output of `check_tdd.py`, `check_mutations.py`, `check_diff_hygiene.py`, and
   `impact_map.py` (dependents and callers of each changed file, with risk)
@@ -64,7 +64,8 @@ this fail?* If none would, it tests nothing. Flag:
   `reason:`; judge whether the reason holds;
 - closed sets modeled as open strings, optional fields that are always required,
   states the types allow but the domain forbids;
-- signatures frozen in plan.md's Types first that changed without a Deviation.
+- signatures frozen in plan.md's Shape (approved by the architect) that changed
+  without a Deviation.
 
 **Stance: attack the change.** Ask "how would I break this?", not "is this
 correct?" — construct the input, sequence, or state that makes it fail.

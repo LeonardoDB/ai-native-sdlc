@@ -30,6 +30,18 @@ PLAN = """\
 
 - tests/test_old.py — contradicted AC-1
 
+## Shape
+
+- `fee(total: Decimal) -> Decimal`
+
+### Round 1
+
+- [fixed] CHANGE fee takes Money, not float
+
+### Round 2
+
+Verdict: approved (round 2)
+
 ## Surviving mutants
 
 ## Learnings
@@ -85,6 +97,7 @@ class MetricsTests(Repo):
         self.assertEqual(full["spec_rework"], 1)
         self.assertEqual(full["plan_edits"], 1)
         self.assertEqual(full["review_rounds"], 2)
+        self.assertEqual(full["shape_rounds"], 2)
         self.assertEqual(full["deviations"], 2)
         self.assertEqual(full["test_changes"], 1)
         self.assertEqual(full["survivors"], 0)

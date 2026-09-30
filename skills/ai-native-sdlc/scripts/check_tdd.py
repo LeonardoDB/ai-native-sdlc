@@ -88,6 +88,29 @@ def section(text: str, heading: str) -> list[str]:
     return []
 
 
+OPEN_ITEM_RE = re.compile(r"^\s*[-*]\s+\[ \]\s+\S")
+SHAPE_NONE_RE = re.compile(r"^\s*(?:[-*]\s+)?none\b", re.I)
+SHAPE_VERDICT_RE = re.compile(r"^\s*(?:[-*]\s+)?Verdict\s*:\s*approved\b", re.I)
+
+
+def shape_status(plan_text: str) -> str:
+    """Where plan.md's ## Shape stands: absent, none, pending, or approved.
+
+    absent — no Shape section (a plan written before the step existed).
+    none — the change adds or changes no types or signatures ("none — <why>").
+    approved — the architect's "Verdict: approved" is recorded and no finding
+    is left open (`- [ ]`). Anything else is pending.
+    """
+    lines = section(plan_text, "Shape")
+    if not lines and not re.search(r"(?im)^## Shape\s*$", plan_text):
+        return "absent"
+    if any(SHAPE_NONE_RE.match(line) for line in lines):
+        return "none"
+    if any(OPEN_ITEM_RE.match(line) for line in lines):
+        return "pending"
+    return "approved" if any(SHAPE_VERDICT_RE.match(line) for line in lines) else "pending"
+
+
 def parse_proof(plan_text: str) -> list[tuple[str, str | None]]:
     """[(AC id, command or None for manual evidence)]"""
     entries = []

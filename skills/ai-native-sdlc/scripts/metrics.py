@@ -10,6 +10,7 @@ per task and in aggregate:
     spec_rework     commits to spec.md after plan.md first appeared
                     (requirements that changed once building started)
     plan_edits      commits to plan.md after its first
+    shape_rounds    "### Round <n>" headings under plan.md's ## Shape (architect)
     review_rounds   "### Round <n>" headings under plan.md's ## Review
     deviations      bullets under ## Deviations
     test_changes    existing tests edited, from ## Test changes
@@ -88,6 +89,7 @@ def task_metrics(repo: Path, folder: Path) -> dict:
         "manual_criteria": sum(1 for _, cmd in proof if cmd is None),
         "spec_rework": sum(1 for t in spec_times if first_plan is not None and t > first_plan),
         "plan_edits": max(0, len(plan_times) - 1),
+        "shape_rounds": sum(1 for line in tdd.section(plan_text, "Shape") if ROUND_RE.match(line)),
         "review_rounds": sum(1 for line in tdd.section(plan_text, "Review") if ROUND_RE.match(line)),
         "deviations": bullets(plan_text, "Deviations"),
         "test_changes": bullets(plan_text, "Test changes"),
@@ -141,14 +143,14 @@ def summarize(rows: list[dict]) -> dict:
         "tasks": len(rows),
         "full_path_share": round(sum(r["path"] == "full" for r in rows) / len(rows), 2) if rows else None,
         "spec_rework_share": round(sum(r["spec_rework"] > 0 for r in rows) / len(rows), 2) if rows else None,
-        **{f"mean_{k}": mean(k) for k in ("review_rounds", "deviations", "test_changes",
+        **{f"mean_{k}": mean(k) for k in ("shape_rounds", "review_rounds", "deviations", "test_changes",
                                           "survivors", "promoted", "plan_edits", "lead_days", "mr_comments", "mr_days")},
     }
 
 
 def table(rows: list[dict], forge: bool) -> str:
-    cols = ["repo", "task", "path", "criteria", "spec_rework", "plan_edits", "review_rounds",
-            "deviations", "test_changes", "survivors", "promoted", "lead_days"] + (["mr", "mr_comments", "mr_days"] if forge else [])
+    cols = ["repo", "task", "path", "criteria", "spec_rework", "plan_edits", "shape_rounds",
+            "review_rounds", "deviations", "test_changes", "survivors", "promoted", "lead_days"] + (["mr", "mr_comments", "mr_days"] if forge else [])
     out = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
     for r in rows:
         out.append("| " + " | ".join("" if r.get(c) is None else str(r[c]) for c in cols) + " |")

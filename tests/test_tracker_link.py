@@ -155,6 +155,16 @@ class TaskStateTests(unittest.TestCase):
         self.write("plan.md", "Approved")
         self.assertEqual(self.state(), {"spec": "missing", "plan": "approved", "next": "implement"})
 
+    def test_shape_waits_for_the_architect(self) -> None:
+        self.write("plan.md", "Approved\n\n## Shape\n\n- `export(rows: list[Row]) -> Csv`\n\n"
+                              "### Round 1\n\n- [ ] NIT: name it `to_csv`")
+        self.assertEqual(self.state()["next"], "shape")
+        self.write("plan.md", "Approved\n\n## Shape\n\n- `to_csv(rows: list[Row]) -> Csv`\n\n"
+                              "### Round 1\n\n- [fixed] NIT: name it `to_csv`\n\nVerdict: approved (round 2)")
+        self.assertEqual(self.state()["next"], "implement")
+        self.write("plan.md", "Approved\n\n## Shape\n\nnone — a config value, no type or signature changes")
+        self.assertEqual(self.state()["next"], "implement")
+
 
 class TaskBranchTests(unittest.TestCase):
     def test_on_task_branch(self) -> None:

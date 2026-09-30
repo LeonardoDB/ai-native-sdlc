@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deterministic diff hygiene: no silent escape hatches, no silently weakened tests.
 
-Three checks — two on the lines a change adds or removes, one on the plan:
+Four checks — two on the lines a change adds or removes, two on the plan:
 
   1. escape hatches — an added line that suppresses the type checker or the
      linter (`any`, `as any`, `@ts-ignore`, `# type: ignore`, `eslint-disable`,
@@ -16,6 +16,9 @@ Three checks — two on the lines a change adds or removes, one on the plan:
   3. learnings triaged — every `- [ ]` entry under the plan's "## Learnings"
      is promoted to a knowledge store or dropped before delivery
      (references/knowledge.md).
+  4. shape approved — when the plan has a "## Shape" section that is not
+     "none", every architect finding in it is resolved (no `- [ ]` left) and
+     the architect's "Verdict: approved" is recorded.
 
 Working-tree mode (default): the change is the working tree (untracked files
 included) against HEAD. Committed mode (--base <rev>): base...HEAD.
@@ -54,7 +57,6 @@ ESCAPE_HATCHES = [
         r"|\bt\.Skip\(|#\[ignore\]")),
 ]
 REASON_RE = re.compile(r"\breason\s*:", re.I)
-UNTRIAGED_RE = re.compile(r"^\s*[-*]\s+\[ \]\s+\S")
 HUNK_FILE_RE = re.compile(r"^\+\+\+ b/(.+)$")
 
 
@@ -133,10 +135,21 @@ def main(argv: list[str] | None = None) -> int:
     plan_text = plan_file.read_text(encoding="utf-8") if plan_file and plan_file.is_file() else ""
 
     for line in tdd.section(plan_text, "Learnings"):
-        if UNTRIAGED_RE.match(line):
+        if tdd.OPEN_ITEM_RE.match(line):
             print(f"FAIL learning not triaged in {plan_path}: {line.strip()[:100]} "
                   "(promote it to a store or drop it)")
             failures += 1
+
+    for line in tdd.section(plan_text, "Shape"):
+        if tdd.OPEN_ITEM_RE.match(line):
+            print(f"FAIL architect finding not resolved in {plan_path}: {line.strip()[:100]} "
+                  "(fix it, or reject it with a reason)")
+            failures += 1
+    if tdd.shape_status(plan_text) == "pending" and not any(
+            tdd.OPEN_ITEM_RE.match(line) for line in tdd.section(plan_text, "Shape")):
+        print(f"FAIL shape not approved in {plan_path}: record the architect's `Verdict: approved` "
+              "under ## Shape, or write `none — <why>` when no type or signature changes")
+        failures += 1
 
     weakened = sorted(p for p, count in removed.items()
                       if count and scanned(p) and tdd.is_test_path(p, args.tests))

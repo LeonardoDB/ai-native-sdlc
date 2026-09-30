@@ -26,13 +26,26 @@ high fix rate) with the callers that could break and the test that covers them. 
 
 - <path> — <dependents/callers at risk> — covered by <test id, or AC-n>
 
-## Types first
+## Shape
 
-<Only when the change adds new domain shapes (types, schemas, interfaces, public signatures).
-List them; they are written first with stub bodies, pass the type-check, are reviewed, and
-are then frozen — a later change to one goes under Deviations. Otherwise: "none".>
+<Before any test or implementation: the types, schemas, interfaces, and function signatures
+the change adds or changes, written in the real files with stub bodies, type-check passing.
+The architect (references/agents/architect.md) judges them in a fresh context, one
+"### Round <n>" per dispatch. Every finding is resolved as `- [fixed] …` or
+`- [rejected: <why>] …`; the step ends with the architect's `Verdict: approved (round <n>)`.
+The signatures are then frozen — a later change to one goes under Deviations.
+check_diff_hygiene.py fails while a `- [ ]` is left or the verdict is missing.
+When no type or signature changes: `none — <why>`.>
 
 - <type or signature> — <why this shape: closed values as unions/enums, no invalid states>
+
+Walkthrough:
+
+- AC-1: <call sequence through the signatures>
+
+### Round 1
+
+- [ ] <BLOCKER|CHANGE|NIT> <path:line> — <finding> → <the shape asked for>
 
 ## Order of work
 

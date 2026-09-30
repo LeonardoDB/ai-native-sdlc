@@ -42,7 +42,7 @@ Output: one JSON object on stdout:
                   (its last segment is the slug or starts with "<slug>-")
     state         where the task stands, read from change_dir in the repo:
                   {spec, plan: missing | draft | approved, next} with next one
-                  of design, approve-spec, plan, approve-plan, implement — so a
+                  of design, approve-spec, plan, approve-plan, shape, implement — so a
                   second run with the same link resumes instead of restarting
 
 Exit codes: 0 = task or MR/PR link resolved, 1 = another kind of link or unrecognized
@@ -58,6 +58,12 @@ import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urlsplit
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+import check_tdd as tdd  # noqa: E402
 
 LINEAR_KEY_RE = re.compile(r"^([A-Za-z][A-Za-z0-9]*)-(\d+)$")
 SCP_REMOTE_RE = re.compile(r"^(?:[^@/]+@)?([^:/]+):(.+)$")
@@ -179,7 +185,8 @@ def task_state(root: str, change_dir: str) -> dict:
     base = Path(root) / change_dir
     spec, plan = _artifact_status(base / "spec.md"), _artifact_status(base / "plan.md")
     if plan == "approved":
-        step = "implement"
+        plan_text = (base / "plan.md").read_text(encoding="utf-8")
+        step = "shape" if tdd.shape_status(plan_text) == "pending" else "implement"
     elif plan == "draft":
         step = "approve-plan"
     elif spec == "approved":

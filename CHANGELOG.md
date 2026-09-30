@@ -14,6 +14,19 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ### Added
 
+- Models per role: a **builder** subagent (`references/agents/builder.md`)
+  implements each slice after the shape is approved, on a cheaper model;
+  the session — on the strongest model — keeps the spec, the plan, the shape,
+  and the review filter. CLAUDE.md's optional `## Models` sets each role's
+  model (defaults: explorer and builder `sonnet`, architect and reviewer
+  `inherit`; `builder: inherit` builds in the session).
+- Shape step in Build (hard rule 9): after the plan is approved, the types
+  and signatures are written as stubs and judged by a new **architect**
+  subagent (`references/agents/architect.md`) in a fresh context, round by
+  round, until it approves — before any test or code. plan.md's `## Types
+  first` becomes `## Shape`; `check_diff_hygiene.py` fails on an open
+  architect finding or a missing `Verdict: approved`; `tracker_link.py`
+  reports `next: shape`; `metrics.py` counts `shape_rounds`.
 - Eval `09-kb-recall`: an ADR the code does not reveal (money is Decimal, after an incident) must be read, cited in the spec, and followed.
 - `check_diff_hygiene.py` fails while a `- [ ]` entry is left untriaged under
   plan.md's `## Learnings`; `metrics.py` reports learnings promoted and
