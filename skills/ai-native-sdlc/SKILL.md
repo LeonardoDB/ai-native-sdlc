@@ -1,7 +1,7 @@
 ---
 name: ai-native-sdlc
-version: 0.2.0
-description: Take a tracker task to a reviewed, opened MR/PR — Design, Plan, Shape, Build, Review — with versioned artifacts and human approval gates at every handoff; the loop ends when the MR/PR is opened, never at merge or deploy. Use when the user passes a Linear, GitLab, or GitHub task link, or states a goal, idea, feature, or change request, and expects the agent to drive the work to an MR/PR instead of jumping straight to code.
+version: 0.3.0
+description: Take a tracker task to a reviewed, opened MR/PR — Design, Plan, Shape, Build, Review — with versioned artifacts and human approval gates at every handoff (or, in delegated mode, routine gates passed by the agent and recorded for the MR/PR review); the loop ends when the MR/PR is opened, never at merge or deploy. Use when the user passes a Linear, GitLab, or GitHub task link, or states a goal, idea, feature, or change request, and expects the agent to drive the work to an MR/PR instead of jumping straight to code.
 ---
 
 # AI-Native SDLC
@@ -12,27 +12,27 @@ Take a task from the tracker to an opened, verified MR/PR:
 task link → Design → Plan → Shape → Build → Review → MR/PR opened ■ end
 ```
 
-You do the generating, verifying, and mechanical work; the user approves at each gate. The loop ends when the MR/PR is opened — merge, deploy, and release belong to the team. `hooks/gate.py` enforces that: merges, pushes to the default branch, `--no-verify`, and bare force-pushes are blocked, and a task branch is published only with the checks passing.
+You do the generating, verifying, and mechanical work; the user approves at each gate — or, when CLAUDE.md's `## Autonomy` says `delegated`, you pass the routine gates yourself, record each decision, and escalate the rest (`references/autonomy.md`). The loop ends when the MR/PR is opened — merge, deploy, and release belong to the team. `hooks/gate.py` enforces that: merges, pushes to the default branch, `--no-verify`, and bare force-pushes are blocked, and a task branch is published only with the checks passing.
 
 ## The loop
 
 Each step says what to do; `references/playbook.md` has the detail for each one.
 
 1. **Resolve** — `scripts/tracker_link.py parse <link>` gives the task ref, `slug`, `change_dir` (`docs/changes/<slug>`), the git state, and `state.next` to resume from (`design`, `approve-spec`, `plan`, `approve-plan`, `shape`, `implement`). A board or epic link exits 1: ask for the task link. Read the task through the tracker's CLI or MCP connector (`references/trackers.md`); never edit it.
-2. **Workspace** — before reading code. On the task's branch: continue. Otherwise, with a clean tree, propose `<type>/<slug>-<summary>` off the default branch and create it when the user confirms. A dirty tree stops here.
+2. **Workspace** — before reading code. On the task's branch: continue. Otherwise, with a clean tree, propose `<type>/<slug>-<summary>` off the default branch and create it when the user confirms (delegated: create it). A dirty tree stops here.
 3. **Size** — say which path and why. **Light** (a localized bug, config, a small edit in one module): no spec, plan.md only. **Full** (a feature, a behavior change, anything crossing modules): spec, then plan. When in doubt, full. A bug starts from `references/debugging.md`.
 4. **Design** (full path) — explorer first if the code is unfamiliar; recall from the knowledge stores (`references/knowledge.md`); write `<change_dir>/spec.md` from `assets/spec.md`. **Gate: spec approved.**
 5. **Plan** — in plan mode, write `<change_dir>/plan.md` from `assets/plan.md`: files that change, order of work, proof per acceptance criterion. **Gate: plan approved.**
 6. **Shape** — when the change adds or changes types or signatures: write them as stubs, walk each acceptance criterion through them, and loop with the architect until it approves (at most two rounds, then the user decides). Otherwise write `none — <why>`. **Gate: architect's verdict.**
 7. **Build** — record the baseline (suite, typecheck, lint), then one acceptance criterion at a time, red → green, each slice dispatched to the builder and verified by you. Nothing is committed yet.
 8. **Review** — the checks (`check_plan_sync.py --hook`, `check_tdd.py`, `check_diff_hygiene.py`, typecheck, suite against the baseline), then the reviewer in a fresh context; filter its findings, walk the acceptance criteria with evidence, fix, re-verify — at most two rounds. Triage plan.md's `## Learnings`.
-9. **Deliver** — ask once: *commit, push, and open the MR/PR?* Use the project's commit and MR/PR skills if CLAUDE.md names them, else the defaults in `references/trackers.md`, with the closing keyword (`Closes group/project#42`, `Fixes ENG-123`). Then stop.
+9. **Deliver** — ask once: *commit, push, and open the MR/PR?* (delegated: don't ask; open it as a draft). Use the project's commit and MR/PR skills if CLAUDE.md names them, else the defaults in `references/trackers.md`, with the closing keyword (`Closes group/project#42`, `Fixes ENG-123`). Then stop.
 
 Other starting points: an **MR/PR link** runs one feedback round (`references/feedback.md`); an **idea with no task** starts with an interview, a task drafted in the shape of `assets/intent.md`, and created in the tracker only after the user confirms. If the user is already in a later phase ("review this MR"), start there.
 
 ## Hard rules
 
-1. **Gates are real.** Do not pass a gate without the user's approval (or the architect's verdict, for Shape). Record it as `Status: Approved` only when the user said so.
+1. **Gates are real.** Do not pass a gate without the user's approval (or the architect's verdict, for Shape). Record it as `Status: Approved` only when the user said so — or, in delegated mode, when you approved it, with `Approved-by: delegated` under it and every decision you took alone under `## Assumptions (delegated)`. Hard-to-undo changes, scope changes, security, and conflicts with recalled decisions always go to the user.
 2. **Stop at the MR/PR.** Never merge, deploy, release, or change production config.
 3. **Plan first.** Nothing is implemented without an approved plan. When the work departs from it, update plan.md in the same change.
 4. **Shape before code.** New or changed types and signatures are stubbed and approved by the architect before any test or implementation; after that they are frozen, and changing one is a Deviation.
@@ -81,4 +81,5 @@ Only the builder writes code. Without the Agent tool, run the brief yourself on 
 | `references/knowledge.md` | the repo declares knowledge stores |
 | `references/debugging.md` | the task is a bug |
 | `references/feedback.md` | the user passes an MR/PR link |
+| `references/autonomy.md` | CLAUDE.md's `## Autonomy` says `delegated`, or the user asks for an unattended run |
 | `references/adoption.md` | tailoring the workflow to a team; how each rule is enforced |

@@ -6,6 +6,23 @@ semver; keep `plugin.json` and the `version` field in SKILL.md in sync
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-02
+
+### Added
+
+- Delegated mode (`references/autonomy.md`), turned on by CLAUDE.md's
+  `## Autonomy` (`Mode: delegated`) or per run. The agent creates the branch,
+  answers routine open questions itself with a cited source under
+  `## Assumptions (delegated)`, approves the spec and plan gates with
+  `Approved-by: delegated`, and opens the MR/PR as a draft with a
+  `## Delegated decisions` section, without asking. It still stops on
+  hard-to-undo changes (schema, public API, shared write paths), scope
+  changes, auth/secrets/payments/personal data, conflicts with recalled
+  decisions, real 50/50s, the project's `Extra escalations`, and Shape or
+  Review not converging in two rounds. Default stays `ask`; the checks and
+  the gate hook are unchanged.
+- Evals `11-delegated-to-draft-mr` and `12-delegated-escalates`.
+
 ## [0.2.0] — 2026-09-29
 
 ### Changed

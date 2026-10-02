@@ -10,7 +10,7 @@
       "name": "ai-native-sdlc",
       "source": "./",
       "description": "Take a Linear, GitLab, or GitHub task to a reviewed, opened MR/PR — test-first, typed, with deterministic checks and a gate hook.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": {
         "name": "Leonardo Dalbosco"
       },

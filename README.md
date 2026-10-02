@@ -20,7 +20,7 @@ task link → Design → Plan → Shape → Build → Review → MR/PR opened �
 | Build | one criterion at a time, test first — each slice by a **builder** subagent on a cheaper model | — |
 | Review | deterministic checks, then a fresh **reviewer** subagent; fixes; the criteria walked with evidence | you say *commit, push, open the MR/PR* |
 
-The agent never merges or deploys; a hook blocks it. Running it again with the same link resumes where the task stopped. The whole contract is one page: [`SKILL.md`](skills/ai-native-sdlc/SKILL.md).
+The agent never merges or deploys; a hook blocks it. Running it again with the same link resumes where the task stopped. To skip the gates, set `Mode: delegated` under `## Autonomy` in CLAUDE.md: the agent passes the routine gates itself, records every decision, stops only for hard-to-undo, scope, and security calls, and you review a draft MR/PR ([autonomy](skills/ai-native-sdlc/references/autonomy.md)). The whole contract is one page: [`SKILL.md`](skills/ai-native-sdlc/SKILL.md).
 
 **Learn more:** [each step in detail](skills/ai-native-sdlc/references/playbook.md) · [task links and delivery](skills/ai-native-sdlc/references/trackers.md) · [tailoring to a team, and how each rule is enforced](skills/ai-native-sdlc/references/adoption.md)
 
@@ -58,6 +58,7 @@ Nothing has to be copied into your repo; the scripts run from the installed skil
    | `## Models` | you want other models per subagent role than the defaults (explorer and builder `sonnet`, architect and reviewer the session's) |
    | `## Tracker` | tasks live somewhere the link and the git remote don't reveal |
    | `## Knowledge base` | the project has knowledge stores to recall from and write to ([knowledge.md](skills/ai-native-sdlc/references/knowledge.md)) |
+   | `## Autonomy` | you want runs to go to a draft MR/PR without stopping at each gate ([autonomy.md](skills/ai-native-sdlc/references/autonomy.md)) |
    | `## Commit and MR/PR` | the project has its own commit or MR/PR skills or templates |
    | `## Code tooling` | there is an LSP or a library-docs tool the agent should use |
 3. **Run the checks in CI** — `check_plan_sync.py --base origin/main --head HEAD`, `check_tdd.py --base origin/main`, `check_diff_hygiene.py --base origin/main` ([playbook](skills/ai-native-sdlc/references/playbook.md#mrpr-ci)).
@@ -110,6 +111,7 @@ claude plugin eval . --scaffold --trust-plugin --no-publish --allow-tools Bash E
         │   ├── knowledge.md       # knowledge stores: recall per phase, capture with a quality gate
         │   ├── debugging.md       # bug tasks: reproduce, bisect, hypotheses, root cause
         │   ├── feedback.md        # one MR/PR feedback round
+        │   ├── autonomy.md        # delegated mode: gates the agent passes, what escalates
         │   └── agents/            # explorer, architect, builder, reviewer — subagent briefs
         ├── hooks/
         │   └── gate.py            # PreToolUse gate: no merge, checks before publishing

@@ -3,6 +3,7 @@
 - Task: <task ref> <task link>
 - Path: Light | Full (full: spec in docs/changes/<task>/spec.md)
 - Status: Draft | Approved
+- Approved-by: <user | delegated (YYYY-MM-DD)>
 - Date: <YYYY-MM-DD>
 
 <The sections down to Build log are the core — every plan has them. The ones after
@@ -87,6 +88,11 @@ check_diff_hygiene.py fails for a rewritten test not listed here.>
 ## Surviving mutants
 
 <When check_mutations.py reports a mutant no test can kill: `path:line — reason`.>
+
+## Assumptions (delegated)
+
+<Delegated mode: questions answered without asking, one line each:
+`<question> → <answer taken> — <why> [<source>]`. On the full path, the spec holds the Design ones.>
 
 ## Deviations
 

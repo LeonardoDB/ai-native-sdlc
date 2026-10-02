@@ -44,6 +44,7 @@ PROMISED = [
     "references/knowledge.md",
     "references/debugging.md",
     "references/feedback.md",
+    "references/autonomy.md",
     "scripts/init_workflow.py",
     "scripts/tracker_link.py",
     "scripts/check_plan_sync.py",

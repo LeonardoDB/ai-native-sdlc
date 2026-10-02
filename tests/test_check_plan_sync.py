@@ -98,6 +98,16 @@ class PlanSyncTests(unittest.TestCase):
         res = self.pr()
         self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
 
+    def test_delegated_approval_passes(self) -> None:
+        self.initial_commit()
+        self.write("src/new.py", "NEW = 1\n")
+        plan = PLAN.format(files="- src/new.py").replace(
+            "- Status: Approved\n", "- Status: Approved\n- Approved-by: delegated (2026-10-02)\n")
+        self.write(PLAN_PATH, plan)
+        self.commit("delegated plan")
+        res = self.pr()
+        self.assertEqual(res.returncode, 0, res.stderr + res.stdout)
+
     def test_unplanned_file_fails(self) -> None:
         self.initial_commit()
         self.write("src/new.py", "NEW = 1\n")

@@ -46,6 +46,9 @@ Measured so far (haiku, one run each): `03-board-link-rejected` 1.00,
 expected a spec without approving the branch first — the agent correctly
 stopped at Workspace; the prompt now approves the branch. The end-to-end
 cases have not been run yet (they need the git fix above on macOS).
+`12-delegated-escalates` 1.00 (session model, one run, after fixing its
+`never-pushed` grader). `11-delegated-to-draft-mr` 1.00 on two of three runs;
+the first stopped before the MR (0.63) and kept no transcript.
 
 | Case | Checks |
 |---|---|
@@ -59,3 +62,5 @@ cases have not been run yet (they need the git fix above on macOS).
 | 08-neg-explain | a plain question does not start the workflow |
 | 09-kb-recall | Design recalls an ADR the code does not show (money is Decimal) and the spec cites and follows it |
 | 10-shape-architect | Build's Shape step: stubbed types and signatures, the architect dispatched, its verdict recorded in plan.md, and no test written before it |
+| 11-delegated-to-draft-mr | `## Autonomy: delegated`, nobody answering: the routine question answered under Assumptions (delegated), the gates recorded `Approved-by: delegated`, TDD proof green, a draft MR with a Delegated decisions section, never merged |
+| 12-delegated-escalates | delegated mode still stops on a public-API change (the fee's unit): it asks, with a recommendation; no code, no push, no MR |

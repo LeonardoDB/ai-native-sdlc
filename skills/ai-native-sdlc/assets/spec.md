@@ -4,6 +4,7 @@
 - Knowledge used: <KB paths or notes consulted, or "none declared">
 - Author: <agent + human reviewer>
 - Status: Draft | Approved
+- Approved-by: <user | delegated (YYYY-MM-DD)>
 - Date: <YYYY-MM-DD>
 
 ## Requirements
@@ -36,6 +37,11 @@ language allows (closed values as unions/enums, required fields required).>
 ## Gotchas
 
 <Conflict points, risky decisions, trade-offs, and what to watch.>
+
+## Assumptions (delegated)
+
+<Delegated mode only — questions answered without asking, one line each:
+`<question> → <answer taken> — <why> [<source>]`. Delete in ask mode.>
 
 ## Open questions
 

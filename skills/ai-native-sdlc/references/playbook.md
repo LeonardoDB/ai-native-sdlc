@@ -1,6 +1,6 @@
 # Playbook — each step in detail
 
-The loop: **task link → Design → Plan → Shape → Build → Review → MR/PR opened**. Read the section for the step you are entering. Resolving the link, the workspace, and delivery are in `references/trackers.md`.
+The loop: **task link → Design → Plan → Shape → Build → Review → MR/PR opened**. Read the section for the step you are entering. Resolving the link, the workspace, and delivery are in `references/trackers.md`. In delegated mode, every "the user approves" below becomes `references/autonomy.md`: you approve, record it, and escalate what it lists.
 
 ## Size the change
 
@@ -17,7 +17,7 @@ When in doubt, take the full path; a spec that turns out short costs little.
 2. **Explore** when the area is unfamiliar: dispatch the explorer (`references/agents/explorer.md`) — one lens for a contained area; two or three distinct lenses (a similar existing feature, the current implementation, the data flow) for a cross-cutting change. Then **read the essential files it flags yourself**: the explorer locates, you understand. Skip it for code you already know.
 3. **Recall** from the knowledge stores CLAUDE.md declares (`references/knowledge.md`; the repo's docs when it declares none) — prior decisions, domain rules, glossary terms. Cite each hit. Settled decisions are extended, not re-decided; a conflict with the task is an open question.
 4. Write `docs/changes/<task>/spec.md` from `assets/spec.md`: requirements, design, gotchas, areas of concern. The header cites the task (`Intent: <ref> <link>`) and the knowledge used.
-5. Gaps in the task become open questions in the spec or questions to the user — never edits to the task.
+5. Gaps in the task become open questions in the spec or questions to the user — never edits to the task. In delegated mode, answer them yourself under `## Assumptions (delegated)`, with a source for each, unless they must escalate.
 6. **Gate.** The user reviews the spec against the task and approves it; then set `Status: Approved`.
 
 ## Plan
@@ -83,7 +83,7 @@ Nothing is committed during Build; the change stays in the working tree until Re
 5. **Fix and re-verify.** A behavior found missing gets its own red → green slice. Re-run the checks and keep the output as evidence. Auth, secrets, or payments get a dedicated security review on top.
 6. **Triage the learnings.** Each `- [ ]` under `## Learnings` is promoted to the store that fits or dropped with a reason (`references/knowledge.md`).
 7. **At most two rounds.** Blockers still standing after the second go to the user.
-8. **Ask once:** *commit, push, and open the MR/PR?* One go-ahead covers it all.
+8. **Ask once:** *commit, push, and open the MR/PR?* One go-ahead covers it all. In delegated mode, don't ask: the MR/PR opens as a draft with a `## Delegated decisions` section.
 9. **Deliver** with the project's own skills when CLAUDE.md names them in `## Commit and MR/PR`, otherwise the defaults in `references/trackers.md`. Then **stop**. When the team's review comes back, the MR/PR link starts one feedback round (`references/feedback.md`).
 
 When a review flags a mistake for the second time, the correction goes into CLAUDE.md as part of that review.

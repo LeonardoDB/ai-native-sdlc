@@ -35,6 +35,12 @@ updated in this same MR/PR.>
 - [ ] Correctness · [ ] Spec + conventions · [ ] Simplicity + security
 - Rounds: <n>; findings fixed and rejected are in plan.md `## Review`
 
+## Delegated decisions
+
+<Delegated mode only — delete otherwise. The gates the agent approved, every
+`Assumptions (delegated)` line from spec.md and plan.md, and the architect and
+review findings it rejected. Read these first.>
+
 ## Notes
 
 <Nits count, skipped generated paths, open questions. Keep to the 5-nit cap.>

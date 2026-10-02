@@ -47,6 +47,16 @@ Defaults when this section is absent:
 - builder: sonnet (`inherit` builds the slices in the session instead)
 - reviewer: inherit>
 
+## Autonomy
+
+<Optional. Default: `ask` — every gate waits for you. `delegated`: the agent passes
+the routine gates itself, records each decision, escalates hard-to-undo, scope,
+and security calls, and opens the MR/PR as a draft (see the skill's
+references/autonomy.md). e.g.
+- Mode: delegated
+- Priorities: simple over complete; no new dependencies
+- Extra escalations: anything touching billing>
+
 ## Tracker
 
 <Optional. Default: tasks come from the tracker link you pass; the forge comes from

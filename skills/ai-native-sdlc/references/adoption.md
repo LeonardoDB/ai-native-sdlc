@@ -15,7 +15,7 @@ Each hard rule has an advisory layer (the skill makes compliance likely), a dete
 
 | Rule | Deterministic | Otherwise |
 |---|---|---|
-| 1. Gates are real | `check_plan_sync.py` refuses implementation without `Status: Approved` in plan.md | **The agent writes that line** when you approve, so the check proves a plan was recorded as approved, not who approved it. The real backstop is human: spec and plan land in the MR/PR, where the team reviews them. |
+| 1. Gates are real | `check_plan_sync.py` refuses implementation without `Status: Approved` in plan.md | **The agent writes that line** when you approve, so the check proves a plan was recorded as approved, not who approved it. The real backstop is human: spec and plan land in the MR/PR, where the team reviews them. In delegated mode (`references/autonomy.md`) the agent approves routine gates itself and writes `Approved-by: delegated`; the escalation list, the draft MR/PR, and its `## Delegated decisions` section carry the rule. |
 | 2. Stop at the MR/PR | `hooks/gate.py` blocks merges, pushes to the default branch, `--no-verify`, bare force-pushes; branch protection on the forge | — |
 | 3. Plan first | `check_plan_sync.py`: every changed file is in the approved plan's Files that change | — |
 | 4. Shape before code | `check_diff_hygiene.py`: no open architect finding, the verdict recorded | that the stubs came before the tests rests on the agent |
@@ -69,7 +69,7 @@ REVIEW.md sets the passes, the evidence requirement, severity levels, and the 5-
 
 ## Parallel work
 
-Each task has its own `docs/changes/<task>/` folder and branch, so parallel tasks do not collide; give each session its own worktree (`.worktrees/<task>`, ignored by the scaffolded `.gitignore`). Start with two or three — the ceiling is how many streams one person can review properly. Once the guardrails are tuned, auto-accept for routine work is reasonable: approve the plan, let the agent work, review the artifacts.
+Each task has its own `docs/changes/<task>/` folder and branch, so parallel tasks do not collide; give each session its own worktree (`.worktrees/<task>`, ignored by the scaffolded `.gitignore`). Start with two or three — the ceiling is how many streams one person can review properly. Once the guardrails are tuned, auto-accept for routine work is reasonable: approve the plan, let the agent work, review the artifacts. One step further is delegated mode (`references/autonomy.md`): the agent passes the routine gates too, and you review the draft MR/PR. Start it on small tasks, read its `## Delegated decisions` closely at first, and add what it got wrong to `Extra escalations` or `Priorities`.
 
 Other recurring jobs can become subagents in `.claude/agents/*.md` — a verifier that runs the app and checks the change, for example. Name each for its function, commit it, and keep its report bounded and evidence-based.
 

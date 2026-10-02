@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: 11-delegated-to-draft-mr
+tags: [e2e, autonomy]
+context:
+  scaffold_script: fixture.sh

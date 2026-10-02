@@ -67,7 +67,7 @@ else's branch inherits their work in its diff.
 - **Dirty tree** (`dirty: true`) on another branch: stop and let the user
   decide (stash, commit, or switch). Never carry or discard their changes.
 - **Otherwise** propose the branch and wait for the go-ahead before creating
-  it: `<type>/<slug>-<summary>` (`feat/eng-123-csv-export`,
+  it (in delegated mode, create it and say which): `<type>/<slug>-<summary>` (`feat/eng-123-csv-export`,
   `fix/42-date-off-by-one`; type `feat`, `fix`, or `chore`) off the fetched
   `default_branch` (`git fetch origin && git switch -c <branch> origin/<default>`),
   unless the repo's CLAUDE.md sets another rule. Starting the last segment
@@ -99,7 +99,10 @@ rather than picking one.
 
 Nothing is committed during Build. When Review is done, ask once: *commit,
 push, and open the MR/PR?* — one go-ahead covers all three, and nothing
-leaves the machine or enters history without it. Then, if the project's
+leaves the machine or enters history without it. In delegated mode
+(`references/autonomy.md`) the go-ahead is given: open it as a draft
+(`glab mr create --draft`, `gh pr create --draft`), with a
+`## Delegated decisions` section in the body. Then, if the project's
 CLAUDE.md has a `## Commit and MR/PR` section, use the skills and rules it
 names; they win over everything below. Otherwise:
 

@@ -32,7 +32,7 @@ done
 for f in intent hooks bands.yaml evals gates workflow-graph.yaml scripts/gate_ledger.py scripts/workflow_state.py; do
   [[ -e "$tmp/proj/$f" ]] && { echo "FAIL: scaffold wrote $f"; fail=1; }
 done
-for section in '## Code tooling' '## Models' '## Tracker' '## Knowledge base' '## Commit and MR/PR'; do
+for section in '## Code tooling' '## Models' '## Autonomy' '## Tracker' '## Knowledge base' '## Commit and MR/PR'; do
   grep -q "$section" "$tmp/proj/CLAUDE.md" || { echo "FAIL: repository memory missing $section"; fail=1; }
 done
 grep -q 'Codex' "$tmp/proj/CLAUDE.md" && { echo "FAIL: repository memory still mentions Codex"; fail=1; }

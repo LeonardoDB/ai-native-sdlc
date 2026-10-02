@@ -151,6 +151,10 @@ class TaskStateTests(unittest.TestCase):
         self.write("plan.md", "Approved")
         self.assertEqual(self.state()["next"], "implement")
 
+    def test_delegated_approval_counts(self) -> None:
+        self.write("plan.md", "Approved\n- Approved-by: delegated (2026-10-02)")
+        self.assertEqual(self.state()["next"], "implement")
+
     def test_light_path_has_no_spec(self) -> None:
         self.write("plan.md", "Approved")
         self.assertEqual(self.state(), {"spec": "missing", "plan": "approved", "next": "implement"})
